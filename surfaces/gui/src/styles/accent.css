@@ -1,0 +1,62 @@
+/* ---- Accent and finish (src/accent.ts, components/AccentPicker.tsx) -------------
+   accent.ts writes the fitted accent as inline custom properties on <html>; these rules turn
+   the finish into the metal tokens material.css paints with. The selectors carry two or
+   three attribute tests on purpose: (0,2,1) and up beats the palette blocks (0,2,0) and the
+   mode rules in material.css (0,1,1), whatever the import order. */
+
+/* Flat: the accent as a plain fill, titles in the ink, nothing brushed or glowing. */
+html[data-finish="flat"][data-palette] {
+  --chrome: linear-gradient(var(--accent), var(--accent));
+  --chrome-text: linear-gradient(var(--ink), var(--ink));
+  --m-btn-shadow: none;
+  --m-btn-text-shadow: none;
+  --m-btn-border: transparent;
+  --m-glow: transparent;
+  --m-edge: var(--accent);
+}
+html[data-finish="flat"] .theme-preview .tp-cta { background: var(--accent); }
+
+/* Metal with a chosen accent: the colour anodised. On a dark theme every stop is at least as
+   light as the fitted accent (near-black text on it clears 4.5:1 at the darkest band); on a
+   light theme every stop is at most as light (white text clears 4.5:1 at the lightest). */
+html[data-theme="dark"][data-finish="metal"][data-accent="set"] {
+  --chrome: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent), white 55%) 0%,
+    color-mix(in srgb, var(--accent), white 20%) 38%,
+    color-mix(in srgb, var(--accent), black 8%) 52%,
+    color-mix(in srgb, var(--accent), white 10%) 72%,
+    color-mix(in srgb, var(--accent), white 40%) 100%);
+}
+html[data-theme="light"][data-finish="metal"][data-accent="set"] {
+  --chrome: linear-gradient(180deg,
+    var(--accent) 0%,
+    color-mix(in srgb, var(--accent), black 8%) 38%,
+    color-mix(in srgb, var(--accent), black 22%) 52%,
+    color-mix(in srgb, var(--accent), black 6%) 72%,
+    var(--accent) 100%);
+}
+
+/* The swatches. A swatch's own colour is --sw; "Theme's own" is half ink, half ground. */
+.accent-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4); }
+.accent-swatch {
+  position: relative;
+  width: var(--ctl-h);
+  height: var(--ctl-h);
+  border-radius: var(--r-pill);
+  background: var(--sw);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.accent-swatch:hover { transform: scale(1.08); }
+.accent-swatch.is-on { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--ink); }
+.accent-swatch.is-theme { background: conic-gradient(var(--ink) 0 50%, var(--paper) 0); }
+.accent-swatch.is-custom:not(.is-set) {
+  background: conic-gradient(#FF6B6B, #FFD93D, #6BCB77, #4D96FF, #B39DFF, #FF6B6B);
+}
+.accent-swatch.is-custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.accent-swatch.is-custom:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .accent-swatch { transition: none; }
+  .accent-swatch:hover { transform: none; }
+}

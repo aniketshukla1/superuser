@@ -1,0 +1,34 @@
+/* ---- Attachments ----------------------------------------------------------- */
+.composer.dragging { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.attach-chip {
+  position: relative; display: inline-flex; align-items: center; gap: var(--s-3);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--paper);
+  padding: var(--ctl-pad-y) var(--ctl-pad-x); font-size: var(--t-sm); color: var(--muted); max-width: 220px;
+}
+.attach-chip .attach-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-chip.img { padding: 0; border: none; background: transparent; }
+.attach-chip.img img { width: 46px; height: 46px; object-fit: cover; border-radius: var(--r-md); border: 1px solid var(--line-strong); display: block; }
+.attach-x {
+  position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: var(--r-circle);
+  border: none; background: var(--solid); color: var(--on-solid); font-size: var(--t-xs); line-height: 1; cursor: pointer;
+  display: grid; place-items: center;
+}
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--ctl-h); height: var(--ctl-h); border: none; border-radius: var(--r-md);
+  background: transparent; color: var(--muted); cursor: pointer; flex: none;
+}
+.icon-btn:hover { color: var(--ink); background: var(--paper); }
+/* in-transcript attachments on a user bubble */
+.bubble-attachments { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-bottom: var(--s-3); }
+.msg-img { max-width: 220px; max-height: 220px; border-radius: var(--r-lg); border: 1px solid var(--line-strong); display: block; }
+.msg-file {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--t-sm);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--s-2) var(--s-4);
+}

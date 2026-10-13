@@ -1,0 +1,66 @@
+/* ---- Desktop overlay title bar -------------------------------------------- */
+/* Traffic lights float over the UI (Tauri titleBarStyle: Overlay). The visible
+   app header/sidebar top padding provide the draggable area in the normal app. */
+.app.tauri-overlay { padding-top: 0; }
+.boot-splash.tauri-overlay { padding-top: 36px; }
+.titlebar-drag {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* Sit the wordmark on the top strip's shared midline (a hair above the traffic lights'
+     y=30 center — owner-tuned on the DMG #28 walkthrough alongside the brand row and the
+     topbar cluster; keep all four -3px offsets in step). */
+  height: 48px;
+  padding-top: var(--s-4);
+  z-index: 180;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  padding-left: 82px; /* clear the macOS traffic lights */
+  user-select: none;
+}
+.titlebar-brand { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--t-sm); font-weight: 600; color: var(--muted); user-select: none; }
+.titlebar-brand .mark { color: var(--accent); }
+/* The sidebar's brand row IS the desktop title bar, and on macOS the traffic lights float
+   over its top-left corner. This row used to clear them SIDEWAYS — 84px of left padding —
+   which spent a third of the sidebar on OS chrome and left the content over-subscribed.
+   It failed twice that way: first the wordmark rendered as "superuser bet", patched by
+   tightening the cluster; then the sidebar narrowed to 240px and gained a search button,
+   and the row needed 258px of 240 — so the wordmark read "superus" and the search button
+   was pushed off the edge entirely, unreachable by mouse OR keyboard.
+
+   Clearing them DOWNWARD instead ends that whole family of bug: the row gets the full
+   width back (14 + 24 + 6 + ~100 + 6 + 28 + 6 = 184px of 240) with room to grow, and the
+   strip the lights sit in is just a title bar, which is what it already was. The row stays
+   a drag region (data-tauri-drag-region in Sidebar.tsx), so it still moves the window.
+   Guarded by `the desktop brand row fits its sidebar` in e2e-ux/deep.spec.ts. */
+/* Beside the traffic lights again, not under them. Clearing them vertically was the right
+   call while this row also carried a full wordmark — 84px of inset plus a brand name plus
+   two controls did not fit in 240px, and the overflow pushed the search button off the
+   edge. The wordmark is back as a mark only here: its name is hidden by the container query
+   on `.sidebar .brand` until the row has room, so the row is still the mark plus 24px
+   buttons. Guarded by `the desktop brand row fits inside its sidebar` in e2e-ux/deep.spec.ts. */
+.app.tauri-overlay .sidebar .brand {
+  padding-left: 84px;
+  padding-right: var(--s-3);
+  /* Centre the 24px controls on the traffic lights' own centre line, which is at
+     y=27 — that is where `.nav-reveal-btn` was fitted against real macOS chrome,
+     and the two are meant to coincide. The old 8px put them at 21, six pixels
+     above the lights they sit beside.
+
+     14, not 15: the row starts a pixel below the window top, so the padding is one
+     less than the arithmetic suggests. Measured, not derived — which is the only
+     way to get this right, since the lights themselves are native and invisible
+     to the DOM. */
+  padding-top: var(--s-7);
+  padding-bottom: var(--s-3);
+  /* Six 24px controls share this row now, not two, and after the 84px the traffic
+     lights need there are ~157px left of 245. 144px of buttons plus five gaps has
+     to fit inside that with room to spare — at 3px it did not, and the last
+     control hung 1px past the sidebar's edge. `e2e-app/window.spec.ts` measures
+     this against the real OS chrome; the arithmetic is not something to eyeball. */
+  gap: var(--s-1);
+  padding-right: var(--s-2);
+}
+.app.tauri-overlay .sidebar .brand-wordmark .mark { width: 16px; height: 16px; }

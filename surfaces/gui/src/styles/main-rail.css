@@ -1,0 +1,190 @@
+/* composer — the wrap/card/head/bar layout is supplied by Tailwind utilities on the elements
+   (Composer.tsx); only the textarea reset + drag-ring remain in CSS. */
+/* The same size as the thing you are typing INTO the conversation — the input was
+   --t-lg where every bubble is --t-md, so your own words changed size the moment you
+   sent them. */
+.composer textarea {
+  width: 100%; border: none; outline: none; resize: none; font: inherit; font-size: var(--t-md); line-height: var(--t-prose-lh);
+  background: transparent; color: var(--ink); padding: var(--s-2) 0; min-height: var(--ctl-h); max-height: 88px; overflow: hidden;
+}
+.composer textarea::placeholder { color: var(--faint); }
+/* The textarea kills its own outline and had nothing in its place, so the app's
+   most-used control was the one place a keyboard user could not see they had landed —
+   it was the single failure in a 45-step tab walk (UX-REPORT §8). The ring goes on the
+   card rather than the bare textarea: the composer reads as one control, and lighting
+   its edge is what the other inputs here already do. */
+.composer:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.voice-wave-line { flex: 1; min-width: 28px; border-top: 1px dashed var(--line-strong); }
+.voice-wave-bars { height: 28px; display: inline-flex; align-items: center; gap: var(--s-1); color: var(--accent); }
+.voice-wave-bars i {
+  display: block; width: 2px; max-height: 27px; min-height: 4px; border-radius: var(--r-xs);
+  background: currentColor; animation: voice-wave .7s ease-in-out infinite alternate;
+}
+.voice-wave-bars i:nth-child(2n) { animation-delay: -.28s; }
+.voice-wave-bars i:nth-child(3n) { animation-delay: -.49s; }
+.voice-wave-bars i:nth-child(5n) { animation-delay: -.13s; }
+@keyframes voice-wave {
+  from { transform: scaleY(.32); opacity: .55; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+/* Quiet text trigger — the send button stays the composer's only loud element. inline-flex keeps
+   the chevron glued to the label (the old inline pill let it wrap onto its own line). */
+.pill {
+  display: inline-flex; align-items: center; gap: var(--s-1); max-width: 240px;
+  font: inherit; font-size: var(--t-sm); color: var(--muted);
+  border: none; border-radius: var(--r-sm); padding: var(--ctl-pad-y) var(--ctl-pad-x-sm); background: transparent; cursor: pointer;
+}
+.pill:hover { color: var(--ink); background: var(--paper); }
+.pill-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* "No model ⚠" shown in place of the model picker until a provider is connected — no box,
+   just warn-colored text + a small glyph, matching the other composer pills. */
+.pill.model-warn { color: var(--warn-ink); }
+.pill.model-warn:hover { color: var(--warn-ink); background: var(--paper); }
+.model-warn-ico { color: var(--warn-ink); font-size: var(--t-sm); line-height: 1; }
+.pill .caret { color: var(--faint); flex: none; }
+.pill:hover .caret { color: var(--muted); }
+/* Bordered chip variant (composer-head model selector) — mock's `bg-paper border border-line`. */
+.pill.chip { background: var(--paper); border: 1px solid var(--line); }
+.pill.chip:hover { border-color: var(--line-strong); background: var(--paper); }
+
+/* dropdown popover */
+.dd { position: relative; }
+.dd-backdrop { position: fixed; inset: 0; z-index: 20; }
+.dd-menu {
+  position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 21;
+  min-width: 240px; background: var(--panel); border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg); padding: var(--s-3); box-shadow: 0 12px 36px rgba(0,0,0,0.14);
+}
+.dd-menu.right { left: auto; right: 0; }
+.dd-item { padding: var(--s-4) var(--s-5); border-radius: var(--r-md); cursor: pointer; }
+.dd-item:hover { background: var(--paper); }
+.dd-item.sel .dd-label { color: var(--accent); }
+.dd-label { font-size: var(--t-md); color: var(--ink); display: flex; justify-content: space-between; align-items: center; }
+.dd-item .chk { color: var(--accent); }
+.dd-desc { font-size: var(--t-sm); color: var(--faint); margin-top: 1px; }
+.send { width: 34px; height: 34px; border-radius: var(--r-circle); border: none; background: var(--accent); color: var(--on-accent); cursor: pointer; font-size: var(--t-lg); }
+.send:disabled { opacity: 0.4; cursor: default; }
+.statusline { max-width: 760px; margin: var(--s-3) auto 0; font-size: var(--t-sm); color: var(--faint); display: flex; gap: var(--s-6); }
+.dot { width: 7px; height: 7px; border-radius: var(--r-circle); display: inline-block; }
+.dot.idle { background: var(--faint); }
+.dot.running { background: var(--ok); }
+.dot.off { background: var(--accent); }
+
+.approval-inline {
+  display: inline-flex; align-items: center; gap: var(--s-3); align-self: flex-start;
+  color: var(--muted); font-size: var(--t-sm); background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--r-pill); padding: var(--s-3) var(--s-5);
+}
+.approval-inline .status { color: var(--ok); }
+.approval-inline .dim { color: var(--faint); }
+
+/* right inspector + artifact viewer */
+.right-rail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 332px;
+  overflow-y: auto;
+  background: var(--glass-soft);
+  border-left: 1px solid var(--line);
+  padding: var(--s-8) var(--s-8);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  z-index: 5;
+}
+/* An open artifact widens the rail into a reading panel (Codex-style) — the chat stays visible
+   and usable beside it; Back returns to the normal-width Progress/Artifacts list. */
+.right-rail.artifact-mode {
+  width: var(--artifact-rail-w);
+  z-index: 8;
+  padding: 0;
+  background: var(--paper);
+  backdrop-filter: none;
+}
+.main.rail-open:has(.right-rail.artifact-mode) .main-chat { margin-right: var(--artifact-rail-w); }
+.main.rail-open:has(.right-rail.artifact-mode) .main-topbar { right: var(--artifact-rail-w); }
+/* Narrow windows (down to the 880px minimum the shell allows): the rail stops taking
+   a slice out of the transcript and floats over it instead, so the reading column and
+   the composer keep the width they need (UX-REPORT §4). App.tsx starts it closed at
+   these sizes; this is what it looks like when the user opens it anyway. */
+@media (max-width: 1040px) {
+  .main.rail-open .main-chat { margin-right: 0; }
+  .main.rail-open .main-topbar { right: 0; }
+  .right-rail {
+    width: min(332px, 62vw);
+    background: var(--panel);
+    box-shadow: -14px 0 34px rgb(0 0 0 / 0.16);
+    z-index: 7; /* over the topbar, so it reads as a panel and not a seam */
+  }
+}
+.artifact-head { display: flex; justify-content: space-between; gap: var(--s-7); align-items: center; }
+.rail-section { border-bottom: 1px solid var(--line); padding: var(--s-5) 0; }
+.rail-section-head { display: flex; justify-content: space-between; gap: var(--s-4); align-items: center; min-height: 24px; }
+/* min-height 24px: these are the rail's primary controls and were 20px tall. */
+.rail-section-toggle { flex: 1; min-height: 24px; display: flex; gap: var(--s-4); align-items: center; cursor: pointer; font: inherit; font-size: var(--t-md); font-weight: 600; color: var(--ink); user-select: none; border: 0; background: transparent; padding: 0; text-align: left; }
+.rail-chev { color: var(--faint); flex: none; }
+.rail-mini-btn { width: 24px; height: var(--ctl-h-sm); display: grid; place-items: center; color: var(--muted); border: 0; border-radius: var(--r-sm); background: transparent; cursor: pointer; }
+.rail-mini-btn:hover { color: var(--ink); background: var(--paper); }
+.rail-section-body { padding-top: var(--s-5); }
+/* --t-md-lh, not 1.45. A unitless multiplier on a 12px font gives 17.4px, so no line in
+   a pane using this class sat on the same rhythm as any line that used a token. Whole
+   pixels are the reason the line-height tokens exist. */
+.rail-muted { font-size: var(--t-sm); color: var(--faint); line-height: var(--t-md-lh); overflow-wrap: anywhere; }
+.rail-error { font-size: var(--t-sm); color: var(--danger); overflow-wrap: anywhere; }
+.rail-todo-list { display: flex; flex-direction: column; gap: var(--s-4); }
+.rail-todo {
+  display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--s-4); align-items: flex-start;
+  font-size: var(--t-sm); line-height: 1.35; color: var(--muted);
+}
+.rail-todo-mark {
+  width: var(--i-sm); height: var(--i-sm); margin-top: var(--s-1); border: 1.6px solid var(--line-strong);
+  border-radius: var(--r-xs); background: transparent;
+}
+.rail-todo.in_progress { color: var(--ink); }
+.rail-todo.in_progress .rail-todo-mark {
+  border-radius: var(--r-pill); border-color: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--panel); background: var(--accent);
+}
+.rail-todo.done { color: var(--faint); text-decoration: line-through; text-decoration-thickness: 1px; }
+.rail-todo.done .rail-todo-mark {
+  border-color: var(--accent); background: var(--accent);
+}
+.rail-todo.done .rail-todo-mark::after {
+  content: ""; display: block; width: 5px; height: 3px; margin: var(--s-1) 0 0 2.5px;
+  border-left: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: rotate(-45deg);
+}
+.rail-actions { display: flex; gap: var(--s-4); align-items: center; flex-wrap: wrap; }
+.rail-actions .btn { padding: var(--ctl-pad-y) var(--ctl-pad-x); font-size: var(--t-sm); border-radius: var(--r-md); }
+.browser-mini { display: flex; flex-direction: column; gap: var(--s-4); }
+.browser-shot { display: block; width: 100%; max-height: 220px; object-fit: contain; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
+.artifact-list { display: flex; flex-direction: column; gap: var(--s-3); }
+.artifact-row {
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: var(--s-4);
+  text-align: left; border: 1px solid transparent; background: transparent; color: var(--ink);
+  border-radius: var(--r-md); padding: var(--s-4) var(--s-4); cursor: pointer; font: inherit; min-width: 0;
+}
+.artifact-row:hover { border-color: var(--line); background: var(--panel); }
+.artifact-ico { display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
+.artifact-name { display: flex; flex-direction: column; gap: 1px; font-size: var(--t-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-row-meta { font-size: var(--t-xs); color: var(--faint); font-weight: 400; }
+.artifact-open { font-size: var(--t-xs); color: var(--faint); }
+.artifact-viewer { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.artifact-head {
+  flex: none; min-height: 58px; padding: var(--s-5) var(--s-8); border-bottom: 1px solid var(--line);
+  background: var(--glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.artifact-icon-btn {
+  width: var(--ctl-h); height: var(--ctl-h); display: grid; place-items: center;
+  color: var(--muted);
+  background: transparent; border: 0; border-radius: var(--r-md); padding: 0; cursor: pointer;
+}
+.artifact-icon-btn:hover { background: var(--paper); color: var(--ink); }
+.artifact-heading { flex: 1; min-width: 0; }
+.artifact-title { display: flex; align-items: center; gap: var(--s-3); font-size: var(--t-lg); font-weight: 600; color: var(--ink); overflow: hidden; white-space: nowrap; }
+.artifact-title span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.artifact-sep { color: var(--faint); font-weight: 400; }
+.artifact-path { font-size: var(--t-xs); color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: var(--s-1); }

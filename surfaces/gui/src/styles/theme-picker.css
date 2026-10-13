@@ -1,0 +1,88 @@
+/* ---- Theme picker (Settings ▸ General) ----------------------------------------
+   One card per theme. The swatch carries `data-palette`, so the palette blocks paint it in
+   its own colours: a sidebar, a card with two lines of text, and the primary button's
+   metal. Auto shows its two halves, Porcelain and Carbon, side by side. */
+.theme-picker { display: grid; gap: var(--s-8); }
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--s-5);
+}
+
+.theme-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+.theme-card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+.theme-card.is-on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.theme-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.theme-preview {
+  display: grid;
+  grid-template-columns: 30% 1fr;
+  height: 72px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+.tp-side,
+.tp-main { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-4); }
+.tp-side { border-right: 1px solid var(--line); }
+.tp-main { justify-content: space-between; align-items: flex-start; background: var(--canvas); }
+.tp-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  background: var(--panel);
+}
+.tp-line { display: block; height: 4px; border-radius: var(--r-pill); background: var(--faint); }
+.tp-line.is-short { width: 60%; }
+.tp-card .tp-line { background: var(--ink); }
+.tp-card .tp-line.is-muted { width: 70%; background: var(--muted); }
+.tp-cta { display: block; width: 36%; height: 8px; border-radius: var(--r-pill); background: var(--chrome); }
+
+.theme-auto {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border-radius: var(--r-md);
+}
+.theme-auto .theme-preview { border-radius: 0; }
+.theme-auto .theme-preview + .theme-preview { border-left: 0; }
+
+.tc-foot { display: flex; flex-direction: column; min-width: 0; padding: 0 var(--s-1); }
+.tc-name { font-size: var(--t-sm); line-height: var(--t-sm-lh); font-weight: 600; }
+.tc-note { font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--muted); }
+.tc-check {
+  position: absolute;
+  top: var(--s-5);
+  right: var(--s-5);
+  display: grid;
+  place-items: center;
+  width: var(--i-lg);
+  height: var(--i-lg);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 0 0 0 2px var(--panel);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-card { transition: none; }
+  .theme-card:hover { transform: none; }
+}

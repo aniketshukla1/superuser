@@ -1,0 +1,84 @@
+/* ---------- shared: skip link, brand, small buttons, section heads, bands, chips ---------- */
+
+.skip {
+  position: absolute;
+  left: var(--sp-4);
+  top: -64px;
+  z-index: 50;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+.skip:focus {
+  top: var(--sp-3);
+  text-decoration: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.brand:hover {
+  text-decoration: none;
+}
+.btn-sm {
+  min-height: 34px;
+  padding: 0 var(--sp-3);
+  font-size: 13px;
+  border-radius: 8px;
+}
+.nav-links .btn-sm {
+  color: var(--ink);
+}
+@media (max-width: 460px) {
+  .nav-links a.hide-xs {
+    display: none;
+  }
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 62ch;
+}
+.section-head.center {
+  align-items: center;
+  text-align: center;
+  margin: 0 auto;
+}
+
+/* A quiet change of ground for the reference sections, so a long page has a rhythm. */
+.band {
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chip-accent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+  background: var(--accent-soft);
+}

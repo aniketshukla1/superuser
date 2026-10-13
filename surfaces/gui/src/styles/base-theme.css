@@ -1,0 +1,181 @@
+/* Dark palette. `data-theme` is set on <html> by an inline script in index.html (pre-paint)
+   and kept current by src/theme.ts (Light / Dark / Auto-as-system, stored in localStorage). */
+html[data-theme="dark"], .theme-preview[data-palette="carbon"] {
+  color-scheme: dark;
+  /* Carbon, THE theme and the default: matte black and ice white (owner's calls, 2026-10-07
+     and -13 — the silver went, ice white replaced it). Flat,
+     non-reflective blacks in four steps, so the parts of the window read apart without a
+     border doing the work: the nav (--paper) is the darkest, the chat (--canvas) a step up,
+     cards and the composer (--panel) another, and hover and the user's bubble (--solid) the
+     last. Ice white marks what is elevated. The accent is barely a hue, so it is never the only
+     signal: links carry an underline. The material — the metal, the edge light — is in
+     material*.css. */
+  --paper: #111111;           /* nav: sidebar, side panel, window ground */
+  --canvas: #161616;          /* the chat and every page beside the nav */
+  --panel: #1C1C1C;           /* cards, the composer */
+  --ink: #ECECEC;
+  --muted: #A8A8A8;           /* 6.6:1 on solid */
+  /* Measured against all four dark surfaces, because the binding one is the lightest —
+     `solid` (the user bubble), not `paper`: 5.62:1 on paper, 5.07:1 on panel, 4.67:1 on
+     solid. Checking only paper is how #626A71 shipped at 3.33:1 on panel, which is the
+     same mistake the previous palette had already been corrected for once. Any future
+     change to this value re-checks all of them (palette.contrast.test.ts). */
+  --faint: #8C8C8C;
+  --line: #262626;            /* the nav/chat divider and card edges: flat, one step lit */
+  --line-strong: #333333;
+  --field-line: #707070;      /* 3.17:1 on solid, the binding surface */
+  --accent: #DDEAF7;          /* ice white — the signature */
+  --accent-soft: #262626;     /* graphite fill behind accent text */
+  --on-accent: #050506;       /* near-black text on ice white, 16.7:1 */
+  /* The Metal finish's ice: frosted metal for the few things that are pressed or are the
+     brand, and the same as lettering. Gradients, so the contrast test cannot read them:
+     --on-accent is 9.2:1 on the darkest stop, and the lettering's darkest stop is 6.2:1 on
+     solid. (The Flat finish, the default, paints plain --accent and --ink instead.) */
+  --chrome: linear-gradient(180deg, #FFFFFF 0%, #E2EDF8 38%, #9EB0C4 52%, #CCDAE8 72%, #F1F6FB 100%);
+  --chrome-text: linear-gradient(180deg, #FFFFFF 0%, #E4EEF8 45%, #92A4B8 62%, #E8F0F8 100%);
+  --ok: #8CCFA5;
+  --ok-soft: #142019;
+  --ok-line: #24402F;
+  --ok-dot: #9EE0B6;
+  --logo-plate: #D7DADF;
+  --warn-ink: #E0B44A;
+  --warn-soft: #2A2416;
+  --danger: #E5707A;
+  --danger-soft: #2C1A1C;
+  --teal-ink: #46C9C4;
+  --teal-line: #1A3D3C;
+  --teal-soft: #132726;
+  --solid: #232323;           /* hover, the user's bubble */
+  --on-solid: #ECECEC;
+  --glass: rgba(17, 17, 17, 0.9);
+  --glass-strong: rgba(17, 17, 17, 0.96);
+  --glass-soft: rgba(17, 17, 17, 0.78);
+  --scrim: rgba(0, 0, 0, 0.62);
+  --check-a: #1E1E1E;
+  --check-b: #181818;
+}
+
+/* ---- Colour themes ------------------------------------------------------------
+   The family of themes, in Superuser's tokens. `data-theme` on <html> stays the MODE
+   (dark / light) — every rule that differs by mode keys on it — and `data-palette` names
+   the theme. Carbon and Porcelain are the two bases above; each block here overrides the
+   base of its mode with a full set of colours, so a `.theme-preview` swatch in Settings
+   can wear any theme on its own. `:is(html, .theme-preview)` puts these at (0,2,0), above
+   the bases' (0,1,1), whatever the order. Generated from one set of primitives with every
+   text colour nudged to clear 4.5:1 on all three surfaces and every field outline 3:1;
+   palette.contrast.test.ts checks each block, and theme.test.ts that THEMES, these blocks
+   and index.html agree. */
+/* Graphite — soft dark. faint 4.63:1, muted 6.04:1, field-line 3.27:1 at worst; on-accent on chrome's darkest stop 7.8:1; chrome text darkest on paper 6.7:1; on-accent on accent 15.0:1. */
+:is(html, .theme-preview)[data-palette="graphite"] {
+  color-scheme: dark;
+  --paper: #0F0F11;
+  --canvas: #141416;
+  --panel: #18181B;
+  --solid: #242427;
+  --on-solid: #EDEDF0;
+  --ink: #EDEDF0;
+  --muted: #A1A1AA;
+  --faint: #8C8C93;
+  --line: #232327;
+  --line-strong: #303036;
+  --field-line: #737375;
+  --accent: #DFDFE3;
+  --accent-soft: #2B2B2E;
+  --on-accent: #09090A;
+  --chrome: linear-gradient(180deg, #FAFAFB 0%, #E0E0E3 38%, #A2A2A4 52%, #D0D0D3 72%, #F4F4F6 100%);
+  --chrome-text: linear-gradient(180deg, #FBFBFC 0%, #E2E2E5 45%, #99999B 62%, #F1F1F3 100%);
+  --ok: #6CC38F;
+  --ok-soft: #222D29;
+  --ok-line: #314B3E;
+  --ok-dot: #82CCA0;
+  --warn-ink: #D8B25E;
+  --warn-soft: #2F2A23;
+  --danger: #EC6F6F;
+  --danger-soft: #312225;
+  --teal-ink: #46C9C4;
+  --teal-line: #223F40;
+  --teal-soft: #1D2A2C;
+  --logo-plate: #D7D7DA;
+  --glass: rgba(15, 15, 17, 0.9);
+  --glass-strong: rgba(15, 15, 17, 0.96);
+  --glass-soft: rgba(15, 15, 17, 0.78);
+  --scrim: rgba(0, 0, 0, 0.62);
+  --check-a: #1F1F21;
+  --check-b: #161618;
+}
+/* Slate — cool blue-grey. faint 4.58:1, muted 5.44:1, field-line 3.22:1 at worst; on-accent on chrome's darkest stop 7.8:1; chrome text darkest on paper 6.5:1; on-accent on accent 14.7:1. */
+:is(html, .theme-preview)[data-palette="slate"] {
+  color-scheme: dark;
+  --paper: #16181C;
+  --canvas: #1A1D22;
+  --panel: #1E2227;
+  --solid: #292D33;
+  --on-solid: #ECEEF1;
+  --ink: #ECEEF1;
+  --muted: #9AA3B1;
+  --faint: #8C95A4;
+  --line: #282D34;
+  --line-strong: #343A44;
+  --field-line: #797A7D;
+  --accent: #DDE1E5;
+  --accent-soft: #313439;
+  --on-accent: #0D0E11;
+  --chrome: linear-gradient(180deg, #F9FAFB 0%, #DFE1E4 38%, #A3A5A9 52%, #D0D2D5 72%, #F4F5F7 100%);
+  --chrome-text: linear-gradient(180deg, #FBFCFC 0%, #E1E3E6 45%, #9B9DA0 62%, #F0F1F4 100%);
+  --ok: #6CC38F;
+  --ok-soft: #273533;
+  --ok-line: #355246;
+  --ok-dot: #82CCA0;
+  --warn-ink: #D8B25E;
+  --warn-soft: #34332E;
+  --danger: #EC6F6F;
+  --danger-soft: #372B30;
+  --teal-ink: #46C9C4;
+  --teal-line: #27474A;
+  --teal-soft: #223337;
+  --logo-plate: #D7D9DC;
+  --glass: rgba(22, 24, 28, 0.9);
+  --glass-strong: rgba(22, 24, 28, 0.96);
+  --glass-soft: rgba(22, 24, 28, 0.78);
+  --scrim: rgba(0, 0, 0, 0.62);
+  --check-a: #25272B;
+  --check-b: #1C1E22;
+}
+/* Fjord — arctic, softer dark. faint 4.60:1, muted 4.82:1, field-line 3.24:1 at worst; on-accent on chrome's darkest stop 7.7:1; chrome text darkest on paper 5.8:1; on-accent on accent 13.4:1. */
+:is(html, .theme-preview)[data-palette="fjord"] {
+  color-scheme: dark;
+  --paper: #222931;
+  --canvas: #262E36;
+  --panel: #2A323C;
+  --solid: #353D48;
+  --on-solid: #ECEEF1;
+  --ink: #ECEEF1;
+  --muted: #A0ADBE;
+  --faint: #9CA9B9;
+  --line: #333D4A;
+  --line-strong: #3F4B5A;
+  --field-line: #888C90;
+  --accent: #DCE1E6;
+  --accent-soft: #3B434C;
+  --on-accent: #14191D;
+  --chrome: linear-gradient(180deg, #F9FAFB 0%, #E0E2E5 38%, #A7ABB0 52%, #D2D4D8 72%, #F4F5F7 100%);
+  --chrome-text: linear-gradient(180deg, #FBFCFC 0%, #E2E4E7 45%, #9FA3A8 62%, #F0F1F4 100%);
+  --ok: #6CC38F;
+  --ok-soft: #324346;
+  --ok-line: #3E5E55;
+  --ok-dot: #82CCA0;
+  --warn-ink: #D8B25E;
+  --warn-soft: #3F4140;
+  --danger: #F08A8A;
+  --danger-soft: #413942;
+  --teal-ink: #46C9C4;
+  --teal-line: #30535A;
+  --teal-soft: #2D414A;
+  --logo-plate: #D8DADE;
+  --glass: rgba(34, 41, 49, 0.9);
+  --glass-strong: rgba(34, 41, 49, 0.96);
+  --glass-soft: rgba(34, 41, 49, 0.78);
+  --scrim: rgba(0, 0, 0, 0.62);
+  --check-a: #30373E;
+  --check-b: #282F37;
+}

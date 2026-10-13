@@ -1,0 +1,6 @@
+{
+  "default": "source.png",
+  "bg_color": "#0B0D0F",
+  "android_fg": "src/adaptive-foreground.png",
+  "android_fg_scale": 100
+}

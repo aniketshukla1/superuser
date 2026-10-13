@@ -1,0 +1,25 @@
+/* The app's one tooltip (src/tooltip.ts), for icon-only controls. Inverted — paper on ink —
+   so it reads on every surface in every theme without a palette of its own. */
+.tip {
+  position: fixed;
+  z-index: 1000;
+  max-width: 280px;
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  font-weight: 500;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.tip[data-side="above"] { transform: translateY(2px); }
+.tip.is-on { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .tip { transition: none; }
+}

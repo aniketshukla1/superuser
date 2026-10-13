@@ -1,0 +1,22 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "testbridge",
+  "description": "DEV-ONLY. Window management for the automated test bridge (surfaces/gui/src/testbridge.ts). The shipped capability set deliberately does NOT let the webview resize, move, or full-screen its own window — that is correct, and this file must never be merged into `default.json`. It is gated to debug builds by `platforms` + the `#[cfg(debug_assertions)]` guard in lib.rs, and the bridge that uses it is stripped from production bundles by Vite.",
+  "windows": ["main"],
+  "permissions": [
+    "core:window:allow-set-size",
+    "core:window:allow-set-min-size",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-minimize",
+    "core:window:allow-unminimize",
+    "core:window:allow-set-position",
+    "core:window:allow-inner-size",
+    "core:window:allow-outer-size",
+    "core:window:allow-outer-position",
+    "core:window:allow-scale-factor",
+    "core:window:allow-is-visible",
+    "core:window:allow-is-focused",
+    "core:window:allow-is-fullscreen",
+    "core:window:allow-is-minimized"
+  ]
+}

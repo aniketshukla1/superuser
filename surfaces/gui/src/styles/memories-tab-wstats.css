@@ -1,0 +1,151 @@
+/* ---- workspace statistics (WorkspaceStats.tsx) ------------------------------
+   The panel a new chat opens on, in place of the persona greeting that used to be there. */
+/* Radius here follows the scale in design/Main.dc.html, which is not a single value but a
+   short one: 7px for rows and controls (12 of the artifact's 21 radii, and the `row`
+   token), 9px for a grouped container, and 12-13px reserved for the two largest boxes in
+   the app — the composer and the user bubble. This panel shipped at 14px outer and 10px
+   cards, both above anything the artifact uses for the same job. */
+.wstats {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  padding: var(--s-6);
+}
+.wstats-head { display: flex; align-items: center; gap: var(--s-4); margin-bottom: var(--s-6); }
+.wstats-tabs, .wstats-ranges { display: flex; align-items: center; gap: var(--s-1); }
+.wstats-ranges { margin-left: auto; }
+.wstats-tab, .wstats-range {
+  border: 0; background: none; cursor: pointer;
+  padding: var(--s-2) var(--ctl-pad-x-sm); border-radius: var(--r-sm);
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--muted);
+  min-height: var(--ctl-h-sm); /* WCAG 2.5.8: these sit a couple of pixels apart */
+}
+.wstats-tab:hover, .wstats-range:hover { color: var(--ink); background: var(--solid); }
+.wstats-tab.is-on, .wstats-range.is-on { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.wstats-grid {
+  display: grid; gap: var(--s-3);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+/* One row of four is unreadable in a narrow pane; two of two is fine and still scans. */
+@media (max-width: 900px) { .wstats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.wstats-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  padding: var(--s-4) var(--s-4) var(--s-3);
+  min-width: 0;
+}
+/* 11px label, 13px value — both steps on the scale, which is the whole of the fix.
+   The figure carries its emphasis with WEIGHT rather than size: this panel has gone
+   17px, then 14px, and a stat card does not need to be bigger than the prose it
+   sits beside to read as the number. 14 was not on the scale anyway. */
+/* One line, so every value in a row sits on the same baseline. "Current streak" and "Favourite
+   model" wrapped to two lines and pushed their figures below the others in the row. */
+.wstats-card-label { font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wstats-card-value {
+  font-size: var(--t-md); line-height: var(--t-lg-lh); font-weight: 600; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wstats-heat {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  /* Columns are the CELL's width, not "whatever is left over". Without this the
+     auto columns stretch to fill the card, so the 1px gap applied down a column and
+     9.2px across one — the grid was tight vertically and airy horizontally, which
+     is the uneven margin that made it read wrong. `justify-content` then decides
+     what to do with the slack instead of the columns silently absorbing it. */
+  grid-auto-columns: var(--heat-cell);
+  justify-content: start;
+  gap: var(--heat-gap);
+  margin-top: var(--s-3);
+  /* Hidden, not `auto`. The component now draws exactly as many columns as fit, so
+     a horizontal scrollbar here would not be a way to see more — it would be the
+     symptom of the measurement being wrong, and `auto` would quietly absorb it. */
+  overflow-x: hidden;
+}
+/* 16px, not 11, and a 1px gutter rather than 3. At 11px with 3px between them the
+   cells read as a scatter of little buttons; the size is what turns them back into
+   a surface, and the tighter gutter is what stops the gaps competing with the
+   marks. The corner stays on the scale's smallest step, which at 16px is a
+   quarter the roundness it was at 11. */
+.wstats-cell {
+  width: var(--heat-cell); height: var(--heat-cell);
+  border-radius: var(--r-xs);
+  /* An EMPTY day has to be visible, or the grid is not a grid. This was --solid on
+     a --panel card: #14171A on #121517, three values apart, so the quiet days
+     rendered as nothing and the lit ones floated in space — a scatter of marks
+     where the reference reads as one rectangle with texture. The shape of the
+     whole period is the point of a heatmap; the days you did nothing are half of
+     that shape. */
+  background: var(--line-strong);
+}
+.wstats-cell[data-level="1"] { background: color-mix(in srgb, var(--accent) 35%, var(--solid)); }
+.wstats-cell[data-level="2"] { background: color-mix(in srgb, var(--accent) 65%, var(--solid)); }
+.wstats-cell[data-level="3"] { background: var(--accent); }
+.wstats-cell.is-future { visibility: hidden; }
+.wstats-heat-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-4);
+  margin-top: var(--s-6); font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--muted);
+}
+.wstats-legend { display: inline-flex; align-items: center; gap: var(--s-1); }
+.wstats-legend .wstats-cell { width: 10px; height: 10px; margin: 0 var(--s-1); }
+.wstats-models { display: flex; flex-direction: column; gap: var(--s-3); }
+.wstats-model { display: flex; align-items: center; gap: var(--s-4); font-size: var(--t-sm); line-height: var(--t-md-lh); }
+.wstats-model-name {
+  flex: 0 0 34%; min-width: 0; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wstats-model-bar { flex: 1 1 auto; height: 6px; border-radius: var(--r-pill); background: var(--solid); overflow: hidden; }
+.wstats-model-bar > span { display: block; height: 100%; background: var(--accent); border-radius: var(--r-pill); }
+.wstats-model-n { flex: 0 0 auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wstats-empty { font-size: var(--t-sm); color: var(--muted); padding: var(--s-4) var(--s-1); }
+.wstats-model-detail { flex: 0 0 auto; color: var(--muted); font-size: var(--t-xs); white-space: nowrap; }
+.wstats-note { margin-top: var(--s-6); font-size: var(--t-xs); color: var(--muted); }
+
+/* ---- turn status (TurnStatus.tsx) -------------------------------------------
+   The line under the transcript while a turn runs: elapsed, tokens, what it is waiting on. */
+.turn-status {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  font-size: var(--t-sm);
+  color: var(--muted);
+  padding: var(--s-1) 0;
+}
+.turn-status-glyph {
+  width: var(--i-sm); height: var(--i-sm); flex-shrink: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  animation: turn-pulse 1.4s ease-in-out infinite;
+}
+@keyframes turn-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.82); }
+  50%      { opacity: 1;    transform: scale(1); }
+}
+/* A pulse that cannot be turned off is a moving thing on screen for someone who asked for
+   none. The dot stays, so the line still reads as live; it just stops moving. */
+@media (prefers-reduced-motion: reduce) {
+  .turn-status-glyph { animation: none; opacity: 0.8; }
+}
+
+/* ---- charts (Chart.tsx) -----------------------------------------------------
+   Rendered from a JSON spec the agent writes, in this app's tokens rather than a charting
+   library's own theme — see the note at the top of Chart.tsx. */
+.chart { margin: 0; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.chart-svg { width: 100%; height: auto; display: block; }
+.chart-grid { stroke: var(--line); stroke-width: 1; }
+.chart-axis { fill: var(--faint); font-size: 9px; font-family: var(--mono); }
+.chart-pie-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.chart-pie { width: 150px; height: 150px; flex-shrink: 0; }
+.chart-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.chart-legend-row { flex-direction: row; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.chart-legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); min-width: 0; }
+.chart-swatch { width: 9px; height: 9px; border-radius: var(--r-xs); flex-shrink: 0; }
+.chart-legend-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chart-legend-val { color: var(--ink); font-variant-numeric: tabular-nums; margin-left: auto; padding-left: 10px; }
+.chart-note { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 10px 0 0; }
+.chart-source { font-size: 11px; line-height: 1.4; color: var(--faint); margin: 6px 0 0; }

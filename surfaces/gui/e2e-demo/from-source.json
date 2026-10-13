@@ -1,0 +1,465 @@
+{
+ "personas": [
+  {
+   "id": "analyst",
+   "name": "Data Analyst",
+   "icon": "table",
+   "tagline": "Answer the question that was asked, and show the numbers that complicate it",
+   "family": "knowledge",
+   "tools": [
+    "files",
+    "shell",
+    "search",
+    "todo",
+    "knowledge",
+    "recall_memory"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "assistant",
+   "name": "Main Assistant",
+   "icon": "sparkle",
+   "tagline": "Get things done — research, drafts, and analysis",
+   "family": "knowledge",
+   "tools": [
+    "recall_memory",
+    "knowledge",
+    "web",
+    "files",
+    "shell",
+    "todo",
+    "connectors",
+    "schedule",
+    "subagent",
+    "authoring"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "chief",
+   "name": "Chief of Staff",
+   "icon": "clipboard",
+   "tagline": "Reads what came in since yesterday and tells you what matters",
+   "family": "knowledge",
+   "tools": [
+    "activity",
+    "knowledge",
+    "recall_memory"
+   ],
+   "mode": "discuss"
+  },
+  {
+   "id": "cloud-posture",
+   "name": "Cloud Posture Assistant",
+   "icon": "sliders",
+   "tagline": "Review Terraform and cloud config — read-only, evidence first",
+   "family": "code",
+   "tools": [
+    "files",
+    "search",
+    "shell",
+    "git",
+    "todo",
+    "toolchain"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "coder",
+   "name": "Coder",
+   "icon": "code",
+   "tagline": "Work in a codebase — edit, run, and ship",
+   "family": "code",
+   "tools": [
+    "files",
+    "search",
+    "shell",
+    "git",
+    "todo",
+    "toolchain"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "dep-audit",
+   "name": "Dependency Audit Assistant",
+   "icon": "audit",
+   "tagline": "Vulnerable dependencies — audit, minimal upgrades, PRs",
+   "family": "code",
+   "tools": [
+    "files",
+    "search",
+    "shell",
+    "git",
+    "todo",
+    "toolchain"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "email",
+   "name": "Email Assistant",
+   "icon": "inbox",
+   "tagline": "Reads your email and drafts the replies you approve",
+   "family": "knowledge",
+   "tools": [
+    "knowledge",
+    "recall_memory"
+   ],
+   "mode": "discuss"
+  },
+  {
+   "id": "expenses",
+   "name": "Expense Manager",
+   "icon": "receipt",
+   "tagline": "Logs receipts from your email and builds summaries that add up",
+   "family": "knowledge",
+   "tools": [
+    "expenses",
+    "knowledge",
+    "recall_memory"
+   ],
+   "mode": "discuss"
+  },
+  {
+   "id": "finance",
+   "name": "Finance Analyst",
+   "icon": "coins",
+   "tagline": "Say where the money actually went, and when it runs out",
+   "family": "knowledge",
+   "tools": [
+    "files",
+    "shell",
+    "search",
+    "todo",
+    "knowledge",
+    "recall_memory"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "hr",
+   "name": "HR Partner",
+   "icon": "users",
+   "tagline": "Describe the job, run the same process for everyone, and write it down",
+   "family": "knowledge",
+   "tools": [
+    "files",
+    "shell",
+    "search",
+    "todo",
+    "knowledge",
+    "recall_memory"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "lead",
+   "name": "Team Lead",
+   "icon": "branch",
+   "tagline": "Break work down, hand it out, check it came back right",
+   "family": "code",
+   "tools": [
+    "files",
+    "search",
+    "git",
+    "todo",
+    "board",
+    "subagent",
+    "shell"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "ops",
+   "name": "Ops Assistant",
+   "icon": "wrench",
+   "tagline": "Operate and investigate — runbooks, logs, infrastructure",
+   "family": "knowledge",
+   "tools": [
+    "files",
+    "search",
+    "shell",
+    "todo",
+    "connectors"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "perf",
+   "name": "Product Performance",
+   "icon": "gauge",
+   "tagline": "Investigates a slowdown in your metrics — the hotspot, the evidence, and links",
+   "family": "knowledge",
+   "tools": [
+    "metrics",
+    "connectors",
+    "knowledge",
+    "recall_memory",
+    "todo",
+    "files"
+   ],
+   "mode": "discuss"
+  },
+  {
+   "id": "pm",
+   "name": "Product Manager",
+   "icon": "clock",
+   "tagline": "Specify it so it can be built and tested without a meeting",
+   "family": "knowledge",
+   "tools": [
+    "files",
+    "shell",
+    "search",
+    "todo",
+    "knowledge",
+    "recall_memory",
+    "connectors"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "qa",
+   "name": "QA Analyst",
+   "icon": "check",
+   "tagline": "Find what breaks before someone else does, and say what you didn't check",
+   "family": "code",
+   "tools": [
+    "files",
+    "search",
+    "shell",
+    "git",
+    "todo",
+    "web",
+    "toolchain"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "repro",
+   "name": "Bug Reproduction",
+   "icon": "bug",
+   "tagline": "Reproduces a bug report on staging, with exact steps and a test case",
+   "family": "knowledge",
+   "tools": [
+    "browser",
+    "files",
+    "connectors",
+    "knowledge",
+    "recall_memory",
+    "todo"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "security",
+   "name": "Security Assistant",
+   "icon": "shield",
+   "tagline": "Find and fix security issues — scan, triage, PR",
+   "family": "code",
+   "tools": [
+    "files",
+    "search",
+    "shell",
+    "git",
+    "todo",
+    "toolchain"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "support",
+   "name": "Customer Support",
+   "icon": "helpCircle",
+   "tagline": "Solve the problem behind the ticket, and answer even when the answer is no",
+   "family": "knowledge",
+   "tools": [
+    "files",
+    "shell",
+    "search",
+    "todo",
+    "web",
+    "knowledge",
+    "recall_memory"
+   ],
+   "mode": "interactive"
+  },
+  {
+   "id": "writer",
+   "name": "Technical Writer",
+   "icon": "pencil",
+   "tagline": "Documentation written from the code, and followed before it ships",
+   "family": "code",
+   "tools": [
+    "files",
+    "search",
+    "shell",
+    "git",
+    "todo",
+    "web"
+   ],
+   "mode": "interactive"
+  }
+ ],
+ "presets": [
+  {
+   "id": "no-acting-after-reading-outside",
+   "name": "Nothing acts after reading outside content",
+   "when": "tainted && intent in [\"send\", \"run_command\", \"write_tool\", \"use_computer\"]",
+   "cost": "Once a run has read a web page, an email or a connected app, it can't send, run commands or change anything in your apps for the rest of that run — even when what it read was harmless. Start a new turn to act on it."
+  },
+  {
+   "id": "never-send",
+   "name": "Never send messages",
+   "when": "intent == \"send\"",
+   "cost": "Assistants can still write the message. You send it yourself."
+  },
+  {
+   "id": "no-secret-files",
+   "name": "Don't touch secret files",
+   "when": "(intent in [\"read_file\", \"write_file\", \"list_files\"] && (file.name == \".env\" || startsWith(file.name, \".env.\") || file.extension in [\"pem\", \"key\", \"p12\", \"pfx\", \"kdbx\"] || contains(file.path, \".ssh/\") || contains(file.path, \".aws/\") || contains(file.path, \".gnupg/\"))) || (intent == \"run_command\" && (contains(command, \".env\") || contains(command, \".ssh/\") || contains(command, \".aws/\")))",
+   "cost": "Goes by names and folders, so a key saved as notes.txt is not covered, and a script can still read what a command line doesn't mention."
+  },
+  {
+   "id": "no-deleting-commands",
+   "name": "No commands that delete",
+   "when": "intent == \"run_command\" && matches(command, r\"(^|[;&|(\\s])(rm|rmdir|shred|unlink|srm|trash)(\\s|$)|git\\s+(clean|reset\\s+--hard|push\\s+(-f|--force))\")",
+   "cost": "A filter on the words of a command, not a wall: a script or a program can still delete. It stops the obvious cases, including ones you would have approved."
+  },
+  {
+   "id": "apps-read-only",
+   "name": "Connected apps are read-only",
+   "when": "intent == \"write_tool\"",
+   "cost": "Assistants can search your issues, pages and messages, but can't file, edit, post or delete anything in those apps."
+  },
+  {
+   "id": "unattended-only-reads",
+   "name": "Scheduled and background runs only look",
+   "when": "unattended && intent in [\"write_file\", \"run_command\", \"send\", \"write_tool\", \"use_computer\", \"delegate\", \"schedule\"]",
+   "cost": "Automations can look things up and report back into their conversation, but can't save files, run commands or send anything — including the report files some automations write."
+  },
+  {
+   "id": "never-submit-in-browser",
+   "name": "Never submit a form in the browser",
+   "when": "(intent == \"activate\" && (contains(element.name, \"submit\") || contains(element.name, \"send\") || contains(element.name, \"place order\") || contains(element.name, \"pay\") || contains(element.name, \"confirm\"))) || (tool.name in [\"browser_key\", \"browser_type\"] && key == \"Enter\")",
+   "cost": "Also stops pressing Enter anywhere in the assistant's browser, including in a search box. Buttons are matched by their label, so one that submits while saying \"Continue\" is not covered."
+  },
+  {
+   "id": "no-social-media",
+   "name": "Stay off social media",
+   "when": "intent == \"navigate\" && (page.host in [\"facebook.com\", \"x.com\", \"twitter.com\", \"instagram.com\", \"tiktok.com\", \"reddit.com\", \"linkedin.com\"] || endsWith(page.host, \".facebook.com\") || endsWith(page.host, \".x.com\") || endsWith(page.host, \".twitter.com\") || endsWith(page.host, \".instagram.com\") || endsWith(page.host, \".tiktok.com\") || endsWith(page.host, \".reddit.com\") || endsWith(page.host, \".linkedin.com\"))",
+   "cost": "Names these sites only. A link shortener or another site that shows their pages is not covered."
+  }
+ ],
+ "fields": [
+  {
+   "field": "intent",
+   "means": "What the action does: read_file, list_files, write_file, run_command, navigate, activate, type, search, send, schedule, remember, delegate, author, read_tool, write_tool, use_computer, show, track, read"
+  },
+  {
+   "field": "tool.name",
+   "means": "The tool the assistant called, e.g. run_shell or send_message"
+  },
+  {
+   "field": "tool.risk",
+   "means": "read, write_local, exec or external"
+  },
+  {
+   "field": "command",
+   "means": "A command about to run, exactly as written"
+  },
+  {
+   "field": "file.path",
+   "means": "A file's path, as the assistant gave it"
+  },
+  {
+   "field": "file.name",
+   "means": "Just the file's name, e.g. .env"
+  },
+  {
+   "field": "file.extension",
+   "means": "Lower-case, without the dot — empty for dotfiles like .env"
+  },
+  {
+   "field": "page.url",
+   "means": "An address being fetched or opened, without its query"
+  },
+  {
+   "field": "page.host",
+   "means": "Just the host, e.g. example.com"
+  },
+  {
+   "field": "target",
+   "means": "What the action touches, in words: a channel, a host, a connected app"
+  },
+  {
+   "field": "mcp.server",
+   "means": "The connected app a tool belongs to"
+  },
+  {
+   "field": "mcp.tool",
+   "means": "That app's own name for the tool"
+  },
+  {
+   "field": "mcp.effect",
+   "means": "read or write — empty for anything that is not a connected app's tool"
+  },
+  {
+   "field": "persona.id",
+   "means": "Which assistant is acting"
+  },
+  {
+   "field": "initiator.kind",
+   "means": "What started the run: person, approval, schedule, watch, message, subagent or api"
+  },
+  {
+   "field": "initiator.id",
+   "means": "The schedule, watch or channel that started it"
+  },
+  {
+   "field": "unattended",
+   "means": "true when nobody is watching the run happen"
+  },
+  {
+   "field": "tainted",
+   "means": "true once the run has read something from outside this machine — a web page, an email, a connected app"
+  },
+  {
+   "field": "chars",
+   "means": "How many characters of text the action carries, e.g. a message's length"
+  },
+  {
+   "field": "session.id",
+   "means": "The conversation the run belongs to"
+  },
+  {
+   "field": "key",
+   "means": "A key about to be pressed in an assistant's own browser — Enter when typing ends in a submit"
+  },
+  {
+   "field": "element.name",
+   "means": "The label of what is being clicked or typed into, as the browser's own snapshot names it"
+  },
+  {
+   "field": "element.role",
+   "means": "button, link, textbox, checkbox, …"
+  },
+  {
+   "field": "element.ref",
+   "means": "The element's reference in the page snapshot"
+  },
+  {
+   "field": "element.type",
+   "means": "An input's type, e.g. password or email"
+  },
+  {
+   "field": "bot.id",
+   "means": "The same as persona.id"
+  },
+  {
+   "field": "actor.id",
+   "means": "Always \"user\" on this machine"
+  }
+ ]
+}

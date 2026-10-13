@@ -1,0 +1,17 @@
+/* ---------- layout ---------- */
+
+.wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--sp-6);
+}
+
+section {
+  padding: var(--sp-32) 0;
+}
+@media (max-width: 720px) {
+  section {
+    padding: var(--sp-24) 0;
+  }
+}

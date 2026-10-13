@@ -1,0 +1,131 @@
+/* ---------- contact ---------- */
+
+.contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: var(--sp-12);
+  align-items: start;
+}
+@media (max-width: 880px) {
+  .contact {
+    grid-template-columns: 1fr;
+    gap: var(--sp-8);
+  }
+}
+.contact-points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  padding-left: 18px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.form-card {
+  padding: var(--sp-6);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.form-card form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+@media (max-width: 560px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 500;
+}
+.optional {
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--faint);
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 15px/1.45 var(--sans);
+}
+.field textarea {
+  min-height: 128px;
+  resize: vertical;
+}
+.field select {
+  appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%238b9299' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.field :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.field [aria-invalid="true"] {
+  border-color: var(--err);
+}
+.field-error {
+  font-size: 13px;
+  color: var(--err);
+}
+.form-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.form-note {
+  flex: 1 1 220px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.form-failed {
+  font-size: 14px;
+  color: var(--err);
+}
+.form-failed:empty {
+  display: none;
+}
+.form-done {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4) 0;
+  outline: none;
+}
+.form-done p {
+  color: var(--muted);
+}
+/* The bot trap: off-screen rather than display:none, which some bots know to skip. */
+.trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

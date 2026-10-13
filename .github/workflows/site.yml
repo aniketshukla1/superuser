@@ -1,0 +1,59 @@
+name: Website
+
+# Builds surfaces/site and publishes it to GitHub Pages at /superuser/.
+# One-time setup: Settings ▸ Pages ▸ Source: GitHub Actions, and a repository variable
+# CONTACT_FORM_ENDPOINT holding the contact form's Formspree endpoint
+# (Settings ▸ Secrets and variables ▸ Actions ▸ Variables). Without the variable the site
+# still builds; its form says it isn't connected yet.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "surfaces/site/**"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: surfaces/site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: surfaces/site/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+        env:
+          SITE_BASE: /superuser/
+          VITE_CONTACT_ENDPOINT: ${{ vars.CONTACT_FORM_ENDPOINT }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: surfaces/site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

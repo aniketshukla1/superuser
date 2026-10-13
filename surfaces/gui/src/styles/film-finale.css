@@ -1,0 +1,176 @@
+/* ---- the launch film: everything coming home, the mark, the name ---- */
+
+.film-converge { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.film-glow { filter: drop-shadow(0 0 3px rgb(238 243 248 / 0.9)) drop-shadow(0 0 9px rgb(124 196 255 / 0.45)); }
+/* A pulse running home: a short dash carried from before its path's start to past its
+   end, quickening as it goes — pulled in, not pushed. */
+.film-streak { fill: none; stroke: #ffffff; stroke-width: 1.5; stroke-linecap: round; opacity: 0; animation: film-streak 0.5s cubic-bezier(0.6, 0, 0.9, 0.45) forwards; }
+@keyframes film-streak {
+  0% { stroke-dashoffset: var(--from); opacity: 0; }
+  10%, 90% { opacity: 1; }
+  100% { stroke-dashoffset: var(--to); opacity: 0; }
+}
+.film-ring { fill: none; stroke: rgb(238 243 248 / 0.85); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; animation: film-ring 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
+@keyframes film-ring {
+  from { transform: scale(0.4); opacity: 0.9; }
+  to { transform: scale(3.4); opacity: 0; }
+}
+/* Light where everything converged, settling into a soft spot behind the name. */
+.film-flare { position: absolute; inset: 0; background: radial-gradient(38% 30% at 50% 42%, rgb(221 234 247 / 0.12), transparent 70%); opacity: 0; animation: film-flare 0.9s ease-out calc(var(--mark) - 60ms) both; }
+@keyframes film-flare {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+.reel-still .film-flare { animation: none; opacity: 0.3; }
+
+/* Film: grain jittered in steps, faint scanlines, a vignette — matte, never glossy. */
+.film-grain { position: absolute; inset: -50%; opacity: 0.5; pointer-events: none; animation: film-grain 0.5s steps(4) infinite; }
+@keyframes film-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-6%, 4%); }
+  50% { transform: translate(4%, -6%); }
+  75% { transform: translate(-3%, -2%); }
+}
+.film-scanlines { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, rgb(238 243 248 / 0.022) 0 1px, transparent 1px 3px); }
+.film-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 46%, transparent 50%, rgb(0 0 0 / 0.7) 100%); }
+/* The scan that ends the footage. */
+.film-sweep {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 5;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgb(238 243 248 / 0.9) 18%, rgb(238 243 248 / 0.9) 82%, transparent);
+  box-shadow: 0 0 22px 5px rgb(221 234 247 / 0.22);
+  opacity: 0;
+  animation: film-sweep 0.62s cubic-bezier(0.5, 0, 0.5, 1) var(--sweep) both;
+}
+@keyframes film-sweep {
+  0% { transform: translateY(-4vh); opacity: 0; }
+  10%, 90% { opacity: 1; }
+  100% { transform: translateY(104vh); opacity: 0; }
+}
+
+/* ---- the last frame: the mark, the name, the promises, where things stand ---- */
+.film-final { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 7vh; pointer-events: none; }
+.film-final button { pointer-events: auto; }
+.film-mark-box { width: 104px; height: 104px; }
+.film-mark { display: block; width: 100%; height: 100%; overflow: visible; }
+.film-mark-tile { fill: none; stroke: rgb(238 243 248 / 0.55); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 1; animation: film-draw 0.52s cubic-bezier(0.22, 0.8, 0.3, 1) forwards; }
+.film-mark-fill { fill: #1b1b1b; opacity: 0; animation: film-wash 0.5s ease-out forwards; }
+.film-mark-line {
+  fill: none;
+  stroke: var(--film-ice);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 3px rgb(221 234 247 / 0.6));
+  animation: film-draw 0.3s cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
+}
+.film-mark.is-still * { animation: none; stroke-dashoffset: 0; opacity: 1; }
+
+/* The name: off the type scale on purpose — a piece of artwork shown once at launch, not
+   a heading — so it is sized from the display step and the window, never a number. */
+.film-name {
+  position: relative;
+  margin: var(--s-8) 0 0;
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: clamp(var(--t-display), 8.4vw, calc(var(--t-display) * 4));
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--film-ink);
+  animation: film-name-glow 1.6s ease-out var(--glow) both;
+}
+@keyframes film-name-glow {
+  0% { text-shadow: none; }
+  32% { text-shadow: 0 0 14px rgb(221 234 247 / 0.85), 0 0 46px rgb(124 196 255 / 0.45), 0 0 96px rgb(124 196 255 / 0.22); }
+  100% { text-shadow: 0 0 10px rgb(221 234 247 / 0.3), 0 0 36px rgb(124 196 255 / 0.14); }
+}
+.film-name.is-still { animation: none; text-shadow: 0 0 10px rgb(221 234 247 / 0.3), 0 0 36px rgb(124 196 255 / 0.14); }
+/* One letter: a cell as wide as the letter (a hidden copy sets it), a column of glyphs
+   scrolling up through it and landing on the real one. */
+.film-roll { position: relative; display: inline-block; overflow: hidden; vertical-align: top; }
+.film-roll-size { visibility: hidden; }
+.film-roll-run { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; opacity: 0; animation: film-roll 0.62s cubic-bezier(0.18, 0.9, 0.25, 1) both; }
+.film-roll-run > span { display: block; height: 1em; line-height: 1; }
+@keyframes film-roll {
+  0% { opacity: 0; transform: translateY(0); filter: blur(2px); }
+  20% { opacity: 1; }
+  75% { filter: blur(0.5px); }
+  100% { opacity: 1; transform: translateY(-5em); filter: blur(0); }
+}
+.film-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.film-tagline { margin: var(--s-8) 0 0; font-family: var(--mono); font-size: var(--t-xs); line-height: var(--t-xs-lh); letter-spacing: 0.3em; text-transform: uppercase; color: rgb(238 243 248 / 0.7); }
+.film-word { display: inline-block; margin-right: 0.6em; opacity: 0; transform: translateY(0.7em); animation: film-word 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+@keyframes film-word { to { opacity: 1; transform: none; } }
+.film-dot { color: rgb(238 243 248 / 0.6); }
+.film-tagline.is-still .film-word { animation: none; opacity: 1; transform: none; }
+
+/* Only when the app cannot start: what went wrong, and a way to try again. */
+.film-status { margin-top: 28px; }
+.film-prompt-dim { color: rgb(238 243 248 / 0.4); }
+.film-trouble { display: flex; flex-direction: column; align-items: center; gap: var(--s-6); max-width: 520px; text-align: center; }
+.film-trouble-title { font-family: var(--mono); font-size: var(--t-sm); line-height: var(--t-sm-lh); letter-spacing: 0.14em; text-transform: uppercase; color: #ff8a8a; }
+.film-explain { margin: 0; font-size: var(--t-sm); line-height: var(--t-sm-lh); color: rgb(238 243 248 / 0.65); }
+.film-retry {
+  padding: var(--s-3) var(--s-8);
+  border: 1px solid rgb(238 243 248 / 0.4);
+  border-radius: var(--r-sm);
+  font-size: var(--t-sm);
+  line-height: var(--t-sm-lh);
+  color: var(--film-ink);
+  background: rgb(238 243 248 / 0.06);
+  cursor: pointer;
+}
+.film-retry:hover { background: rgb(238 243 248 / 0.12); }
+
+/* ---- the readings that are not staged, and the way out ---- */
+.film-bottom {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-8);
+  padding: var(--s-8) 24px;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(238 243 248 / 0.62);
+}
+.film .hud-steps { display: flex; flex-wrap: wrap; gap: var(--s-6); }
+.film .hs { display: inline-flex; align-items: center; gap: var(--s-2); }
+.film .hs i { width: 6px; height: 6px; border: 1px solid currentColor; border-radius: var(--r-circle); }
+.film .hs em { font-style: normal; }
+.film .hs.on { color: rgb(238 243 248 / 0.75); }
+.film .hs.on i { border-color: var(--film-mint); background: var(--film-mint); }
+.film .hs.bad { color: #ff8a8a; }
+.film-bottom-right { display: flex; align-items: center; gap: var(--s-6); }
+.film-skip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid rgb(238 243 248 / 0.3);
+  border-radius: var(--r-sm);
+  font: inherit;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(238 243 248 / 0.8);
+  background: rgb(238 243 248 / 0.04);
+  cursor: pointer;
+}
+.film-skip:hover { color: #ffffff; background: rgb(238 243 248 / 0.1); }
+.film-skip kbd { font: inherit; opacity: 0.55; }
+.film.is-leaving { animation: film-leave 0.6s ease-in forwards; }
+@keyframes film-leave { to { opacity: 0; } }

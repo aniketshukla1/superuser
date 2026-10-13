@@ -1,0 +1,136 @@
+/* Topbar "Artifacts (N)" affordance, shown when the side panel is hidden */
+/* Icon-sized, like Terminal and Browser beside it. It was a bordered pill reading
+   "▣ Artifacts 11" — the only labelled control in a strip of glyphs, which made the
+   quietest thing in the top bar the loudest. It keeps the count, because "there are
+   files" is the whole reason to look, and the label moves to the tooltip.
+
+   `.topbar-icon-btn` carries the size, colour and hover; this adds only what a
+   count needs — auto width so two digits fit, and the numeral itself. */
+/* Plain icon button plus a notification dot. It was an accent pill carrying "11"
+   next to a 16px glyph, which put the most ink in the strip on the quietest control
+   in it — and a two-digit count is a number you cannot act on from a top bar
+   anyway. The dot says the one thing worth saying from here: there is something to
+   look at. The count lives in the tooltip and in the panel. */
+.topbar-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 6px; height: 6px; border-radius: var(--r-pill);
+  background: var(--accent);
+  /* A ring in the ground behind it, so the dot stays a dot against the glyph's
+     stroke rather than merging into it. `--paper` is both the page ground and the
+     button's hover fill, so the ring holds in either state.
+     (Not `--bg`: three rules in this file already use that, and it is not a token
+     anyone defines — those shadows have never rendered.) */
+  box-shadow: 0 0 0 2px var(--paper);
+}
+/* the inline add-folder form sits under the "Analyze the files in a directory" task row */
+.intro-addfolder { padding: var(--s-2) var(--s-3) var(--s-7) var(--s-3); border-top: 1px solid var(--line); }
+
+/* request_directory prompt (agent-initiated) */
+.dirreq-card {
+  background: var(--panel); border: 1px solid var(--accent); border-radius: var(--r-lg);
+  padding: var(--s-6) var(--s-7); margin-bottom: var(--s-4); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.dirreq-head { display: flex; align-items: center; gap: var(--s-4); font-weight: 600; font-size: var(--t-md); color: var(--ink); }
+.dirreq-head .ico { color: var(--accent); }
+.dirreq-reason { font-size: var(--t-md); color: var(--muted); font-style: italic; margin: var(--s-3) 0 var(--s-5); }
+.dirreq-pathrow { display: flex; gap: var(--s-4); align-items: center; }
+.dirreq-path {
+  flex: 1; font: inherit; font-size: var(--t-md); color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); outline: none;
+}
+.dirreq-path:focus { border-color: var(--accent); }
+.dirreq-actions { display: flex; align-items: center; gap: var(--s-5); margin-top: var(--s-5); }
+.dirreq-access { display: inline-flex; align-items: center; gap: var(--s-3); font-size: var(--t-sm); color: var(--muted); cursor: pointer; }
+.dirreq-actions .spacer { flex: 1; }
+
+/* propose_plan prompt (plan-mode exit) */
+.plan-card .plan-body {
+  max-height: 320px; overflow-y: auto; font-size: var(--t-md);
+  margin: var(--s-4) 0 var(--s-1); padding: var(--s-4) var(--s-5);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+
+/* folder gate */
+.gate-overlay { position: fixed; inset: 0; background: var(--scrim); display: grid; place-items: center; z-index: 50; }
+.gate { width: 480px; max-width: 92vw; background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-lg); padding: 26px 26px 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+/* On the scale, and matching the app's other modal (`.ca-*`, New assistant).
+   This dialog was written to its own sizes — a 22px mark over a 24px heading, both
+   past the top of the scale, above an input a step larger than every other input in
+   the app. Three numbers, none of them a token, in the one dialog that opens in
+   front of everything else. */
+.gate-mark { color: var(--accent); font-size: var(--t-xl); line-height: var(--t-xl-lh); }
+.gate h2 {
+  font-family: var(--serif); font-size: var(--t-xl); line-height: var(--t-xl-lh);
+  margin: var(--s-3) 0 var(--s-2);
+}
+.gate-sub { color: var(--muted); font-size: var(--t-md); line-height: var(--t-md-lh); margin: 0 0 var(--s-8); }
+.gate-input { display: flex; gap: var(--s-4); }
+.gate-input input { flex: 1; font: inherit; font-size: var(--t-md); padding: var(--s-4) var(--s-6); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--panel); outline: none; }
+.gate-input input:focus { border-color: var(--accent); }
+.gate-error { color: var(--danger); font-size: var(--t-sm); margin-top: var(--s-4); }
+.gate-label { font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--faint); margin: var(--s-8) 0 var(--s-3); }
+.gate-recents { display: flex; flex-direction: column; max-height: 200px; overflow-y: auto; }
+.gate-recent { display: flex; flex-direction: column; padding: var(--s-4) var(--s-5); border-radius: var(--r-md); cursor: pointer; }
+.gate-recent:hover { background: var(--panel); }
+/* A list row, sized like every other list row in the app (--t-md), with its path as
+   secondary text. It was --t-lg over --t-xs: the folder name louder than a session
+   title in the sidebar, and the path at 11px under it — the widest type contrast in
+   the app, inside a list you scan. */
+.gate-recent .folder { font-size: var(--t-md); line-height: var(--t-md-lh); color: var(--ink); }
+.gate-recent .dim { font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gate-foot { display: flex; align-items: center; justify-content: space-between; margin-top: var(--s-8); }
+.gate-link { font-size: var(--t-md); color: var(--accent); cursor: pointer; }
+.gate-link:hover { text-decoration: underline; }
+.gate-cancel { margin: 0; }
+
+/* Centered sub-tab row inside a manage pane (e.g. API models / Local models). */
+.subtabs { display: flex; justify-content: center; margin: 20px 0 var(--s-8); }
+.ob-subtabs { justify-content: flex-start; margin: 22px 0 var(--s-2); }
+
+/* Small inline segmented control (Appearance: Light / Dark / Auto). */
+.seg { display: inline-flex; gap: var(--s-2); background: var(--panel); border: 1px solid var(--line); padding: var(--s-1); border-radius: var(--r-md); }
+.seg button { font: inherit; font-size: var(--t-sm); padding: var(--s-2) var(--s-7); border: none; border-radius: var(--r-sm); background: transparent; color: var(--muted); cursor: pointer; }
+.seg button.active { background: var(--accent-soft); color: var(--ink); }
+
+/* Model checklist (Onboarding + Configure Models): tick = in the composer picker. */
+.mlist { display: flex; flex-direction: column; gap: 1px; margin: var(--s-3) 0 var(--s-2); }
+.mlist-row { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-3) var(--s-4); border-radius: var(--r-md); }
+.mlist-row:hover { background: var(--panel); }
+.mlist-main { display: flex; align-items: center; gap: var(--s-4); flex: 1; min-width: 0; cursor: pointer; }
+.mlist-main input { accent-color: var(--accent); margin: 0; }
+.mlist-name { font-size: var(--t-md); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mlist-row.off .mlist-name { color: var(--muted); }
+.mlist-default {
+  background: var(--ink); color: var(--panel); font-size: var(--t-xs); font-weight: 600;
+  padding: var(--s-1) var(--s-4); border-radius: var(--r-pill); letter-spacing: 0.03em; flex: none;
+}
+.mlist-make {
+  visibility: hidden; border: 1px solid var(--line-strong); background: var(--panel);
+  border-radius: var(--r-sm); padding: var(--s-1) var(--s-4); font-size: var(--t-xs); color: var(--muted); cursor: pointer; flex: none;
+}
+.mlist-row:hover .mlist-make { visibility: visible; }
+.mlist-make:hover { color: var(--ink); border-color: var(--ink); }
+.mlist-add { display: flex; gap: var(--s-4); margin-top: var(--s-4); }
+.mlist-add input {
+  flex: 1; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-5); color: var(--ink); font: inherit; font-size: var(--t-md); outline: none;
+}
+.mlist-add input:focus { border-color: var(--accent); }
+.mlist-add select {
+  background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4); color: var(--ink); font: inherit; font-size: var(--t-md); outline: none;
+}
+.mlist-add select:focus { border-color: var(--accent); }
+
+/* .mcp-error is used by ScheduledView; the MCP servers list itself is Tailwind-styled inline
+   (ManageTabs McpTab/McpRow/AddForm). */
+/* Errors are --danger. Six rules here painted them in the accent, which on this palette means
+   "the thing to press" — so a failure looked like a call to action. */
+.mcp-error { color: var(--danger); font-size: var(--t-sm); margin-top: var(--s-3); }
+
+button.btn-primary { border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); align-self: flex-start; }
+button.btn-primary:hover { filter: brightness(1.05); }
+button.link { font: inherit; font-size: var(--t-sm); background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; }
+button.link:hover { color: var(--ink); }
+button.link.danger:hover { color: var(--danger); }
+button.link:disabled { color: var(--faint); cursor: default; }

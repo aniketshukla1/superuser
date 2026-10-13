@@ -1,0 +1,110 @@
+/* Connector inbound message card (§3.3) — restyled inline with Tailwind utilities on the elements
+   (ConnectorMessageCard.tsx). The header background pulls var(--brand-soft) (set inline from the
+   connector's color); the header swaps names → `channel_id · sender_id` on hover/focus (React state). */
+
+/* ============ Phase 4: persona detail page + per-session Sources bar/drawer ============ */
+
+/* On/off switch (Toggle.tsx) — mock's .tgl/.knob. */
+/* Off has to be visible as a switch, not only on. It was a --line-strong track around a
+   --panel knob — 1.2:1 against the page in dark, so an off switch read as an empty lozenge
+   and the only way to tell off from missing was to hover it. The track now takes the field
+   outline and the knob a solid --muted, which is the same 3:1 a form field clears. */
+.tgl {
+  width: 34px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--field-line);
+  background: var(--paper);
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+.tgl .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-pill);
+  background: var(--muted);
+  transition: transform 0.12s, background 0.12s;
+}
+.tgl.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.tgl.on .knob {
+  transform: translateX(14px);
+  background: var(--on-accent);
+}
+.tgl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tgl:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The Access section's Working-directories branch tag (primary root row; §23 lineage). */
+.root-tag.root-branch { display: inline-flex; align-items: center; gap: var(--s-1); }
+
+/* ============================================================================
+   Phase 5 — frontend polish: Integrations sub-nav, dual sidebar (split button +
+   grouped-by-persona cards), and the StepGroup transcript disclosure.
+   ========================================================================== */
+
+/* -- Integrations sub-nav + panels are now Tailwind-styled inline (IntegrationsView.tsx,
+   ManageModal ConnectorsTab/McpTab), ported to the mock (redesign.html §view-integrations). -- */
+
+/* -- StepGroup (collapsed tool/approval disclosure) — restyled inline with Tailwind utilities
+   (Transcript.tsx); only the <summary> disclosure-marker reset stays in CSS. ---- */
+.stepgroup-head { list-style: none; }
+.stepgroup-head::-webkit-details-marker { display: none; }
+/* §33 turn group: running-step spinner (small sibling of .waiting-spinner) */
+.spinner {
+  display: inline-block; width: 10px; height: 10px; border-radius: var(--r-circle);
+  border: 2px solid var(--accent); border-right-color: transparent;
+  animation: spin 0.8s linear infinite; vertical-align: middle;
+}
+/* narration markdown stays quiet: the .md defaults (15px, ink) must not win here */
+.turn-narr .md { font-size: var(--t-md); color: var(--muted); line-height: 1.5; }
+.turn-narr p { margin: 0 0 var(--s-2); }
+.turn-narr p:last-child { margin-bottom: 0; }
+
+/* §34 (UX-016): [Title](artifact:path) renders as a chip that opens the artifact viewer */
+.art-chip {
+  display: inline-flex; align-items: center; gap: var(--s-4); margin: var(--s-3) 0 var(--s-1);
+  padding: var(--ctl-pad-y) var(--ctl-pad-x) var(--ctl-pad-y) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--paper); cursor: pointer; font: inherit; font-size: var(--t-md); color: var(--ink);
+  text-align: left; max-width: 100%;
+}
+.art-chip:hover { border-color: var(--accent); }
+.art-chip-ico {
+  width: var(--ctl-h); height: var(--ctl-h); border-radius: var(--r-sm); flex: none;
+  background: var(--accent-soft); color: var(--accent); display: grid; place-items: center;
+}
+.art-chip-meta { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.art-chip-meta b { font-size: var(--t-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.art-chip-meta span { font-size: var(--t-xs); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.art-chip-open { margin-left: var(--s-4); flex: none; font-size: var(--t-xs); color: var(--accent); font-weight: 500; }
+
+/* ---- UX-027: Slack post-connect "how mentions reach you" card ----
+   Split-scene carousel: the Slack window is PINNED to modern light-Slack (aubergine
+   chrome, white pill for the active channel, purple top toolbar with the search
+   field — it should read as a screenshot of Slack, not our UI). The app's
+   window uses app tokens. Everything enters via .hiw-k + an inline --d delay once
+   .hiw-play is set. */
+.hiw-tab { position: relative; font: inherit; font-size: 12px; color: var(--muted); background: none;
+  border: 0; padding: 5px 9px 7px; cursor: pointer; border-radius: var(--r-sm) var(--r-sm) 0 0; }
+.hiw-tab:hover { color: var(--ink); background: var(--paper); }
+.hiw-tab.on { color: var(--ink); font-weight: 600; }
+.hiw-prog { position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px;
+  background: var(--line-strong); opacity: 0; }
+.hiw-tab.on .hiw-prog { opacity: 1; }
+.hiw-tab.on .hiw-prog i { display: block; height: 100%; width: 0; background: var(--accent);
+  animation: hiw-prog-fill var(--hiw-dur, 8s) linear forwards; }
+@keyframes hiw-prog-fill { to { width: 100%; } }
+
+.hiw-scene { position: relative; display: flex; gap: 16px; }
+.hiw-win { border: 1px solid var(--line-strong); border-radius: var(--r-lg); overflow: hidden;
+  display: flex; flex-direction: column; height: 252px; box-shadow: 0 5px 14px rgba(0,0,0,.08); }

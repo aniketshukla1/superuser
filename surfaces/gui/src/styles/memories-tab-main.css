@@ -1,0 +1,189 @@
+/* ---------- Memories tab ---------- */
+/* Search only — the heading moved up to the Brain page's own PanelHead, so this
+   row right-aligns its single child rather than spacing a title away from it. */
+.mem-head { display: flex; align-items: flex-start; justify-content: flex-end; gap: var(--s-8); margin-bottom: var(--s-8); }
+/* Provenance line. Quiet by default: this is context, not an alarm — most of a
+   healthy vault is external, and shouting about it would train the user to ignore it. */
+.mem-origin {
+  font-size: var(--t-xs); line-height: 1.5; color: var(--muted);
+  border-left: 2px solid var(--line-strong); padding: var(--s-1) 0 var(--s-1) var(--s-4); margin: var(--s-4) 0 0;
+}
+.mem-origin.is-internal { border-left-color: var(--accent); }
+.mem-search {
+  width: 220px; font: inherit; font-size: var(--t-sm); color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill); padding: var(--s-3) var(--s-7); outline: none; flex: none;
+}
+.mem-search:focus { border-color: var(--accent); }
+.mem-empty { font-size: var(--t-sm); color: var(--muted); padding: 24px var(--s-1); }
+/* The list and the reader sit side by side while there is room for both, and the reader
+   matches the list's height rather than shrinking to its contents (align-items: stretch) —
+   a short memory used to leave a small box beside a tall list.
+   Below ~600px of the TAB's own width they stack. Measured on the tab, not the window: the
+   tab shares the window with the sidebar and Brain's own section nav, so at the 880px
+   window minimum the reader column had ~50px and wrapped "Pick a memory to read it" one word
+   per line behind a scrollbar. */
+.mem-tab { container-type: inline-size; }
+.mem-split { display: grid; grid-template-columns: minmax(210px, 300px) 1fr; gap: var(--s-8); align-items: stretch; }
+.mem-list { max-height: 62vh; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-4); }
+@container (max-width: 600px) {
+  .mem-split { grid-template-columns: 1fr; }
+  .mem-list { max-height: 40vh; }
+  .mem-detail { max-height: none; }
+}
+.mem-count { font-size: var(--t-xs); color: var(--faint); padding: var(--s-1) var(--s-3) var(--s-4); }
+.mem-group { margin-bottom: var(--s-5); }
+.mem-group-head {
+  font-size: var(--t-xs);
+  color: var(--muted); padding: var(--s-2) var(--s-3);
+}
+.mem-group-n { color: var(--faint); }
+.mem-row {
+  width: 100%; display: flex; align-items: baseline; gap: var(--s-4);
+  font: inherit; font-size: var(--t-sm); text-align: left; cursor: pointer;
+  background: none; border: 0; border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); color: var(--ink);
+}
+.mem-row:hover { background: var(--paper); }
+.mem-row.is-on { background: var(--accent-soft); color: var(--accent); }
+.mem-row-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The sync's kind ("Repo", "Forked") after the name, quiet: still there, no longer first. */
+.mem-row-kind { margin-left: var(--s-3); font-size: var(--t-xs); color: var(--faint); }
+.mem-row-date { font-size: var(--t-xs); color: var(--faint); flex: none; }
+.mem-detail { border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-8); max-height: 62vh; overflow-y: auto; }
+.mem-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-6); }
+.mem-detail-title { font-size: var(--t-lg); font-weight: 600; color: var(--ink); }
+.mem-forget {
+  font: inherit; font-size: var(--t-xs); cursor: pointer; flex: none;
+  color: var(--danger); background: none;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: var(--s-1) var(--s-4);
+}
+.mem-forget:hover { border-color: var(--danger); }
+.mem-meta { font-size: var(--t-xs); color: var(--muted); margin-top: var(--s-2); }
+.mem-summary { font-size: var(--t-md); color: var(--ink); margin: var(--s-6) 0 0; line-height: var(--t-prose-lh); }
+/* The body renders as prose now (it is markdown); a code box made a note read like a log. */
+.mem-body { margin: var(--s-6) 0 0; overflow-wrap: anywhere; }
+.mem-body .md h1, .mem-body .md h2 { font-size: var(--t-lg); }
+.mem-file { margin-top: var(--s-5); font-family: var(--mono); font-size: var(--t-xs); color: var(--faint); }
+
+/* Memory journal: the timeline layer above the flat memory list.
+   No rule under the section: each Brain section is alone on its tab now, and the line it drew
+   for a stacked page ran across Knowledge and Profile under nothing. */
+.jrn { margin-bottom: var(--s-8); }
+.jrn-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-8); }
+.jrn-title { font-size: var(--t-lg); font-weight: 600; color: var(--ink); margin: 0; }
+.jrn-sub { font-size: var(--t-sm); color: var(--muted); margin: var(--s-2) 0 0; max-width: 58ch; line-height: 1.5; }
+.jrn-ghost {
+  font: inherit; font-size: var(--t-xs); cursor: pointer;
+  color: var(--muted); background: none;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: var(--s-2) var(--s-5);
+}
+.jrn-ghost:hover { color: var(--ink); border-color: var(--accent); }
+/* The views and the section's one action share a row. The views wrap before the button is
+   pushed off it, and the button keeps its own width. */
+.jrn-toolbar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: var(--s-4) var(--s-8); margin-bottom: var(--s-6);
+}
+/* Same look as the app's segmented control (.seg): the selected view is ink on accent-soft. */
+.jrn-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); min-width: 0; }
+.jrn-tab {
+  font: inherit; font-size: var(--t-sm); cursor: pointer; color: var(--muted);
+  background: none; border: 0; border-radius: var(--r-sm); padding: var(--s-2) var(--s-4);
+}
+.jrn-tab:hover { color: var(--ink); background: var(--paper); }
+.jrn-tab.is-on { color: var(--ink); background: var(--accent-soft); }
+.jrn-n { color: var(--faint); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+.jrn-tab.is-on .jrn-n { color: var(--accent); }
+/* An empty view stays clickable — its empty state says what fills it — but reads as empty,
+   so six equal-weight tabs no longer promise six places with something in them. */
+.jrn-tab.is-empty:not(.is-on) { color: var(--faint); }
+.jrn-off { font-size: var(--t-xs); color: var(--muted); margin: 0 0 var(--s-5); }
+.jrn-notice { font-size: var(--t-sm); color: var(--muted); background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-3) var(--s-5); margin-bottom: var(--s-5); }
+.jrn-empty { font-size: var(--t-sm); color: var(--muted); padding: var(--s-7) var(--s-1); line-height: 1.55; max-width: 62ch; }
+/* Prose. The core memory and every entry are markdown, and were shown as source in an 11px
+   mono box that scrolled on its own inside a page that already scrolls. */
+.jrn-body { margin: 0; color: var(--ink); overflow-wrap: anywhere; max-width: 72ch; }
+.jrn-body .md h1, .jrn-body .md h2 { font-size: var(--t-lg); }
+.jrn-editor {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 200px;
+  padding: var(--s-6); border-radius: var(--r-md);
+  background: var(--panel); border: 1px solid var(--line-strong); outline: none;
+  font-family: var(--mono); font-size: var(--t-xs); line-height: 1.6; color: var(--ink);
+}
+.jrn-editor:focus { border-color: var(--accent); }
+.jrn-actions { display: flex; gap: var(--s-4); margin-top: var(--s-5); }
+.jrn-entries { display: flex; flex-direction: column; gap: var(--s-7); }
+.jrn-entry + .jrn-entry { border-top: 1px solid var(--line); padding-top: var(--s-7); }
+.jrn-date { font-family: var(--mono); font-size: var(--t-xs); letter-spacing: .04em; color: var(--faint); margin-bottom: var(--s-2); }
+
+/* Fan-out thread links under an assistant reply. */
+.threadlinks { display: flex; flex-direction: column; gap: var(--s-2); margin: var(--s-3) 0 var(--s-5); }
+.threadlink {
+  display: flex; align-items: center; gap: var(--s-4);
+  font: inherit; font-size: var(--t-sm); text-align: left; cursor: pointer;
+  color: var(--ink); background: none;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-5); max-width: 520px;
+}
+.threadlink:hover { border-color: var(--accent); background: var(--accent-soft); }
+.threadlink-arrow { color: var(--faint); flex: none; }
+.threadlink-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.threadlink-go { font-size: var(--t-xs); color: var(--muted); flex: none; }
+.threadlink:hover .threadlink-go { color: var(--accent); }
+
+/* Day separator in the transcript. */
+
+/* Folder gate: a corner close, so a workbench that demands a folder is never a trap. */
+.gate { position: relative; }
+.gate-close {
+  position: absolute; top: 10px; right: 12px;
+  font: inherit; font-size: var(--t-lg); line-height: 1;
+  color: var(--faint); background: none; border: 0;
+  cursor: pointer; padding: var(--s-2) var(--s-4); border-radius: var(--r-sm);
+}
+.gate-close:hover { color: var(--ink); background: var(--paper); }
+
+/* ── The workspace panel ──────────────────────────────────────────────────────
+   The session's side surface as tabs (Activity / Files / Terminal / Browser plus
+   a tab per open document). It replaces the stacked rail, so it needs real width:
+   a 332px browser or terminal is a novelty, not a tool. The old artifact-mode
+   widening is gone with it — nothing takes the panel over any more. */
+:root { --wp-w: min(50vw, 720px); --nav-w: 240px; }
+
+.right-rail.workspace-panel {
+  width: var(--wp-w);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.main.rail-open:has(.workspace-panel) .main-chat { margin-right: var(--wp-w); }
+.main.rail-open:has(.workspace-panel) .main-topbar { right: var(--wp-w); }
+@media (max-width: 1040px) {
+  .main.rail-open:has(.workspace-panel) .main-chat { margin-right: 0; }
+  .main.rail-open:has(.workspace-panel) .main-topbar { right: 0; }
+}
+
+/* Tab strip */
+/* The strip keeps its bottom rule — unlike the left sidebar's top bar, these buttons
+   govern what is directly below them, and the line is what says so.
+
+   14px on top, which is the same measured number `.topbar` uses and for the same
+   reason: it puts a 26px control's centre on the traffic lights' line at y=27, where
+   every other control along the top of this window sits. The old 12 was fitted to a
+   30px LABEL tab; swapping in a 26px icon track without re-deriving it dropped these
+   icons to y=19, eight pixels above their neighbours. */
+.wp-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-7) var(--s-4) var(--s-3);
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 0 0 auto;
+}
+.wp-tabs::-webkit-scrollbar { display: none; }

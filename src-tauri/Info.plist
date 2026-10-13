@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Shown when the app first asks for the microphone (voice input). -->
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Superuser uses the microphone so you can talk to your coworker instead of typing.</string>
+  <!-- Required for the WebView's speech recognition to access dictation. -->
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Superuser transcribes your voice on this device, so what you say never leaves the machine.</string>
+  <!-- Shown when you use "Take photo" to capture an image from the webcam. -->
+  <key>NSCameraUsageDescription</key>
+  <string>Superuser uses the camera so you can snap a photo to share with your coworker.</string>
+</dict>
+</plist>

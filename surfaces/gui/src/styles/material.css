@@ -1,0 +1,114 @@
+/* ── Material (every theme) ───────────────────────────────────────────────────
+   What sits on top of a palette: metal for the brand and for what you press, the same metal
+   as lettering for titles, a light along the composer's edge while a turn runs, a spotlight
+   under the pointer, a shine across a primary button on hover. Every colour here is read
+   from the theme's own tokens, so Abyss gets navy metal and Sand gets sepia; what differs
+   by MODE (how light falls on a dark ground vs a light one) is the --m-* set below, and the
+   rules that only make sense in one mode are in material-dark.css / material-light.css.
+   Corners name the token of the element they trace (rounded-xl2 = --r-lg, rounded-card =
+   --r-xs), because a pseudo-element cannot inherit the utility. */
+
+/* How light behaves, by mode. Dark: matte — the metal keeps a faint glow and nothing else
+   shines. Light: no glow, soft shadows, and the metal is graphite with white type on it. */
+html[data-theme="dark"] {
+  --m-glow: color-mix(in srgb, var(--ink) 22%, transparent);
+  --m-spot: color-mix(in srgb, var(--ink) 5%, transparent);
+  --m-edge: var(--ink);
+  --m-btn-border: color-mix(in srgb, var(--ink) 55%, transparent);
+  --m-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 6px 18px -6px color-mix(in srgb, var(--ink) 35%, transparent);
+  --m-btn-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+html[data-theme="light"] {
+  --m-glow: transparent;
+  --m-spot: color-mix(in srgb, var(--ink) 3%, transparent);
+  --m-edge: var(--ink);
+  --m-btn-border: var(--ink);
+  --m-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.18), 0 6px 16px -8px rgba(0, 0, 0, 0.35);
+  --m-btn-text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* The brand tile. The colour under the metal is what a contrast check reads (--on-accent on
+   --accent, 13:1 or more in every theme), and the generator held --on-accent to 4.5:1 on
+   the metal's own extreme stop as well. */
+html[data-theme] .brand-wordmark .mark {
+  background: var(--chrome); background-color: var(--accent); color: var(--on-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 14px var(--m-glow);
+}
+
+/* Metal lettering. `color` stays --ink and only the fill goes transparent, so selection,
+   forced colours and the legibility check all see real text; every stop of --chrome-text
+   clears 4.5:1 on its theme's ground (palette notes in base-theme*.css). */
+html[data-theme] .brand-wordmark .word,
+html[data-theme] .page-title,
+html[data-theme] .main-title-text {
+  background: var(--chrome-text); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* The open tab's underline is a bar of the metal. */
+html[data-theme] .page-tab.is-on { position: relative; border-bottom-color: transparent; }
+html[data-theme] .page-tab.is-on::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: var(--r-pill);
+  background: var(--chrome); box-shadow: 0 0 12px var(--m-glow);
+}
+
+/* Cards follow the pointer with a soft light (main.tsx sets --mx / --my). */
+html[data-theme] .chart-block,
+html[data-theme] .main .rounded-xl2.bg-panel:not(.composer) {
+  position: relative;
+  background-image: radial-gradient(380px circle at var(--mx, -999px) var(--my, -999px), var(--m-spot), transparent 60%);
+}
+
+/* The accent is no longer a hue in any theme, so a link says it is one with an underline. */
+html[data-theme] .bubble-assistant a,
+html[data-theme] a.text-accent {
+  text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent);
+  text-underline-offset: 3px;
+}
+
+/* The composer's focus ring, and the light that travels along its edge while a turn runs —
+   the screen's one sign of work that is not text. */
+html[data-theme] .composer:focus-within { border-color: var(--accent); }
+html[data-theme] .composer.is-working::after {
+  content: ""; position: absolute; inset: -1px; padding: 1px; pointer-events: none; border-radius: var(--r-lg);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--m-edge) 35%, transparent) 30%, var(--m-edge) 50%, color-mix(in srgb, var(--m-edge) 35%, transparent) 70%, transparent) no-repeat;
+  background-size: 34% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 6px var(--m-glow)) drop-shadow(0 0 16px var(--m-glow));
+  animation: edge-run 2.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+@keyframes edge-run { from { background-position: -45% 0; } to { background-position: 145% 0; } }
+
+/* What you press is polished metal; hovering sends a shine across it. */
+html[data-theme] button.bg-accent.text-onAccent,
+html[data-theme] .ctl.border-accent.text-accent:not(.bg-accentSoft) {
+  position: relative; overflow: hidden;
+  background: var(--chrome); background-color: var(--accent); color: var(--on-accent);
+  border-color: var(--m-btn-border);
+  box-shadow: var(--m-btn-shadow);
+  text-shadow: var(--m-btn-text-shadow);
+}
+html[data-theme] button.bg-accent.text-onAccent::after,
+html[data-theme] .ctl.border-accent.text-accent:not(.bg-accentSoft)::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; pointer-events: none;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+}
+html[data-theme] button.bg-accent.text-onAccent:hover::after,
+html[data-theme] .ctl.border-accent.text-accent:not(.bg-accentSoft):hover::after {
+  animation: sheen 0.7s ease;
+}
+@keyframes sheen { from { left: -60%; } to { left: 130%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme] .composer.is-working::after { animation: none; background-position: 50% 0; }
+  html[data-theme] button.bg-accent.text-onAccent:hover::after,
+  html[data-theme] .ctl.border-accent.text-accent:not(.bg-accentSoft):hover::after { animation: none; }
+}
+
+/* Small print in mono — the root shell's voice: who asked, when, where it goes. */
+.inbox-item-meta,
+.inbox-item-kind,
+.stepgroup-head,
+.chart-source { font-family: var(--mono); }

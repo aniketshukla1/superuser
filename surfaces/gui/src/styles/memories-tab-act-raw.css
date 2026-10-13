@@ -1,0 +1,193 @@
+.wp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-5);
+  border: none;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wp-tab { transition: background 100ms ease, color 100ms ease, box-shadow 140ms ease; }
+.wp-tab:hover { background: var(--glass-soft); color: var(--ink); }
+.wp-tab.active { background: var(--paper); color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
+.wp-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.wp-tab.doc .wp-doc-name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.wp-close {
+  display: inline-flex;
+  padding: var(--s-1);
+  border-radius: var(--r-xs);
+  opacity: 0.5;
+}
+.wp-close:hover { opacity: 1; background: var(--glass-soft); }
+.wp-count {
+  font-size: var(--t-xs);
+  padding: 0 var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+/* A badge on a 24px icon button. It sits ON the corner rather than beside the icon —
+   there is no beside any more — and overhangs a little so a two-digit count does not
+   squeeze the glyph it belongs to. */
+.wp-tab-btn { position: relative; }
+.wp-badge { position: absolute; top: -2px; right: -3px; pointer-events: none; }
+.wp-badge.wp-dot { top: 2px; right: 2px; }
+.wp-badge.wp-count { font-size: var(--t-xs); line-height: 13px; padding: 0 var(--s-1); min-width: 13px; text-align: center; }
+/* A turn is in flight — the same signal the composer shows, where the work is. */
+.wp-dot { width: 6px; height: 6px; border-radius: var(--r-circle); background: var(--accent); animation: wp-pulse 1.4s ease-in-out infinite; }
+@keyframes wp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.wp-divider { width: 1px; align-self: stretch; margin: var(--s-3) var(--s-3) 0; background: var(--line); }
+.wp-tabs-spacer { flex: 1 1 auto; }
+.wp-gear {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: var(--s-3);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.wp-gear:hover, .wp-gear.active { background: var(--glass-soft); color: var(--ink); }
+
+/* Panes. Terminal and Browser stay mounted and hide — remounting would throw away
+   the scrollback and the loaded page respectively. */
+.wp-body { position: relative; flex: 1 1 auto; min-height: 0; }
+.wp-pane { position: absolute; inset: 0; display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+.wp-pane[hidden] { display: none; }
+/* Activity does its own scrolling — it is two independently scrolling halves, and a
+   scroller around them would add a third bar that moves both at once. */
+.wp-pane.split { overflow: hidden; }
+/* Panes that own their own scrolling (the terminal scrolls its scrollback itself).
+   A scrollbar HERE would be a second one, and — worse — it steals 15px from the
+   pane, resizing whatever measures itself against it. */
+.wp-pane.wp-pane-fill { overflow: hidden; }
+
+/* Activity */
+.activity-tab { height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 0; gap: 0; }
+/* Top half: the plan and the tool calls. Its height comes from the split state, so
+   `flex: 0 0 auto` — letting flex negotiate the height would fight the drag. */
+.act-top { flex: 0 0 auto; min-height: 0; overflow: auto; padding: var(--s-6) var(--s-7); display: flex; flex-direction: column; gap: var(--s-5); }
+.act-split {
+  flex: 0 0 auto;
+  height: 7px;
+  cursor: row-resize;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  transition: background 120ms ease;
+}
+/* The splitter lights up on hover AND keeps the app's focus ring — it used to set
+   `outline: none`, which left the one draggable divider invisible to a keyboard. */
+.act-split:hover, .act-split:focus-visible { background: var(--accent); }
+.act-plan { display: flex; flex-direction: column; gap: var(--s-2); padding-bottom: var(--s-4); border-bottom: 1px solid var(--line); }
+.act-empty { padding: var(--s-8) var(--s-1); }
+/* An empty state is a moment the product either looks finished or doesn't. Centred,
+   quiet, and it says what will fill the space rather than only that it is empty. */
+.files-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s-1); height: 100%; min-height: 130px; padding: 24px 28px; text-align: center;
+}
+.files-empty > svg { color: var(--line-strong); margin-bottom: var(--s-3); }
+.files-empty-line { margin: 0; font-size: var(--t-md); font-weight: 500; color: var(--muted); }
+.files-empty-hint {
+  margin: 0; font-size: var(--t-xs); line-height: 1.5; color: var(--faint); max-width: 30ch;
+}
+.act-list { display: flex; flex-direction: column; gap: var(--s-1); }
+.act-note { padding-bottom: var(--s-3); }
+.act-row { border-radius: var(--r-sm); }
+.act-row:hover { background: var(--glass-soft); }
+.act-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+.act-head:disabled { cursor: default; }
+.act-status { width: 7px; height: 7px; border-radius: var(--r-circle); flex: 0 0 auto; background: var(--muted); }
+.act-status.ok { background: var(--ok); }
+.act-status.bad { background: var(--danger); }
+.act-status.running { background: var(--accent); animation: wp-pulse 1.4s ease-in-out infinite; }
+/* Cut off, not failed: the muted dot says "this did not finish" without the red
+   that would claim something went wrong. */
+.act-status.stopped { background: var(--faint); }
+.act-stopped { font-size: var(--t-xs); color: var(--faint); flex: 0 0 auto; }
+.act-name { color: var(--muted); font-family: var(--mono); font-size: var(--t-xs); flex: 0 0 auto; }
+.act-title {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+.act-chev { color: var(--faint); flex: 0 0 auto; }
+.act-body {
+  margin: 0 var(--s-4) var(--s-4) 23px;
+  padding: var(--s-4) var(--s-5);
+  background: var(--glass-soft);
+  border-radius: var(--r-sm);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow: auto;
+}
+/* Bottom half: the unabridged frame feed. It scrolls itself, and nothing in it is
+   clipped — a raw view that elides is not a raw view. */
+.act-raw-pane { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.act-raw-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-7) var(--s-3);
+  font-size: var(--t-xs);
+  color: var(--faint);
+}
+.act-raw-count { font-family: var(--mono); letter-spacing: 0; color: var(--muted); }
+.act-raw-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 var(--s-7) var(--s-6);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+}
+/* `minmax(0, 1fr)` on the detail column is what lets a long line wrap rather than
+   force the row wider than the pane — the old rule used `truncate`, which is why a
+   raw line was one ellipsised row however much it actually carried. */
+.act-raw-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: var(--s-4);
+  padding: var(--s-1) 0;
+  border-bottom: 1px solid var(--line);
+  align-items: start;
+}
+.act-raw-time { color: var(--faint); }
+.act-raw-type { color: var(--ink); }
+.act-raw-detail { color: var(--muted); white-space: pre-wrap; word-break: break-word; min-width: 0; }
+
+/* Files */
+.files-tab { padding: var(--s-6) var(--s-7); display: flex; flex-direction: column; gap: var(--s-4); }
+.files-head { display: flex; align-items: center; justify-content: space-between; }
+.files-group { font-size: var(--t-xs); color: var(--faint); padding: var(--s-4) var(--s-1) var(--s-1); }
+.file-badge {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-xs);
+  padding: 0 var(--s-2);
+  flex: 0 0 auto;
+}

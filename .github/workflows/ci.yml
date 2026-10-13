@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  interface:
+    name: Interface (unit tests, types, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: surfaces/gui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: surfaces/gui/package-lock.json
+      - run: npm ci
+      - run: npm test
+      # `build` is `tsc && vite build`: the type check and the bundle the app ships.
+      - run: npm run build
+
+  core:
+    name: Rust core (tests)
+    runs-on: macos-14
+    env:
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: surfaces/gui/package-lock.json
+      # The Tauri build embeds the interface, so it has to exist before cargo runs.
+      - name: Build the interface
+        run: npm --prefix surfaces/gui ci && npm --prefix surfaces/gui run build
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      # Some tests commit to scratch git repositories.
+      - run: git config --global user.name "CI" && git config --global user.email "ci@example.invalid"
+      - name: Tests
+        working-directory: src-tauri
+        run: cargo test --lib

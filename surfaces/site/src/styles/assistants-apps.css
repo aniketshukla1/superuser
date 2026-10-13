@@ -1,0 +1,86 @@
+/* ---------- assistants and apps ---------- */
+
+.roster {
+  list-style: none;
+  margin: var(--sp-12) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: var(--sp-8);
+}
+@media (max-width: 880px) {
+  .roster {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .roster {
+    grid-template-columns: 1fr;
+  }
+}
+.roster li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: var(--sp-4) 0;
+  border-top: 1px solid var(--line);
+}
+.roster-id {
+  font-size: 11px;
+  color: var(--accent);
+}
+.roster-name {
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.roster-line {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.apps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-16);
+}
+.apps h3 {
+  font-size: clamp(19px, 2vw, 22px);
+}
+.apps-lead {
+  max-width: 60ch;
+  color: var(--muted);
+}
+.apps-list {
+  display: flex;
+  flex-direction: column;
+  margin: var(--sp-4) 0 0;
+}
+.apps-row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: baseline;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--line);
+}
+.apps-row dt {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--faint);
+}
+.apps-row dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+}
+@media (max-width: 620px) {
+  .apps-row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+}

@@ -1,0 +1,15 @@
+/* -- Channel subscriptions: the per-session composer chip + popover -------- */
+.sub-chip { display: inline-flex; align-items: center; gap: var(--s-2); }
+.chan-input { font: inherit; font-size: var(--t-md); padding: var(--s-3) var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--panel); color: var(--ink); }
+.chan-input { min-width: 220px; }
+.sub-chip-wrap { position: relative; display: inline-flex; }
+.wschip.sub-chip.active { border-color: var(--accent); color: var(--accent); }
+.sub-pop { position: absolute; bottom: calc(100% + 8px); right: 0; width: 300px; z-index: 40; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--r-lg); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14); padding: var(--s-6); }
+.sub-pop-head { font-size: var(--t-xs); font-weight: 600; color: var(--muted); margin-bottom: var(--s-4); }
+.sub-pop-empty { font-size: var(--t-sm); padding: var(--s-1) 0 var(--s-4); }
+.sub-pop-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-2) 0; font-size: var(--t-md); }
+.sub-pop-chan { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub-pop-x { border: 0; background: none; color: var(--faint); font-size: var(--t-lg); line-height: 1; cursor: pointer; padding: 0 var(--s-2); }
+.sub-pop-x:hover { color: var(--ink); }
+.sub-pop-add { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-4); }
+.sub-pop-add .chan-input { min-width: 0; flex: 1; }

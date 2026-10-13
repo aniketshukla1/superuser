@@ -1,0 +1,17 @@
+# What `tauri dev` should NOT treat as a change to the app (gitignore syntax).
+#
+# Every change it sees kills the running app, rebuilds the crate and relaunches the window —
+# 40 to 70 seconds with no window, or a boot splash, per event. Editors and coding agents save
+# by writing a temporary file and renaming it over the real one, and each temporary file was an
+# event of its own: the dev log showed a rebuild for `src/core/.!34894!api_server.rs`, a file
+# that exists for a moment and holds nothing the build reads. The rename that follows is the
+# real change, and it still triggers a rebuild.
+
+# Atomic-write temporaries (`.!<pid>!name`), editor swap and backup files.
+.!*!*
+*.swp
+*.swo
+*~
+.#*
+*.tmp
+.DS_Store

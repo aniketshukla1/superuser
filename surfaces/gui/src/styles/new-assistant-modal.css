@@ -1,0 +1,72 @@
+/* ---------- New-assistant modal ---------- */
+.ca-scrim {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--scrim);
+  display: flex; align-items: center; justify-content: center;
+}
+.ca-modal {
+  width: min(440px, 92vw);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+}
+.ca-title { font-family: var(--mono); font-size: var(--t-lg); font-weight: 600; color: var(--ink); margin-bottom: var(--s-8); }
+.ca-label { display: block; font-size: var(--t-sm); color: var(--muted); margin: var(--s-6) 0 var(--s-3); }
+.ca-hint { color: var(--faint); }
+.ca-input {
+  width: 100%; font: inherit; font-size: var(--t-md);
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  padding: var(--s-4) var(--s-5); outline: none;
+}
+.ca-input:focus { border-color: var(--accent); }
+.ca-textarea { resize: vertical; line-height: 1.45; font-family: inherit; }
+.ca-chips { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+.ca-chip {
+  font: inherit; font-size: var(--t-xs); font-family: var(--mono);
+  color: var(--muted); background: none;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  padding: var(--ctl-pad-y) var(--ctl-pad-x-sm); cursor: pointer;
+}
+.ca-chip.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.ca-error { margin-top: var(--s-6); font-size: var(--t-sm); color: var(--danger); }
+.ca-actions { display: flex; justify-content: flex-end; gap: var(--s-4); margin-top: 20px; }
+.ca-btn {
+  font: inherit; font-size: var(--t-sm); padding: var(--ctl-pad-y-lg) var(--ctl-pad-x-lg);
+  border-radius: var(--r-md); border: 1px solid var(--line-strong);
+  background: none; color: var(--ink); cursor: pointer;
+}
+.ca-btn.is-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 500; }
+.ca-btn:disabled { opacity: .45; cursor: default; }
+
+/* New-assistant modal: scrollable body so the extra configuration fits on a laptop. */
+.ca-body { max-height: min(62vh, 560px); overflow-y: auto; padding-right: var(--s-2); }
+.ca-starter { margin-top: var(--s-3); }
+.ca-modes { display: grid; gap: var(--s-3); }
+.ca-mode {
+  text-align: left; font: inherit; cursor: pointer;
+  background: none; color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-5);
+}
+.ca-mode.is-on { border-color: var(--accent); background: var(--accent-soft); }
+.ca-mode-label { display: block; font-size: var(--t-sm); font-weight: 500; }
+.ca-mode-hint { display: block; font-size: var(--t-xs); color: var(--muted); margin-top: var(--s-1); line-height: 1.35; }
+.ca-drop {
+  border: 1px dashed var(--line-strong); border-radius: var(--r-md);
+  padding: var(--s-7); text-align: center; cursor: pointer;
+  font-size: var(--t-sm); color: var(--muted);
+}
+.ca-drop:hover { border-color: var(--accent); color: var(--accent); }
+.ca-files { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-4); }
+.ca-file {
+  display: inline-flex; align-items: center; gap: var(--s-3);
+  font-family: var(--mono); font-size: var(--t-xs);
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: var(--s-1) var(--s-3);
+  color: var(--ink);
+}
+.ca-file button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: var(--t-md); line-height: 1; padding: 0; }
+.ca-file button:hover { color: var(--danger); }
+.ca-note { margin-top: var(--s-5); font-size: var(--t-xs); color: var(--warn-ink); }

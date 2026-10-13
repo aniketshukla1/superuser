@@ -1,0 +1,27 @@
+/* ---------- hero ---------- */
+
+.hero {
+  padding-top: var(--sp-24);
+  padding-bottom: var(--sp-16);
+}
+.hero h1 {
+  /* Each character is its own inline-block so it can be transformed
+     individually; the whole line still selects and reads as one string. */
+  max-width: 18ch;
+}
+.hero-char {
+  display: inline-block;
+  white-space: pre;
+  transform-origin: 50% 100%;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.hero-note {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--faint);
+}

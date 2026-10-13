@@ -1,0 +1,192 @@
+/* Save/Cancel are text, not icons — `.rail-mini-btn` is a fixed 24px square and
+   squashed the labels into each other. */
+.artifact-text-btn {
+  flex: 0 0 auto;
+  height: var(--ctl-h-sm);
+  padding: 0 var(--ctl-pad-x);
+  display: inline-grid;
+  place-items: center;
+  white-space: nowrap;
+  font-size: var(--t-sm);
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.artifact-text-btn:hover:not(:disabled) { color: var(--ink); background: var(--paper); }
+.artifact-text-btn.primary { color: var(--accent); border-color: var(--accent); }
+.artifact-text-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Editing a file in place. */
+.artifact-editor { display: flex; flex-direction: column; min-height: 0; height: 100%; gap: var(--s-3); }
+.artifact-save-error { flex: 0 0 auto; }
+.artifact-textarea {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: var(--s-5);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+.artifact-textarea:focus { outline: none; border-color: var(--accent); }
+/* Source above, rendered result below — stacked rather than side-by-side because
+   this is a side panel, where two columns leaves neither usable. */
+/* CodeMirror manages its own scrolling and gutters; it only needs a box to fill. */
+.code-editor { flex: 1 1 auto; min-height: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: var(--t-sm); }
+.artifact-editor.split .code-editor { flex: 1 1 45%; }
+.code-loading { padding: var(--s-5); }
+.artifact-editor.split .artifact-textarea { flex: 1 1 45%; min-height: 0; }
+.artifact-preview-pane {
+  flex: 1 1 55%;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel);
+}
+.artifact-editor.split .artifact-md { padding: var(--s-7) var(--s-8); }
+iframe.artifact-preview-pane { background: #fff; }
+
+/* One chrome for every viewer that has controls — decks, documents, whatever comes
+   next. Consistency here is what stops the panel feeling like four apps: the bar is
+   the same height, in the same place, saying the same kind of thing. Frosted, so
+   content scrolling under it stays legible. */
+.viewer-foot {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-5);
+  padding: var(--s-3) var(--s-6);
+  border-top: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: saturate(140%) blur(8px);
+  font-size: var(--t-xs);
+}
+.viewer-zoom { display: flex; align-items: center; gap: var(--s-2); }
+.viewer-zoom-label { min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; }
+.viewer-zoom-btn {
+  width: 22px; height: var(--ctl-h-sm); display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: var(--r-sm); background: transparent;
+  color: var(--muted); cursor: pointer; font-size: var(--t-lg); line-height: 1;
+  transition: background 90ms ease, color 90ms ease, border-color 90ms ease;
+}
+.viewer-zoom-btn:hover { color: var(--ink); background: var(--paper); border-color: var(--line); }
+.viewer-zoom-btn:active { background: var(--accent-soft); color: var(--accent); }
+.viewer-zoom-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* A deck, drawn by `pptx-preview` into SVG. The page chrome is ours; everything
+   inside a slide is the library's rendering of the real file, so nothing here sets a
+   font, a colour or a size — that would fight the deck's own design. */
+.slides-viewer { display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--paper); }
+.slides-note { flex: 0 0 auto; padding: var(--s-5) var(--s-7); }
+.slides-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--s-8) var(--s-8) 22px; }
+/* Scaled from the top-left so zooming doesn't walk the deck out of the scroller. */
+.slides-stage { transform-origin: top left; }
+.slides-fit { margin: 0 auto; overflow: hidden; }
+/* Each rendered slide as a page resting on the panel's ground. */
+.slides-stage [class*="slide-wrapper-"] {
+  background: #fff;
+  border-radius: var(--r-lg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07), 0 10px 30px rgba(0, 0, 0, 0.12);
+  margin: 0 auto 22px;
+  overflow: hidden;
+}
+/* The library paints its own black backdrop behind the deck; the panel supplies the
+   ground here, so it has to go or every deck sits in a black box. */
+.slides-stage > div { background: transparent !important; overflow: visible !important; height: auto !important; }
+
+/* A .docx: the real document, rendered by `docx-preview`, with an explicit text-edit
+   mode beside it. The renderer emits its own page chrome and styles — nothing here
+   sets a font or a colour inside a page, or it would fight the document's design. */
+.doc-editor { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.doc-note { padding: var(--s-4) var(--s-7); }
+
+.doc-render { flex: 1 1 auto; min-height: 0; overflow: auto; background: var(--panel); }
+.doc-fit { transform-origin: top center; }
+/* `docx-preview` renders pages at their real width; centre them and give them the
+   shadow a page has, matching the deck viewer next door. */
+.doc-render .docxr-wrapper { background: transparent !important; padding: var(--s-8) 0 !important; }
+.doc-render .docxr-wrapper > section {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.10);
+  border-radius: var(--r-md);
+  margin-bottom: var(--s-8) !important;
+}
+
+textarea
+/* Terminal.
+   The inset lives on .terminal-tab, NOT on .terminal-host: the fit addon sizes the
+   grid from getComputedStyle(host).height/width, and under `box-sizing: border-box`
+   that reads the BORDER box — padding included. Padding here would make xterm size
+   itself ~16px larger than the space it actually has, spill past the host, raise a
+   scrollbar on the pane, which shrinks the host, which refits... a resize loop that
+   flickers the screen and SIGWINCHes the shell on every frame. Keep the host's
+   padding at zero so measured == available. */
+.terminal-tab { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: var(--s-4); background: var(--panel); }
+.terminal-host { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.terminal-host .xterm { height: 100%; }
+.browser-error { margin: var(--s-4) var(--s-6) 0; }
+/* Inside the now-padded .terminal-tab, so only the offset from that padding. */
+.terminal-error { margin: 0 var(--s-2) var(--s-4); }
+.terminal-restart { margin: 0 var(--s-2) var(--s-4); align-self: flex-start; }
+
+/* Browser. The slot is deliberately empty — a native webview covers it, and
+   anything drawn here would be hidden behind that view. */
+.browser-tab { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.browser-bar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-4) var(--s-5); border-bottom: 1px solid var(--line); }
+.browser-address { flex: 1 1 auto; }
+.browser-address input {
+  width: 100%;
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--glass-soft);
+  color: var(--ink);
+  font-size: var(--t-sm);
+}
+.browser-address input:focus { outline: none; border-color: var(--accent); }
+.browser-slot { flex: 1 1 auto; min-height: 0; background: var(--paper); }
+.browser-fallback { padding: 24px; max-width: 42ch; }
+.flip-x { transform: scaleX(-1); }
+
+
+/* ── Drag-to-resize handles ───────────────────────────────────────────────────
+   A 5px strip on a panel's edge, widened to a visible line only while hovered or
+   dragged. Anchored to the window rather than the panel so it can't be dragged
+   out from under the cursor mid-gesture. */
+.resize-handle {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  z-index: 40;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 120ms ease;
+}
+.resize-handle.left { left: calc(var(--nav-w, 240px) - 2px); }
+.resize-handle.right { right: calc(var(--wp-w) - 2px); }
+.resize-handle:hover { background: var(--accent); }
+/* Plain `:focus`, not `:focus-visible`: this is a separator widget that a keyboard
+   user can drive with the arrow keys, and a 5px transparent strip with no indicator
+   is a place focus vanishes into. */
+.resize-handle:focus {
+  background: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* Keep the cursor as a resize cursor everywhere while a drag is live, and stop the
+   pointer selecting text across the window on the way past. */
+body.resizing-col { cursor: col-resize; user-select: none; }
+body.resizing-col .resize-handle { background: var(--accent); }
+body.resizing-row { cursor: row-resize; user-select: none; }
+body.resizing-row .act-split { background: var(--accent); }
+@media (max-width: 1040px) {
+  /* The panel floats over the transcript at these sizes, so its handle would be
+     dragging an overlay edge — and the nav is a peek overlay too. */
+  .resize-handle { display: none; }
+}

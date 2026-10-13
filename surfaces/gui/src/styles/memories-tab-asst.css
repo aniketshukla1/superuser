@@ -1,0 +1,180 @@
+/* The Assistant tab — the persona's home.
+   Sections stack and the whole tab scrolls; nothing here is a form, so there is no
+   two-column layout to fight the panel's width. */
+.asst-tab { display: flex; flex-direction: column; gap: var(--s-6); padding-bottom: var(--s-8); }
+/* The persona's home should open with the persona, not with a small icon and a
+   caption. The glyph gets a surface of its own so the eye lands there first. */
+.asst-hero {
+  display: flex; align-items: center; gap: var(--s-6);
+  padding: 0 0 var(--s-6); border-bottom: 1px solid var(--line);
+}
+.asst-hero .persona-glyph,
+.asst-hero > svg:first-child {
+  flex: 0 0 auto;
+  padding: var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-sizing: content-box;
+}
+.asst-hero-text { min-width: 0; }
+.asst-name { font-size: var(--t-md); font-weight: 600; letter-spacing: var(--ls-tight); color: var(--ink); line-height: var(--t-md-lh) }
+.asst-tagline { font-size: var(--t-sm); color: var(--faint); margin-top: var(--s-1); line-height: var(--t-sm-lh); }
+
+.asst-section { display: flex; flex-direction: column; gap: var(--s-3); }
+.asst-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); }
+.asst-section-title { font-size: var(--t-xs); font-weight: 600; color: var(--faint); line-height: var(--t-xs-lh) }
+.asst-hint { font-size: var(--t-xs); color: var(--faint); line-height: var(--t-md-lh); }
+.asst-hint code { font-size: var(--t-xs); background: var(--paper); border-radius: var(--r-xs); padding: 1px var(--s-2); }
+
+
+/* A bare <button> in a column flex stretches to the full width, and a button centres its
+   own label — which is the entire reason "Remove this assistant" sat in the middle of a
+   pane where nothing else was centred. Inside .asst-section-head it is a flex ROW item so
+   nothing showed; standing alone in a section, everything did. align-self also stops the
+   hit area sprawling the pane's whole width.
+
+   And 18px tall was under the 24px a pointer target has to be — the same defect the
+   transcript rail and "Show more" had. The look does not change; the box reaches the
+   floor. */
+
+/* A bare <button> in a column flex stretches to the full width, and a button centres its
+   own label — which is why "Remove this assistant" sat in the middle of a pane where
+   nothing else was centred. Inside .asst-section-head it is a flex ROW item, which is why
+   the other links looked fine and this one did not.
+
+   The 24px pointer target is a PAD, not a height. min-height reached the floor and made
+   every section head 24px tall for a 15px label: nine dead pixels, five times down the
+   pane. The pseudo-element gives the same clickable area without the box — the technique
+   .hit-target already uses for the message-hover buttons. */
+.asst-link { position: relative; align-self: flex-start; text-align: left; background: none; border: 0; padding: 0; font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--accent); cursor: pointer; }
+.asst-link::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, var(--ctl-h-sm)); height: var(--ctl-h-sm);
+  transform: translate(-50%, -50%);
+}
+.asst-link:hover { text-decoration: underline; }
+.asst-link.muted { color: var(--faint); }
+.asst-link.danger { color: var(--danger); }
+
+.asst-list { display: flex; flex-direction: column; gap: 0; }
+.asst-row {
+  display: flex; align-items: center; gap: var(--s-4); width: 100%;
+  padding: var(--s-2) var(--s-4); background: none; border: 0; border-radius: var(--r-sm);
+  color: var(--ink); font-size: var(--t-sm); text-align: left; cursor: pointer;
+}
+.asst-row:hover:not(.static) { background: var(--panel); }
+.asst-row.static { cursor: default; }
+.asst-row-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asst-row-meta { flex: 0 0 auto; font-size: var(--t-xs); color: var(--faint); }
+
+/* "+ Add" asks a question and offers starting points — it never opens a form. */
+.asst-guided { display: flex; flex-direction: column; gap: var(--s-5); padding: var(--s-6); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
+.asst-guided-q { font-size: var(--t-sm); line-height: var(--t-prose-lh); color: var(--ink); }
+.asst-chips { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+.asst-chip {
+  padding: var(--ctl-pad-y) var(--ctl-pad-x); font-size: var(--t-sm); color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-pill); cursor: pointer;
+}
+.asst-chip:hover { border-color: var(--accent); color: var(--accent); }
+.asst-guided-foot { display: flex; align-items: center; gap: var(--s-5); }
+
+.asst-instructions {
+  padding: var(--s-6) var(--s-7); font-size: var(--t-sm); line-height: var(--t-prose-lh);
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+  color: var(--ink); overflow-wrap: anywhere;
+}
+/* The markdown renderer is built for the transcript, where it sets its own generous
+   rhythm. In a panel card it needs to sit tighter without losing the hierarchy. */
+.asst-instructions .md > :first-child { margin-top: 0; }
+.asst-instructions .md > :last-child { margin-bottom: 0; }
+.asst-instructions .md h1,
+.asst-instructions .md h2,
+.asst-instructions .md h3 { font-size: var(--t-md); margin: var(--s-5) 0 var(--s-3); }
+.asst-instructions .md ul { margin: var(--s-3) 0; padding-left: var(--s-8); }
+.asst-instructions .md li { margin: var(--s-1) 0; }
+.asst-instructions .md p { margin: var(--s-3) 0; }
+.asst-edit { display: flex; flex-direction: column; gap: var(--s-4); }
+.asst-textarea {
+  min-height: 140px; resize: vertical; width: 100%;
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-5);
+  font-family: var(--mono);
+  font-size: var(--t-sm); line-height: var(--t-prose-lh);
+}
+.asst-textarea:focus { outline: none; border-color: var(--accent); }
+.asst-confirm { display: flex; flex-direction: column; gap: var(--s-5); }
+.artifact-text-btn.danger { color: var(--danger); border-color: var(--danger); }
+
+/* Files tab: a tree above, a preview below.
+   Vertical rather than side-by-side because this is a side panel — a two-column
+   split at panel width leaves neither column usable.
+
+   `min-height: 0` on every scrolling flex child is load-bearing: the app renders in
+   WKWebView, where a flex item defaults to min-height:auto and refuses to shrink
+   below its content, so the inner scrollers never scroll and the whole panel grows
+   instead. Chromium (the dev preview) is more forgiving, which is exactly why this
+   has to be written down rather than discovered again. */
+.files-tab.files-split { height: 100%; min-height: 0; padding-bottom: 0; }
+.files-tree {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 38%;
+  overflow: auto;
+  /* No border: the preview below already has an edge, and two boxes stacked inside a
+     narrow panel read as clutter. A tinted ground separates them with less ink. */
+  background: var(--panel);
+  border-radius: var(--r-lg);
+  padding: var(--s-2) var(--s-2);
+}
+.files-preview {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+  margin: 0 -14px;
+  padding: 0 var(--s-7);
+}
+/* A file row is a name with facts trailing it, not a three-column table: the name
+   carries the weight, the size stays out of the way, and the selected row is marked
+   by a rail rather than by shouting. */
+.file-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-3);
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  font-size: var(--t-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background 90ms ease, color 90ms ease;
+}
+.file-row > svg { flex: 0 0 auto; color: var(--faint); transition: color 90ms ease; }
+.file-row:hover { background: var(--paper); }
+.file-row:hover > svg { color: var(--muted); }
+.file-row.active { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.file-row.active > svg { color: var(--accent); }
+/* The rail sits inside the row so selecting one never nudges the tree sideways. */
+.file-row.active::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 5px; bottom: 5px;
+  width: 2px; border-radius: var(--r-xs); background: var(--accent);
+}
+.file-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* A folder is a container, not a destination — quieter, and its name does the work. */
+.file-row-dir { color: var(--muted); font-weight: 500; }
+.file-row-dir:hover { background: var(--paper); }
+.file-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-meta {
+  flex: 0 0 auto; font-size: var(--t-xs); color: var(--faint);
+  font-variant-numeric: tabular-nums; opacity: 0.85;
+}
+.file-row.active .file-meta { color: var(--accent); opacity: 0.7; }

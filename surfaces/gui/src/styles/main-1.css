@@ -1,0 +1,193 @@
+/* ---------- main ---------- */
+.main {
+  position: relative; display: flex; flex-direction: column;
+  min-height: 0; overflow: hidden;
+  background: var(--canvas);  /* the chat's own shade, a step apart from the nav's --paper */
+}
+.main-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px; display: flex; align-items: center; gap: var(--s-6);
+  padding: 0 var(--s-7) 0 20px; color: var(--ink); user-select: none;
+  /* Edgeless glass (§22 amendment): no border, translucent tint + blur — invisible over the
+     flat canvas at rest, frosts only when the transcript actually scrolls under it. Tinted
+     with the canvas, not the nav's paper: a paper tint read as a band across the chat. */
+  background: color-mix(in srgb, var(--canvas) 72%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 6;
+}
+.main.rail-open .main-topbar { right: 332px; }
+/* Centered title column (§22, amended: the ⋯ menu removed — the nav row's hover cluster owns
+   pin/rename/archive/delete). Title + facts subtitle beneath.
+   ABSOLUTE centering (owner catch 2026-07-13: a long mention-spawned title painted over the
+   topbar icons): the flex sides can't guarantee clearance — the settings row's rest-state
+   glance occupies space by design, so every content-based flex floor over-reserves. Centering
+   on the BAR and capping against its width (100% here = the topbar, not the viewport — the
+   right rail sits outside it) makes the title ellipsize before it can reach either cluster:
+   332px ≈ 2 × (collapsed cluster + settings icon + gaps). */
+/* Left-aligned, one row: name then the facts chip, as design/Main.dc.html draws it. It was
+   absolutely centred with the facts stacked underneath, which spent two lines of topbar on
+   one line of information and put the session name in the middle of the window, where
+   nothing else in the app lives. */
+.main-title {
+  min-width: 0; flex: 1 1 auto;
+  display: flex; flex-direction: row; align-items: center; gap: var(--s-4);
+  font-size: var(--t-md); font-weight: 600; letter-spacing: var(--ls-tight); color: var(--ink);
+}
+/* The overlay build pads the collapsed cluster past the traffic lights — reserve that too. */
+.app.nav-collapsed.tauri-overlay .main-title { max-width: max(96px, calc(100% - 416px)); }
+/* Smaller: this is a label saying where you are, not a document title. At heading
+   weight it competed with the conversation, which is the thing you came to read. */
+.main-title-text {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: min(460px, 100%);
+  font-size: var(--t-md); line-height: var(--t-md-lh); font-weight: 500;
+}
+.title-ghost { color: var(--faint); font-weight: 400; }
+/* The heading is where the conversation is named. Quiet until you reach for it — a heading
+   dressed as a field would read as an empty form at the top of every chat. */
+/* The heading element carries the outline; the look is the text inside it. */
+.main-title-h { margin: 0; min-width: 0; display: flex; align-items: center; font: inherit; }
+.main-title-text.is-editable {
+  display: inline-flex; align-items: center; min-height: var(--ctl-h-sm);
+  border: 1px solid transparent; border-radius: var(--r-sm);
+  margin-left: calc(var(--s-3) * -1); padding: 0 var(--s-3); cursor: text; text-align: left;
+}
+.main-title-text.is-editable:hover { border-color: var(--line-strong); }
+.main-title-input {
+  max-width: min(460px, 100%); min-width: 160px;
+  font: inherit; font-size: var(--t-md); line-height: var(--t-md-lh); font-weight: 500;
+  color: var(--ink); background: var(--panel);
+  border: 1px solid var(--accent); border-radius: var(--r-sm);
+  margin-left: calc(var(--s-3) * -1); padding: 0 var(--s-3); outline: none;
+}
+/* The facts subtitle — fixed facts, not controls (persona · model · folder); click → assistant page. */
+/* A chip, not a subtitle. Under the title it read as a caption; on the same line a plain
+   grey string after a bold name reads as part of the name. The border and the mono face say
+   "machine fact", which is what a model id is. */
+.title-sub {
+  border: 1px solid var(--line-strong); background: none; cursor: default;
+  border-radius: var(--r-xs); padding: var(--s-1) var(--s-3);
+  font-family: var(--mono); font-size: var(--t-xs); font-weight: 400; line-height: 1.4;
+  color: var(--muted);
+  max-width: min(340px, 100%); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex-shrink: 0;
+}
+.title-sub:hover { color: var(--ink); }
+/* Equal-flex side regions keep the subtitle centered; they double as window-drag surfaces. */
+/* 2px, not 6. These are 30px hit targets whose glyphs are 16px, so each button already
+   carries 7px of its own padding on either side — a 6px gap put 20px of air between two
+   icons that belong to each other, and the cluster read as four unrelated controls. */
+.main-topbar-side { align-self: stretch; flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: var(--s-1); }
+.main-topbar-actions { justify-content: flex-end; }
+/* The same control as the sidebar's `.nav-icon-btn`, so it is the same shape:
+   square, on the dense control size, at the least round step. These were 28px at
+   6px while the sidebar's were 24px at 4px — one window, two treatments for one
+   kind of button. 24px still clears the WCAG 2.5.8 pointer floor exactly. */
+.topbar-icon-btn {
+  position: relative; /* the corner dot anchors here */
+  width: var(--ctl-h-sm); height: var(--ctl-h-sm); display: grid; place-items: center;
+  border: 0; border-radius: var(--r-xs); background: transparent; color: var(--muted); cursor: pointer;
+}
+.topbar-icon-btn:hover { color: var(--ink); background: var(--paper); }
+/* A tool that is OPEN says so. Terminal and Browser toggled a panel and looked
+   identical either way, so the only way to know whether you had opened the
+   terminal was to look at the panel — which is the thing the button was for. Same
+   accent pair the sidebar's selected surface uses. */
+.topbar-icon-btn.is-on { color: var(--accent); background: var(--accent-soft); }
+.app.tauri-overlay .main-title,
+.app.tauri-overlay .main-drag-fill {
+  -webkit-app-region: drag;
+}
+.app.tauri-overlay button,
+.app.tauri-overlay input,
+.app.tauri-overlay textarea,
+.app.tauri-overlay select,
+.app.tauri-overlay .topbar-icon-btn {
+  -webkit-app-region: no-drag;
+}
+.main-workspace { position: relative; display: flex; min-height: 0; flex: 1; overflow: hidden; }
+.main-chat { position: relative; display: flex; flex-direction: column; min-width: 0; flex: 1; padding-top: 48px; }
+.main.rail-open .main-chat { margin-right: 332px; }
+/* 26/28 fixed, per the artifact — not 8%. `.transcript` already centres itself with
+   max-width + auto margins, so a percentage gutter was centring the column a second time:
+   on a narrow window it ate width the transcript needed, and on a wide one it did nothing
+   the max-width was not already doing. */
+/* The right panel overlays this pane, so the usable width is far less than `.main` is wide
+   — measured 640px on a 1440px window. 26/28 padding plus the navigator's reserved gutter
+   was spending 90px of that 640 (14%) on empty margin. */
+.main-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 20px; }
+/* The navigator lives in the left gutter, and the gutter is whatever `max-width: 768px`
+   plus auto margins happens to leave. On a 1440px window that was 28px LESS than the
+   navigator needs, so its ticks sat on top of the assistant's text; only above ~1700px was
+   there room by luck. Reserving the width means the transcript centres in what is left
+   instead of underneath it.
+   The sibling selector does the conditional for free: `.tnav` is only in the DOM when the
+   navigator renders (two turns or more), so a short conversation gets the plain gutter. */
+.tnav + .main-scroll { padding-left: 38px; }
+
+/* idle hero */
+.hero { max-width: 720px; margin: 6vh auto 0; }
+.greeting { font-family: var(--serif); font-size: var(--t-xl); line-height: var(--t-xl-lh); margin: 0 0 var(--s-8); }
+.greeting .mark { color: var(--accent); margin-right: var(--s-5); }
+.suggestions { margin-top: 40px; display: flex; flex-direction: column; }
+.suggest-head { font-size: var(--t-md); color: var(--muted); margin-bottom: var(--s-3); }
+.suggest {
+  display: flex; align-items: center; gap: var(--s-5); padding: var(--s-5) var(--s-3);
+  border-top: 1px solid var(--line); cursor: pointer; color: var(--ink); font-size: var(--t-lg);
+}
+.suggest:hover { color: var(--accent); }
+.suggest .ico {
+  width: var(--ctl-h); height: var(--ctl-h); border: 1px solid var(--line); border-radius: var(--r-sm);
+  display: grid; place-items: center; background: var(--panel); font-size: var(--t-md);
+  color: var(--muted); flex: none;
+}
+
+/* transcript */
+/* Conversation column — mock's `max-w-3xl mx-auto space-y-5` (the px-6/py-6 gutter is supplied by
+   .main-scroll). The user bubble is restyled inline with Tailwind utilities on the element. */
+/* Two rhythms, not one.
+   The base gap is the space WITHIN an exchange — a question, the work it caused,
+   and the answer belong together, so they sit close. `.exchange-start` adds the
+   space BETWEEN exchanges, which is where the reader's eye needs a break.
+   A single 20px gap for both meant a question sat as far from its own answer as
+   from an unrelated turn, and a long session read as a list of items rather than
+   a conversation. */
+/* 12px between blocks. It was 20 to keep a command row from reading as part of the sentence
+   explaining it — but that argument was made while every reply also carried an ASSISTANT
+   caption pushing things apart. With the caption gone, your questions are right-aligned in a
+   box and the replies are left-aligned and bare, which separates them on its own; 20px on
+   top of that was just air. The gap between EXCHANGES stays larger, because that is the
+   break that means something. */
+.transcript { max-width: 768px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-6); }
+.transcript > .exchange-start { margin-top: 20px; }
+/* The measure is in CHARACTERS, which is the part that matters and the part that
+   survives a size change: 768px of 15px prose was about 85 characters a line, past
+   the 45-75 the eye tracks comfortably, so long answers lost their place on the
+   return sweep. 68ch holds whatever the size is.
+
+   The size WAS 15px, argued for here against the artifact's 13.5 on the grounds
+   that this is where real paragraphs get read. The owner has now looked at it
+   beside a reference and called it too large; 13px it is. That is a judgement about
+   how the thing looks, and theirs beats an argument in a comment. The line-height
+   comes with it — `--t-prose-lh`, not the 18px a 13px ROW would take, because a
+   paragraph needs more air between lines than a control does. */
+.bubble-assistant { font-size: var(--t-md); line-height: var(--t-prose-lh); white-space: pre-wrap; }
+.bubble-assistant > *:not(.who) { max-width: 68ch; }  /* characters, so it tracks the size */
+/* Above a bubble, who it is from: "proposed plan", or the assistant an `@` mention
+   handed the message to. Small print in the shell's voice, like the other who-and-when
+   lines, so it labels the reply without competing with it. */
+.bubble-assistant > .who { margin-bottom: var(--s-1); font-family: var(--mono); font-size: var(--t-xs); line-height: var(--t-xs-lh); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+/* A 240-character word with no break opportunity used to stretch the user's bubble to
+   1479px — wider than the window — because `max-w-[78%]` bounds the box but not
+   unbreakable content inside it (UX-REPORT §9). Long URLs already wrapped; plain long
+   words did not. `anywhere` is the one value that will break mid-token. */
+.bubble-user, .bubble-assistant { overflow-wrap: anywhere; min-width: 0; }
+/* The user's own words, at the size the answer beneath them is set in. It was
+   14.5px on a `leading-snug` that computed to 19.9375px — a half-pixel size nobody
+   picked and a line-height nobody could have. A question and its answer being two
+   different sizes is the kind of thing you feel before you can name it. */
+.bubble-user { font-size: var(--t-md); line-height: var(--t-prose-lh); }

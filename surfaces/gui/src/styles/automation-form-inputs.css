@@ -1,0 +1,104 @@
+/* ---- Automation form inputs (the form/template cards themselves are Tailwind, §28) ---- */
+
+.tmpl-form { display: flex; flex-direction: column; gap: var(--s-4); }
+.tmpl-input {
+  font: inherit; font-size: var(--t-md); color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); padding: var(--s-3) var(--s-5); outline: none;
+}
+.tmpl-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.tmpl-input::placeholder { color: var(--faint); }
+.tmpl-textarea { resize: vertical; min-height: 64px; line-height: 1.45; }
+.tmpl-sched { display: flex; gap: var(--s-7); flex-wrap: wrap; }
+.tmpl-field { display: flex; flex-direction: column; gap: var(--s-2); font-size: var(--t-xs); color: var(--muted); }
+.tmpl-time, .tmpl-select { padding: var(--s-3) var(--s-4); }
+.tmpl-form-actions { display: flex; align-items: center; gap: var(--s-6); margin-top: var(--s-1); }
+
+
+/* Inbox view */
+/* The line above an item's heading: what kind of thing is waiting, who is asking, how long
+   ago. Quiet — it is context for the decision, not the decision. */
+.inbox-item-meta {
+  display: flex; align-items: center; gap: var(--s-3); min-width: 0;
+  font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--faint);
+}
+.inbox-item-kind { font-weight: 600; color: var(--muted); white-space: nowrap; }
+/* Inbox › Configure's two short cards: side by side while each gets ~280px, stacked below. */
+.inbox-config-grid {
+  display: grid; gap: var(--s-8); margin-bottom: var(--s-8);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+/* Approvals nobody answered for a day, offered as one decision above the list. */
+.inbox-stale {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4);
+  margin-bottom: var(--s-8); padding: var(--s-5) var(--s-6);
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel);
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--muted);
+}
+/* A call's settings ("approval-policy: on-request"): they matter, and they are not the request. */
+.inbox-item-args {
+  margin-top: var(--s-3);
+  font-family: var(--mono); font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--muted);
+  overflow-wrap: anywhere;
+}
+/* "Go to session" chip: persona icon + session title, links back for context. */
+.inbox-session-chip {
+  display: inline-flex; align-items: center; gap: var(--s-3); margin: var(--s-4) 0 var(--s-1);
+  max-width: 100%; padding: var(--ctl-pad-y) var(--ctl-pad-x-sm) var(--ctl-pad-y) var(--s-3); border: 1px solid var(--line);
+  border-radius: var(--r-pill); background: var(--paper); color: var(--muted);
+  font: inherit; font-size: var(--t-sm); cursor: pointer;
+}
+.inbox-session-chip:hover:not(:disabled) { color: var(--ink); border-color: var(--line-strong); }
+.inbox-session-chip:disabled { cursor: default; opacity: 0.6; }
+/* One quiet tile per requester, the persona's glyph inside it. These were four saturated
+   brand-ish blocks (a green, a purple, an orange) mixed into a page of cards — colour spent
+   on which assistant asked, which is the least important thing on an approval. */
+.inbox-chip-ico {
+  width: var(--i-lg); height: var(--i-lg); border-radius: var(--r-xs);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--solid); color: var(--muted); flex: none;
+}
+.inbox-chip-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-chip-go { flex: none; color: var(--faint); }
+
+.provider-plate { background: var(--logo-plate); }
+
+/* Remote control, while it is on: the row says so without shouting, in the warning tone the
+   rest of the app uses for "this is live and it reaches outside". */
+.tg-inbound.is-on {
+  border-radius: var(--r-md); padding: var(--s-4);
+  border: 1px solid var(--warn-ink); background: var(--warn-soft);
+}
+
+/* Connector registry logos. The brand color comes from the API (`brand_color`), set inline as the
+   --brand / --brand-soft custom properties by <ConnectorIcon>/<ConnectorBadge> — not a CSS table. */
+.connector-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  line-height: 0;
+  color: var(--brand, #6b7280);
+}
+.connector-icon > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.connector-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--r-md);
+  background: var(--brand-soft, rgba(107, 114, 128, 0.12));
+}
+
+/* Dark mode (owner call 2026-07-18, matching the industry pattern): badges sit on a LIGHT
+   plate so near-black marks (GitHub, Notion, …) stay legible — the 12% brand tint is
+   invisible against dark panels. Bare icons (sidebar, session intro) have no plate, so
+   dark marks are instead mixed toward the theme ink; icons INSIDE a badge are excluded —
+   on the light plate the original mark is already right. */
+html[data-theme="dark"] .connector-badge {
+  background: #eef0f3;
+}
+html[data-theme="dark"] :not(.connector-badge) > .connector-icon[data-dark-mark] {
+  color: color-mix(in srgb, var(--brand) 35%, var(--ink)) !important;
+}

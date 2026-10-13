@@ -1,0 +1,7 @@
+/* ---------- sidebar ---------- */
+/* Base sidebar chrome lives in Sidebar.tsx (Tailwind, mock-parity). This rule only anchors the
+   grid column + the tauri-overlay overrides below; the `.brand` class is kept on the header as a
+   hook for the overlay hide rule. */
+.sidebar {
+  min-height: 0;
+}

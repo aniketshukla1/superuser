@@ -1,0 +1,24 @@
+# `pnpm approve-builds` wrote this block as a stub with the literal text "set this to
+# true or false" and it was committed that way, which made `pnpm dev` here fail outright:
+# pnpm re-runs install on a deps check, install exits non-zero on an undecided script,
+# and the dev server never starts.
+#
+# esbuild: true — its postinstall fetches the platform binary; without it there is no
+#   esbuild to run at all.
+# protobufjs: false — its postinstall only rewrites require paths for its CLI. Nothing
+#   here runs that CLI; the app imports the library and Vite bundles it.
+allowBuilds:
+  esbuild: true
+  protobufjs: false
+# `surfaces/gui` resolves its own dependencies: the repo root's workspace file has no
+# `packages:` field, so this project is not a member of it and root-level settings do
+# not reach here. This file makes that explicit and gives the GUI somewhere to put
+# settings that must apply to its own tree.
+#
+# The override exists because CodeMirror compares its state classes by identity. The
+# `@uiw` React wrapper resolved `@codemirror/state` 6.7.1 while every language grammar
+# resolved 6.7.0, so each grammar was built against a different `Facet` than the editor
+# running it — which surfaces as "Unrecognized extension value in extension set" and
+# takes the panel down. One version, for the whole tree.
+overrides:
+  "@codemirror/state": "6.7.1"

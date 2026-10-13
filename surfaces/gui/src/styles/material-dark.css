@@ -1,0 +1,40 @@
+/* ── Material, dark themes: matte ─────────────────────────────────────────────
+   Flat, non-reflective shades instead of gloss: the nav (--paper), the chat (--canvas), a
+   card (--panel) and a hover (--solid) are each a step apart, edges are flat one-pixel
+   lines, and depth is a soft shadow under a card rather than a lit rim on top of it. No
+   sheen, no grain, no glass. Only the metal (material.css) catches light. */
+
+/* The open row: a flat lift and a bar of the accent at its start. */
+html[data-theme="dark"] .sidebar .list-row.bg-solid,
+html[data-theme="dark"] .sidebar .nav-row.bg-solid,
+html[data-theme="dark"] .sidebar .nav-row.bg-line {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* Cards: the panel, a flat edge, and a soft shadow beneath. */
+html[data-theme="dark"] .chart-block,
+html[data-theme="dark"] .main .rounded-xl2.bg-panel:not(.composer) {
+  border-color: var(--line);
+  background-color: var(--panel);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35), 0 12px 28px -18px rgba(0, 0, 0, 0.7);
+}
+html[data-theme="dark"] .bubble-user {
+  border-color: var(--line);
+  background: var(--solid);
+}
+
+/* The composer: the panel, its edge, a soft shadow; focus lights the edge in the accent. */
+html[data-theme="dark"] .composer {
+  background: var(--panel);
+  box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.8);
+}
+html[data-theme="dark"] .composer:focus-within {
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 12px 32px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* A selected filter or option: tinted with the accent, edged in it, named in it. */
+html[data-theme="dark"] .bg-accentSoft.border-accent {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent);
+}

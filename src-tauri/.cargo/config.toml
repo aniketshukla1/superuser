@@ -1,0 +1,7 @@
+# Intentionally minimal. The real settings live at the repo root (../.cargo/config.toml)
+# because `npm run build` runs tauri, which invokes cargo from the ROOT — and cargo only
+# walks UP from its working directory, so anything written here is invisible to the
+# release build while appearing to work for `cargo build` run from this directory.
+#
+# Cargo merges every config it finds on the way up, so root-level settings reach builds
+# started from here too. Keep build-affecting settings there, not here.

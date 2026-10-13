@@ -1,0 +1,99 @@
+/* The site's stylesheet. Tokens are the SAME NAMES as the app's
+   (surfaces/gui/src/styles.css) so the two surfaces share one vocabulary — a
+   colour called `--accent` means the same thing in both places, and the brand can
+   only drift in one direction at a time.
+
+   Dark-first, because the product is. The light block exists so a visitor whose
+   OS asks for light does not get handed a black page. */
+
+:root {
+  color-scheme: dark;
+  --paper: #0b0d0f;
+  --panel: #121517;
+  --solid: #14171a;
+  --ink: #e8eaed;
+  --muted: #8b9299;
+  --faint: #788188;
+  --line: #1a1e21;
+  --line-strong: #22262a;
+  --accent: #8a8cf0;
+  --accent-soft: #1c1d33;
+  --on-accent: #0b0d0f;
+  --ok: #5bc47e;
+  --err: #f0857a;
+
+  --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* One scale, used everywhere. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-24: 96px;
+  --sp-32: 128px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --paper: #f4f6f7;
+    --panel: #ffffff;
+    --solid: #edeff1;
+    --ink: #14181b;
+    --muted: #545e66;
+    --faint: #656e75;
+    --line: #e2e6e9;
+    --line-strong: #c9d0d5;
+    --accent: #5457c8;
+    --accent-soft: #ebecfa;
+    --on-accent: #ffffff;
+    --ok: #2e7a4c;
+    --err: #b42318;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* One focus treatment for everything interactive. Never removed — the accent is
+   already verified to clear the non-text contrast threshold on every surface. */
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}

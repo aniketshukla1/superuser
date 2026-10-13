@@ -1,0 +1,194 @@
+.askcard-step {
+  flex-shrink: 0;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--t-xs);
+  /* The title's line box, so the badge sits on its first line without a 1px nudge. */
+  line-height: var(--t-md-lh);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.askcard-q {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: 600;
+  line-height: var(--t-md-lh);
+  color: var(--ink);
+}
+.askcard-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  border-radius: var(--r-sm);
+  color: var(--faint);
+  cursor: pointer;
+}
+.askcard-icon:hover { color: var(--ink); background: var(--paper); }
+
+.askcard-options { display: flex; flex-direction: column; gap: var(--s-2); margin-top: var(--s-4); }
+.askcard-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--ctl-pad-y) var(--ctl-pad-x);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  text-align: left;
+  cursor: pointer;
+}
+.askcard-opt:hover { border-color: var(--line-strong); }
+.askcard-opt.is-on { border-color: var(--accent); background: var(--accent-soft); }
+/* No gap between the two lines: the label's line-height already carries the space,
+   and adding to it was what made each option read as two stacked paragraphs. */
+.askcard-opt-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.askcard-opt-label { font-size: var(--t-md); font-weight: 550; line-height: var(--t-md-lh); color: var(--ink); }
+.askcard-opt-desc { font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--muted); }
+.askcard-key {
+  flex-shrink: 0;
+  min-width: 18px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  background: var(--panel);
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-sm-lh);
+  text-align: center;
+}
+
+.askcard-other { flex-direction: column; align-items: stretch; gap: var(--s-3); padding: var(--s-3) var(--ctl-pad-x) var(--s-4); cursor: default; }
+.askcard-other-head { display: flex; align-items: center; gap: var(--s-4); }
+.askcard-other-head .askcard-opt-label { flex: 1 1 auto; }
+.askcard-other input {
+  width: 100%;
+  padding: var(--ctl-pad-y) var(--ctl-pad-x-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  outline: none;
+}
+.askcard-other input::placeholder { color: var(--faint); }
+.askcard-other input:focus { border-color: var(--line-strong); }
+
+.askcard-foot { display: flex; justify-content: flex-end; align-items: center; gap: var(--s-3); margin-top: var(--s-4); }
+.askcard-skip {
+  padding: var(--s-2) var(--ctl-pad-x-sm);
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--t-md-lh);
+  cursor: pointer;
+}
+.askcard-skip:hover { color: var(--ink); background: var(--paper); }
+.askcard-next {
+  padding: var(--s-2) var(--s-6);
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--t-sm);
+  line-height: var(--t-md-lh);
+  font-weight: 500;
+  cursor: pointer;
+}
+.askcard-next:hover:not(:disabled) { filter: brightness(1.05); }
+.askcard-next:disabled { opacity: 0.4; cursor: default; }
+
+/* A chart drawn in the conversation, not in the panel. It sits in the transcript's
+   own column and carries the card treatment the panel's charts get from their
+   container, so the same spec reads the same in both places. */
+.chart-block {
+  max-width: 640px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  padding: 14px 16px;
+}
+
+/* ── composer control bar ──────────────────────────────────────────────────
+   Six controls that are one row: mode, add, microphone, model, effort, context.
+   Everything here sizes off the existing tokens — --ctl-h-sm for the hit target,
+   --t-sm for the label, --r-sm/--r-md for the corners — so the bar cannot drift
+   away from the rest of the chrome the way six separately-written chips would. */
+
+/* The row sits OUTSIDE the input's border, on the page ground, so it needs its own
+   breathing room where it used to inherit the box's padding. */
+.composer-bar { margin-top: var(--s-3); padding: 0 var(--s-1); }
+
+.composer-chip {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  height: var(--ctl-h-sm); padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  font-size: var(--t-sm); line-height: var(--t-sm-lh);
+  color: var(--muted); background: transparent;
+  cursor: pointer;
+  /* Shrinkable, and that is the whole trick. These were flex-shrink:0, so a long model
+     name did not make the label narrower — it made the ROW wider than the composer, and
+     the controls on the right walked off the edge. Now the row gives before the page
+     does, and `min-width: 0` on the label is what lets it actually truncate.
+
+     The floor is the hit target, not zero. Measured mid-change, an icon chip had been
+     squeezed to 16px wide — still there, still pressable in principle, and under the
+     24px minimum a pointer target is supposed to keep (WCAG 2.5.8). A control is
+     allowed to lose its label; it is not allowed to stop being clickable. */
+  flex: 0 1 auto; min-width: var(--ctl-h-sm);
+  transition: background-color .12s, color .12s;
+}
+/* Except the icon-only ones. There is nothing in them that can truncate, so shrinking
+   just squashes a hit target that is already at the 24px floor. */
+.composer-chip.is-icon { flex: none; }
+
+/* Each control sits in a slot, and the SLOT is what the bar lays out — the chip is a
+   grandchild, because a menu has to be positioned against something. Making the chip
+   shrinkable therefore did nothing at all: the slot's default `min-width: auto` held
+   the row open and the right-hand controls walked off the edge. The slot gives, the
+   chip gives, the label truncates — all three, or none of it works. */
+/* `display: flex`, and it is not decoration. As a block, each slot laid its chip out
+   on a TEXT BASELINE — so every slot ended up a different height depending on what was
+   inside it (26px around a label, 25px around an icon, 27px around the ring's svg) and
+   the chip sat at a different offset within each. The row centres the slots, so the
+   chips landed at four different heights and the ring was 2.5px above everything else.
+   Flex removes the line box: slot height is chip height, and one centre serves all. */
+/* Static inside the stack: the menu's containing block is then the composer as a whole, so
+   `bottom: 100%` clears the input instead of opening on top of it. */
+.composer-slot { position: static; display: flex; align-items: center; flex: 0 1 auto; min-width: 0; }
+/* A slot holding an icon is holding something that cannot get any smaller. */
+.composer-slot.is-fixed { flex: none; min-width: auto; }
+.composer-chip:hover:not(:disabled) { color: var(--ink); background: var(--paper); }
+/* An open panel must have a visible source. Without this you could have three menus'
+   worth of muscle memory and still not know which chip you had just pressed. */
+.composer-chip.is-open { color: var(--ink); background: var(--solid); }
+.composer-chip:disabled { cursor: default; opacity: .5; }
+.composer-chip.is-dim { opacity: .45; }
+.composer-chip.is-recording { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.composer-chip.is-ring { padding: 0 var(--s-2); }
+/* A label that can never be wider than a name. Model ids run long and arbitrary —
+   "llama3.2-vision:latest" against "gpt-4o" — and one long one used to push the whole
+   right-hand group onto a second row the moment the window narrowed. Truncated here,
+   whole in the tooltip. */
+.composer-chip-label {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+  /* A cap for the wide case, so one long id cannot take a third of the bar even when
+     there is room for it. Narrower than that, flex shrinking takes over. */
+  max-width: 16ch;
+}
+
+.composer-menu {
+  position: absolute; z-index: 40; bottom: 100%; margin-bottom: var(--s-2);
+  border-radius: var(--r-lg); border: 1px solid var(--line);
+  background: var(--panel); box-shadow: 0 12px 32px rgb(0 0 0 / .45);
+  padding: var(--s-2); max-height: 60vh; overflow-y: auto;
+}

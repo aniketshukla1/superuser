@@ -1,0 +1,186 @@
+/* ---- Controls -------------------------------------------------------------
+   Named recipes, because a button is a decision and `px-3 py-2` is not one.
+
+   The complaint that produced these: a 12.5px label sitting in a 35px-tall
+   button. Nothing chose 35. `text-[12.5px]` sets the font size and NOT the
+   line-height, so the control inherited the body's 1.5 (≈19px) and `py-2` added
+   16 on top. Fourteen padding pairs were in use for the same job, and every one
+   produced a height by accident.
+
+   SHAPE AND SKIN ARE SEPARATE, and finding that out cost a bug. `.btn` was
+   already a convention here — 31 call sites, with `.primary`, `.danger`,
+   `.icon-only` — and it is a COMPLETE button: sizing plus an outlined skin.
+   Adding a second `.btn` for sizing alone did not replace it, it lost to it:
+   `button.btn` is (0,1,1) and a bare `.btn` is (0,1,0), so every swept constant
+   silently kept the old 35px box, and any `bg-accent` on it lost to the skin's
+   `background: var(--panel)` too. Nothing errored. It measured 35px in the app.
+
+   So: `.ctl` is shape only, for call sites that bring their own colours as
+   utilities. `button.btn` is shape + the default outlined skin, for the call
+   sites that were already using it. Both take their sizing from the same tokens,
+   in the same declaration, so they cannot drift apart.
+
+   A control's height is derived: one 18px line box plus 5px either side is 28px.
+   Tailwind cannot express 5px on its 4px grid, which is the other reason these
+   are classes — the closest utilities are py-1 (26px) and py-1.5 (30px). */
+.ctl,
+button.btn,
+button.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  min-height: var(--ctl-h);
+  padding: var(--ctl-pad-y) var(--ctl-pad-x);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--t-sm);
+  line-height: var(--t-md-lh);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* The default skin, which is what `.btn` has always meant here. */
+button.btn { border: 1px solid var(--line-strong); background: var(--panel); }
+button.btn:hover { background: var(--paper); }
+button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+/* Destructive. It was `color: var(--accent)` — a "danger" button in the colour that means
+   "the thing to press" — which is presumably why nothing used it. */
+button.btn.danger { color: var(--danger); }
+button.btn.danger:hover { border-color: var(--danger); background: var(--danger-soft); }
+
+/* Dense variant: toolbars, chip rows, anywhere a full-height control would
+   dominate the line it sits on. Still clears the 24px pointer-target floor
+   (WCAG 2.5.8), which is why it does not go smaller. */
+.ctl-sm,
+button.btn.sm,
+button.btn-primary.sm {
+  min-height: var(--ctl-h-sm);
+  padding: var(--s-2) var(--ctl-pad-x-sm);
+  font-size: var(--t-xs);
+  line-height: var(--t-sm-lh);
+}
+/* Icon-only: square, so it does not read as a stubby button. */
+.ctl-icon,
+button.btn.icon-only { padding: 0; width: var(--ctl-h); min-height: var(--ctl-h); color: var(--muted); }
+.ctl-icon.ctl-sm,
+button.btn.icon-only.sm { width: var(--ctl-h-sm); min-height: var(--ctl-h-sm); }
+button.btn.icon-only:hover { color: var(--ink); }
+.ctl:disabled,
+button.btn:disabled { opacity: 0.4; cursor: default; }
+
+/* A row in a navigation list — settings sections, brain tabs, integrations.
+   Three views had grown the same inline `px-2.5 py-2 text-[13px]` and all three
+   measured 34px, while the sidebar's own nav rows are 26px. Same job, same
+   surface, 8px apart. This is that rhythm, stated once: 18px line box, 4px
+   either side. Still clears the 24px pointer-target floor. */
+.navrow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--s-2) var(--ctl-pad-x-sm);
+  border-radius: var(--r-sm);
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* A pointer target bigger than the thing you can see.
+   WCAG 2.5.8 wants 24x24 CSS px. The bubble hover actions (copy / read aloud /
+   retry) are 11x11 icons living in a zero-height absolute strip inside the
+   transcript's 20px gap — the strip is what stops revealing them from shifting
+   the layout, so growing the button itself would push it into the next message.
+   The standard answer, and the one the touch-target guidance actually gives:
+   leave the visual alone and extend the hit area past it. */
+.hit-target { position: relative; }
+.hit-target::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  transform: translate(-50%, -50%);
+}
+
+.field {
+  width: 100%;
+  min-height: var(--ctl-h);
+  padding: var(--ctl-pad-y) var(--ctl-pad-x);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  outline: none;
+}
+.field::placeholder { color: var(--faint); }
+.field:focus { border-color: var(--line-strong); }
+
+/* Controls carry a line box whether or not the element that styles them
+   remembered to set one. This is the floor under the whole problem: an
+   arbitrary `text-[12.5px]` utility sets size alone, so without this every
+   button's height is decided by whatever it happens to inherit. */
+button,
+input,
+select,
+textarea {
+  line-height: var(--t-md-lh);
+}
+
+/* The agent's questions, one at a time (components/AskCard.tsx).
+
+   Every radius here is a scale variable, never a number. The first cut of this card
+   was hand-numbered — 12/9/7/6/5px — and the owner spotted it immediately: too round,
+   too padded, and off the system the rest of the app was measured onto.
+
+   The rhythm follows the sidebar's, which is the app's densest settled surface:
+   18px line-height on a row, padding either side. A one-line row there is 26px
+   (18 + 4 + 4). An option here carries two lines, 18 + 17, so 5px either side gives
+   45px + border — the same proportion of padding to content, one row taller. */
+/* The form card: AskCard's sibling, so it wears AskCard's frame. The two are one
+   gesture — the agent stopping to ask — and giving them different shells would make
+   them read as different features. */
+.formcard {
+  border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+  background: var(--panel); padding: var(--s-6) var(--s-6) var(--s-4);
+}
+.formcard.is-compact { max-width: 48rem; margin: 0 auto var(--s-5); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+.formcard-title { font-size: var(--t-md); font-weight: 600; color: var(--ink); }
+.formcard-intro { margin: var(--s-2) 0 0; color: var(--muted); font-size: var(--t-sm); line-height: var(--t-prose-lh); }
+.formcard-fields { display: grid; gap: var(--s-5); margin-top: var(--s-5); }
+.formcard-field { display: grid; gap: var(--s-2); }
+.formcard-label { font-size: var(--t-sm); color: var(--ink); }
+.formcard-optional { color: var(--faint); }
+.formcard-input {
+  width: 100%; font: inherit; font-size: var(--t-md); color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  padding: var(--ctl-pad-y-lg) var(--ctl-pad-x-lg);
+}
+.formcard-input:focus { outline: none; border-color: var(--accent); }
+.formcard-input:disabled { opacity: .55; }
+.formcard-help { font-size: var(--t-xs); color: var(--faint); line-height: var(--t-prose-lh); }
+.formcard-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); margin-top: var(--s-6); }
+.formcard-note { font-size: var(--t-xs); color: var(--faint); }
+.formcard-send {
+  font: inherit; font-size: var(--t-sm); font-weight: 500; cursor: pointer;
+  padding: var(--ctl-pad-y-lg) var(--ctl-pad-x-lg); border-radius: var(--r-md);
+  background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent);
+}
+.formcard-send:disabled { opacity: .45; cursor: default; }
+
+.askcard {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  padding: var(--s-6) var(--s-6) var(--s-4);
+}
+.askcard-compact {
+  max-width: 48rem;
+  margin: 0 auto var(--s-5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.askcard-head { display: flex; align-items: flex-start; gap: var(--s-4); }

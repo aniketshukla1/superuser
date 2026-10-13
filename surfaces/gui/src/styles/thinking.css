@@ -1,0 +1,35 @@
+/* -- thinking (reasoning trace) disclosure — model-layer roadmap item 4 ----------- */
+.thinking { margin: var(--s-1) 0 var(--s-2); }
+.thinking-head {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-size: var(--t-sm); color: var(--faint);
+  background: none; border: none; padding: var(--s-1) 0; cursor: pointer;
+}
+.thinking-head:hover { color: var(--muted); }
+.thinking-caret { transition: transform 0.15s; transform: rotate(-90deg); }
+.thinking-caret.open { transform: rotate(0); }
+.thinking-live { animation: boot-pulse 1.4s ease-in-out infinite; }
+@keyframes boot-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.96); }
+  50% { opacity: 0.9; transform: scale(1.04); }
+}
+.thinking-body {
+  font-size: var(--t-sm); line-height: 1.55; color: var(--muted);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  border-left: 2px solid var(--line); padding: var(--s-2) 0 var(--s-2) var(--s-5); margin: var(--s-2) 0 var(--s-3) var(--s-2);
+  max-height: 280px; overflow-y: auto;
+}
+
+/* -- BETA tag (quiet gray chip beside the wordmark; presentation-only, never in
+   bundle/artifact names — those feed the updater) --------------------------------- */
+
+/* Folder artifact listing (a linked package dir renders as rows, not "not found"). */
+.artifact-folderlist { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-5) var(--s-6); }
+.artifact-folder-row {
+  display: flex; align-items: center; gap: var(--s-4); width: 100%; text-align: left;
+  padding: var(--s-3) var(--s-5); border: 0; border-radius: var(--r-md); background: none; cursor: pointer;
+  color: var(--ink); font-size: var(--t-sm);
+}
+.artifact-folder-row:hover { background: var(--paper); }
+.artifact-folder-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-folder-size { font-size: var(--t-xs); color: var(--faint); }

@@ -1,0 +1,29 @@
+# Build settings that must hold for every build, not just the one someone
+# remembered to prefix with an environment variable.
+#
+# This lives at the REPO ROOT, not in src-tauri/, and the difference is the whole
+# point. Cargo discovers config by walking up from its working directory — and the
+# two ways this project is built do not share one:
+#
+#   cargo build            (cwd src-tauri)  → finds src-tauri/.cargo AND this one
+#   npm run build          (cwd repo root)  → tauri invokes cargo from HERE, so a
+#                                             config under src-tauri is never read
+#
+# So the same settings applied when built one way and silently vanished the other.
+# The release build failed, `cargo build --release` from src-tauri succeeded, and the
+# difference looked like anything except a config file nobody was reading.
+
+[env]
+# whisper.cpp's ggml uses `std::filesystem::path`, which libc++ marks unavailable
+# before macOS 10.15. Left unset, the `cmake` crate configures ggml at 10.13, so
+# ggml-backend-reg.cpp fails with twenty "'path' is unavailable: introduced in macOS
+# 10.15" errors and the release build dies in whisper-rs-sys's build script.
+#
+# CMake seeds CMAKE_OSX_DEPLOYMENT_TARGET from this variable when it configures a
+# build directory, then caches it. A directory configured while this was unset keeps
+# 10.13 even after the variable is set correctly, which is why scripts/preflight-cmake.mjs
+# drops build dirs cached below the floor.
+#
+# 11.0 rather than 10.15 because this ships on arm64, where 11.0 is the floor anyway,
+# and Tauri v2 already requires 10.15+.
+MACOSX_DEPLOYMENT_TARGET = "11.0"

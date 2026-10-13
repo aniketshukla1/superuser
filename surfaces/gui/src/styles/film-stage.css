@@ -1,0 +1,185 @@
+/* ------------------------------------------------------------- the launch film
+ *
+ * components/LaunchFilm. A film's opening rather than a loading screen, so it breaks the
+ * app's rule that nothing loops: the terminals scroll and the grain jitters while it is
+ * up, and never again. Always matte black — Carbon's paper — whatever theme is chosen:
+ * the owner asked for the name to glow on matte black. Every piece starts invisible and
+ * is shown by its own delay, so nothing sits on its first frame waiting for its cue. The
+ * beats arrive as custom properties from LaunchFilm (`--feeds`, `--sweep`, `--cam`,
+ * `--mark`, `--cmd-out`). */
+
+.film {
+  --film-bg: #111111;
+  --film-ink: #eef3f8;
+  --film-ice: #ddeaf7;
+  --film-mint: #5ee6c2;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--film-bg);
+  color: var(--film-ink);
+  font-family: var(--sans);
+}
+
+/* ---- the terminals: code running down both edges ---- */
+.film-term { position: absolute; inset: 0; opacity: 0; animation: film-term-life var(--cam) linear var(--feeds) both; }
+@keyframes film-term-life {
+  0% { opacity: 0; }
+  8%, 86% { opacity: 0.55; }
+  100% { opacity: 0.06; }
+}
+.film-terminal {
+  position: absolute;
+  inset-block: 0;
+  width: 22%;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  white-space: pre;
+  mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent);
+}
+.film-terminal.is-left { left: 2.5%; }
+.film-terminal.is-right { right: 2.5%; text-align: right; }
+.film-terminal div div { overflow: hidden; text-overflow: ellipsis; }
+.film-scroll { animation: film-scroll 6s linear infinite; }
+@keyframes film-scroll { to { transform: translateY(-50%); } }
+.film-tone-dim { color: rgb(238 243 248 / 0.2); }
+.film-tone-bright { color: rgb(238 243 248 / 0.44); }
+.film-tone-ok { color: rgb(94 230 194 / 0.42); }
+.film-tone-warn { color: rgb(242 193 78 / 0.42); }
+
+/* ---- the camera: a rig flying forward through planes of work ---- */
+.film-footage { position: absolute; inset: 0; animation: film-footage-out 0.7s ease-in var(--sweep) forwards; }
+@keyframes film-footage-out { to { opacity: 0.04; } }
+.film-depth { position: absolute; inset: 0; overflow: hidden; perspective: 1000px; perspective-origin: 50% 46%; }
+.film-camera {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: film-camera var(--cam) cubic-bezier(0.45, 0.05, 0.3, 1) calc(var(--feeds) - 300ms) both;
+}
+/* The world moves toward the lens while it turns a little, so near planes sweep past one
+   side and far ones swing in from the other. The short cut starts deeper in. */
+@keyframes film-camera {
+  0% { transform: translateZ(-400px) rotateY(-8deg) rotateX(3deg); }
+  100% { transform: translateZ(1250px) rotateY(5deg) rotateX(-2deg); }
+}
+.reel-short .film-camera { animation-name: film-camera-short; }
+@keyframes film-camera-short {
+  0% { transform: translateZ(250px) rotateY(-5deg) rotateX(2deg); }
+  100% { transform: translateZ(1250px) rotateY(5deg) rotateX(-2deg); }
+}
+.film-plane { position: absolute; inset: 0; }
+
+/* ---- one screen of work, framed like a live feed ---- */
+.film-feed {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 360px;
+  padding: var(--s-4);
+  border: 1px solid rgb(238 243 248 / 0.2);
+  background: rgb(238 243 248 / 0.035);
+  opacity: 0;
+  transform: translate(calc(var(--px) - 50%), calc(var(--py) - 50%));
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  animation: film-appear 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes film-appear {
+  from { opacity: 0; transform: translate(calc(var(--px) - 50%), calc(var(--py) - 50%)) scale(0.82); }
+  to { opacity: 1; transform: translate(calc(var(--px) - 50%), calc(var(--py) - 50%)) scale(1); }
+}
+.film-feed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgb(238 243 248 / 0.04) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 120% at 50% 50%, transparent 60%, rgb(0 0 0 / 0.5));
+}
+.film-feed-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-2);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(238 243 248 / 0.72);
+}
+.film-feed-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.film-feed-live { display: inline-flex; align-items: center; gap: var(--s-2); flex: none; color: rgb(238 243 248 / 0.45); }
+.film-feed-live i { width: 5px; height: 5px; border-radius: var(--r-circle); background: var(--film-mint); animation: film-blink 1s steps(1) infinite; }
+.film-art { display: block; width: 100%; height: auto; aspect-ratio: 270 / 150; overflow: visible; font-family: var(--mono); }
+.film-band {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 18%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgb(238 243 248 / 0.07), transparent);
+  animation: film-band 1.7s linear infinite;
+}
+@keyframes film-band {
+  from { transform: translateY(-120%); }
+  to { transform: translateY(640%); }
+}
+
+/* ---- the work drawing itself ---- */
+.film-reach { transform-box: fill-box; transform-origin: left; transform: scaleX(0); animation: film-reach 0.36s cubic-bezier(0.22, 0.9, 0.3, 1) forwards; }
+@keyframes film-reach { to { transform: scaleX(1); } }
+.film-rise { transform-box: fill-box; transform-origin: bottom; transform: scaleY(0); animation: film-rise 0.5s cubic-bezier(0.22, 0.9, 0.3, 1) forwards; }
+@keyframes film-rise { to { transform: scaleY(1); } }
+.film-draw, .film-tick { stroke-dasharray: 1; stroke-dashoffset: 1; animation: film-draw 1.1s cubic-bezier(0.22, 0.8, 0.3, 1) forwards; }
+.film-tick { animation-duration: 0.3s; }
+@keyframes film-draw { to { stroke-dashoffset: 0; } }
+.film-pop { transform-box: fill-box; transform-origin: center; opacity: 0; animation: film-pop 0.34s cubic-bezier(0.3, 1.4, 0.5, 1) forwards; }
+@keyframes film-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+.film-wash, .film-line, .film-arc { opacity: 0; animation: film-wash 0.5s ease-out forwards; }
+@keyframes film-wash { to { opacity: 1; } }
+
+/* ---- the command, the typing, the cursor ---- */
+.film-command {
+  position: absolute;
+  inset-inline: 0;
+  top: 44%;
+  z-index: 4;
+  margin: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  letter-spacing: 0.04em;
+  color: rgb(238 243 248 / 0.9);
+  pointer-events: none;
+  animation: film-command-life var(--cmd-out) linear both;
+}
+@keyframes film-command-life {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* `step-start`, not `steps(1)`: a jump at the end of the step needs the progress to reach
+   exactly 1, and after a long delay it lands just short — every character typed and then
+   vanished again. */
+.film-char { opacity: 0; animation: film-char 1ms step-start forwards; }
+@keyframes film-char { to { opacity: 1; } }
+.film-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.2em;
+  vertical-align: -0.14em;
+  background: currentColor;
+  animation: film-blink 0.9s steps(1) infinite;
+}
+@keyframes film-blink { 50% { opacity: 0; } }

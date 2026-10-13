@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Superuser</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Resolve the theme before first paint (no white flash for dark users).
+         Must match src/theme.ts: key "superuser.theme", the two id lists, the legacy
+         "dark"/"light" values, "auto" = follow macOS, and absent/invalid = Carbon (the
+         default). theme.test.ts checks the lists and the default against theme.ts. -->
+    <script>
+      try {
+        var dark = ["carbon", "graphite", "slate", "fjord", "abyss", "moss", "umber", "dusk"];
+        var light = ["porcelain", "paper", "mist", "sand", "sage", "frost", "dawn", "chalk"];
+        var t = localStorage.getItem("superuser.theme");
+        if (t === "dark") t = "carbon";
+        if (t === "light") t = "porcelain";
+        if (t === "auto") t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "carbon" : "porcelain";
+        if (dark.indexOf(t) < 0 && light.indexOf(t) < 0) t = "carbon";
+        document.documentElement.dataset.theme = dark.indexOf(t) >= 0 ? "dark" : "light";
+        document.documentElement.dataset.palette = t;
+      } catch (e) {}
+    </script>
+    <!-- Painted before any module loads. The theme attribute above was set early, but the colours
+         it selects live in styles.css, which a dev build only injects once main.tsx and everything
+         it imports have run — so until then the window was the webview's own blank page. That is
+         a quarter of a second warm; on a cold dev server, or when a module fails to load, it was
+         the whole screen, indefinitely, with nothing saying why. Values mirror --paper / --ink /
+         --muted in styles.css. -->
+    <style>
+      html, body { margin: 0; height: 100%; background: #f6f6f7; color: #16161a; }
+      html[data-theme="dark"], html[data-theme="dark"] body { background: #111111; color: #ececec; }
+      .preboot {
+        height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 10px; font: 13px/18px "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+      }
+      .preboot-mark { letter-spacing: 0.04em; }
+      .preboot-note { max-width: 460px; padding: 0 24px; text-align: center; color: #5b5b65; white-space: pre-wrap; }
+      html[data-theme="dark"] .preboot-note { color: #a8a8a8; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Replaced by React's first render (createRoot clears the container on mount). -->
+      <div class="preboot" data-tauri-drag-region>
+        <div class="preboot-mark">superuser</div>
+        <div class="preboot-note" id="preboot-note"></div>
+      </div>
+    </div>
+    <script>
+      // If the interface never starts, say so instead of leaving an empty window. main.tsx sets
+      // __superuserBooted as its first statement, which only runs once every module it imports has
+      // loaded — so a missing file, a syntax error in a half-saved edit, or a dead dev server all
+      // end up here, with the first error the page saw.
+      (function () {
+        var firstError = "";
+        function note(text) {
+          var el = document.getElementById("preboot-note");
+          if (el && !window.__superuserBooted) el.textContent = text;
+        }
+        window.addEventListener("error", function (e) {
+          if (window.__superuserBooted || firstError) return;
+          // Capture phase sees every failed resource; only a script failing is the app failing.
+          var t = e && e.target;
+          if (t && t !== window && t.tagName !== "SCRIPT") return;
+          firstError = (e && e.message) || "couldn't load " + ((t && t.src) || "a script");
+          note("The interface didn't start: " + firstError);
+        }, true);
+        setTimeout(function () {
+          if (window.__superuserBooted || firstError) return;
+          note("Still starting. If this doesn't change, the interface didn't load — the terminal running the app shows why.");
+        }, 8000);
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

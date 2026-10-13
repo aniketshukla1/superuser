@@ -1,0 +1,23 @@
+/* The stylesheet, in cascade order. Each file is one section; keep it under
+   200 lines and add new rules to the section they belong to. */
+@import "./styles/base.css";
+@import "./styles/layout.css";
+@import "./styles/type.css";
+@import "./styles/brand.css";
+@import "./styles/nav.css";
+@import "./styles/buttons.css";
+@import "./styles/hero.css";
+@import "./styles/app-preview.css";
+@import "./styles/features.css";
+@import "./styles/switch.css";
+@import "./styles/close.css";
+@import "./styles/memory-timeline.css";
+@import "./styles/shared.css";
+@import "./styles/tour.css";
+@import "./styles/assistants-apps.css";
+@import "./styles/local-models.css";
+@import "./styles/get-started.css";
+@import "./styles/licence.css";
+@import "./styles/contact.css";
+@import "./styles/questions.css";
+@import "./styles/footer.css";

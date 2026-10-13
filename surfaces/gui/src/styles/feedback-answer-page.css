@@ -1,0 +1,182 @@
+/* ---- Feedback on an answer ------------------------------------------------ */
+/* Quiet until hovered, like the rest of the bubble's actions: a thumbs pair that
+   shouts sits between the user and every answer they were happy with. A verdict
+   already given hides with the row too (owner ask, 2026-09-24); on hover, the accent
+   says which one it was. */
+/* Inside the reply's action row, spaced like the controls beside it. */
+.feedback { display: inline-flex; align-items: center; gap: var(--s-4); }
+/* Square, on the dense control size: these were the arrow glyphs ↑ and ↓ in an 18x17 box —
+   under the 24px pointer floor, and read as scroll or vote controls rather than a verdict. */
+/* The same control as copy and retry beside it: a 12px glyph on a 24px hit area
+   (.hit-target), shown and hidden with the row rather than fading on its own. They were
+   24px boxes of their own placed after the row, and the row is laid over that exact spot,
+   so the two sets of controls interleaved. */
+.feedback-btn {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.feedback-btn:hover { color: var(--muted); }
+.feedback-btn.on { color: var(--accent); }
+/* Room for the action row, which hangs absolutely in the gap under the reply (4px down,
+   12px tall), so the reasons open below it. Padding rather than the panel's margin: the
+   row's strip is empty, and a margin collapses through it into the reply's own trailing
+   margin, which put the panel 16px up, under the row. */
+.feedback-under { padding-top: var(--s-8); }
+
+.feedback-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  /* Both of these named variables that do not exist, so the panel had no fill and square
+     corners. The design-system test now fails on any var() nobody defined. */
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+.feedback-prompt { color: var(--muted); font-size: var(--t-sm); margin-right: var(--s-2); }
+.feedback-reason {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: var(--r-pill);
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+.feedback-reason:hover { border-color: var(--accent); color: var(--accent); }
+.feedback-note {
+  flex: 1 1 14rem;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-sm);
+}
+.feedback-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--t-sm);
+  padding: var(--s-2);
+}
+.feedback-cancel:hover { color: var(--ink); }
+
+/* A view the assistant laid out itself (Phase 5). The frame is sealed — see
+   GeneratedView — so the styling here is only about making it look like it belongs:
+   the app's card, a header strip that says where it came from, and a height that
+   grows with the content up to the point where a view is really a file. */
+.genview { margin: 0; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); overflow: hidden; max-width: 640px; }
+.genview-head { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
+.genview-title { flex: 1; min-width: 0; color: var(--ink); font-size: var(--t-md); font-weight: 600; }
+.genview-note { color: var(--faint); font-size: var(--t-xs); }
+/* The height is set inline from what the frame reports (GeneratedView), 320px until it does. */
+.genview-frame { display: block; width: 100%; height: 320px; border: 0; background: transparent; }
+.genview-source { padding: var(--s-3) var(--s-4); color: var(--faint); font-size: var(--t-xs); border-top: 1px solid var(--line); }
+
+/* ---- A page and its sections (PageTabs.tsx) ------------------------------------------
+   The title is the page-heading step. The sections are one row of underlined tabs — the app's
+   one tab style — replacing a 208px column of them. */
+.page-head { margin-bottom: var(--s-8); }
+.page-head-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-6); }
+.page-title { margin: 0; font-size: var(--t-display); line-height: var(--t-display-lh); font-weight: 600; letter-spacing: var(--ls-tight); color: var(--ink); }
+.page-tabs { display: flex; flex-wrap: wrap; gap: var(--s-8); margin-top: var(--s-4); border-bottom: 1px solid var(--line); }
+.page-tab {
+  display: inline-flex; align-items: center; gap: var(--s-3);
+  min-height: var(--ctl-h); margin-bottom: -1px; padding: 0;
+  border: 0; border-bottom: 2px solid transparent; background: none;
+  font: inherit; font-size: var(--t-md); line-height: var(--t-md-lh); color: var(--muted);
+  cursor: pointer; white-space: nowrap;
+}
+.page-tab:hover { color: var(--ink); }
+.page-tab.is-on { color: var(--ink); font-weight: 500; border-bottom-color: var(--accent); }
+.page-tab-count { padding: 0 var(--s-3); border-radius: var(--r-pill); background: var(--solid); font-size: var(--t-xs); line-height: var(--t-xs-lh); font-weight: 500; color: var(--muted); }
+.page-tab.is-on .page-tab-count { background: var(--accent-soft); color: var(--accent); }
+/* A count that needs looking at (Inbox › Configure's undelivered messages), whichever tab is on. */
+.page-tab-count.is-warn, .page-tab.is-on .page-tab-count.is-warn { background: var(--warn-soft); color: var(--warn-ink); }
+.page-lead { max-width: 68ch; margin: 0; font-size: var(--t-sm); line-height: var(--t-prose-lh); color: var(--muted); }
+
+/* ---- Where your data goes (dataFlow.ts, Settings ▸ General) -------------------------
+   One line per fact, each with a mark saying whether that fact keeps data on the Mac or
+   sends it somewhere. Green for home, amber for away — never red: a connected cloud model
+   is a choice, not a fault. */
+.data-facts { display: flex; flex-direction: column; gap: var(--s-2); margin: var(--s-2) 0 0; padding: 0; list-style: none; }
+.data-fact { position: relative; padding-left: var(--s-7); font-size: var(--t-sm); line-height: var(--t-prose-lh); color: var(--muted); }
+.data-fact::before {
+  content: ""; position: absolute; left: var(--s-1); top: 7px;
+  width: 7px; height: 7px; border-radius: var(--r-circle); background: var(--ok-dot);
+}
+.data-fact.is-leaves::before { background: var(--warn-ink); }
+.data-fact.is-neutral::before { background: var(--faint); }
+.data-facts-link { display: inline-block; margin-top: var(--s-5); font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--accent); }
+.data-facts-link:hover { text-decoration: underline; }
+
+/* ---- Privacy ▸ Network (NetworkSection.tsx) ----------------------------------------
+   The switch leads, stated as a sentence with its state in it. The hosts are a table so a
+   column of numbers can be compared down the page, which a stack of cards never allowed. */
+.net-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-8);
+  margin-bottom: var(--s-8);
+  padding: var(--s-7) var(--s-8);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+}
+.net-switch.is-on { border-color: var(--accent); }
+.net-switch-title { font-size: var(--t-lg); line-height: var(--t-lg-lh); font-weight: 600; color: var(--ink); }
+.net-switch-body { max-width: 68ch; margin: var(--s-2) 0 0; font-size: var(--t-sm); line-height: var(--t-prose-lh); color: var(--muted); }
+.net-switch .tgl { margin-top: var(--s-2); }
+.net-summary { display: flex; flex-wrap: wrap; gap: var(--s-6); margin-bottom: var(--s-4); font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--muted); }
+/* A refusal is the switch doing its job: noticeable, not alarming. */
+.net-refused { color: var(--warn-ink); }
+.net-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
+.net-table { width: 100%; border-collapse: collapse; font-size: var(--t-sm); line-height: var(--t-sm-lh); }
+.net-table th {
+  padding: var(--s-4) var(--s-6);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--faint);
+}
+.net-table td { padding: var(--s-4) var(--s-6); border-bottom: 1px solid var(--line); vertical-align: middle; color: var(--ink); }
+.net-table tbody tr:last-child td { border-bottom: 0; }
+.net-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.net-host { font-family: var(--mono); }
+.net-badge {
+  display: inline-block;
+  margin-left: var(--s-4);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  white-space: nowrap;
+}
+.net-purpose { color: var(--muted); }
+.net-bar { display: inline-block; width: 64px; height: 6px; margin-right: var(--s-4); overflow: hidden; vertical-align: middle; border-radius: var(--r-pill); background: var(--solid); }
+.net-bar > span { display: block; height: 100%; border-radius: var(--r-pill); background: var(--muted); }
+.net-bytes { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.net-requests { border-top: 1px solid var(--line); }
+.net-request { display: flex; align-items: baseline; gap: var(--s-4); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); font-size: var(--t-xs); line-height: var(--t-xs-lh); }
+.net-status { flex-shrink: 0; min-width: 48px; font-family: var(--mono); color: var(--faint); }
+.net-status.bad,
+.net-status.refused { color: var(--warn-ink); }
+.net-method { flex-shrink: 0; font-family: var(--mono); color: var(--muted); }
+.net-url { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); color: var(--ink); }
+.net-when { flex-shrink: 0; margin-left: auto; color: var(--faint); }

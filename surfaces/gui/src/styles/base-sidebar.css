@@ -1,0 +1,181 @@
+/* ---- sidebar row rhythm ----------------------------------------------------
+   Measured against the reference by normalising both screenshots on the macOS traffic
+   lights (three 12pt circles, 8pt apart = 52pt, OS-drawn and identical in both): the
+   reference runs 23pt nav rows and a 21pt segmented control; ours were 32.3pt and 26.8pt.
+
+   The cause was that `text-[13px]` sets font-size only — Tailwind arbitrary values do not
+   carry a line-height — so row height fell out of whatever line-height was inherited.
+   Stated here instead, so a row is a size somebody chose.
+
+   Two of these do NOT go all the way down to the reference. Its 23pt nav row and 21pt
+   segmented are below the 24px minimum WCAG 2.2 sets for a pointer target (2.5.8), and the
+   spacing exception does not rescue them — these controls are stacked a pixel apart, so
+   their 24px circles overlap. 24px is the floor and the reference is under it; matching a
+   screenshot is not worth shipping targets people miss. What IS matched is the proportion
+   between them: reference nav:segmented is 23:21.2 = 1.085, ours is 26:24 = 1.083.
+
+   One row height, not two. list-row was 25 and nav-row 26 for no reason anyone could state,
+   and in the reference a session row and a nav row are the same pitch. */
+.sidebar .nav-row,
+.sidebar .list-row { line-height: 18px; padding-top: var(--s-2); padding-bottom: var(--s-2); }  /* 26px */
+
+/* A row's NAME. 12px — one step under the 13px of the chat it points at, because a
+   list of names is scanned and the chat is read. The leading is `inherit`, NOT the
+   16px that --t-sm normally pairs with: the row's height is set two lines up, and a
+   name carrying its own smaller line box quietly shrank the row from 26px to 24px
+   and split the one row height this file exists to keep. Size from the scale,
+   leading from the row. */
+.sidebar .list-row .row-name { font-size: var(--t-sm); line-height: inherit; }
+
+/* The top bar's icon controls: window chrome, the two arrows, search, and the
+   Home/Workspace pair. Square — same width and height, on the dense control size
+   — and the least round step on the scale, because at 24px a 6px corner is a
+   quarter of the side and the row reads as a strip of lozenges rather than a set
+   of tools. 4px is a softened square; it is not 0, and one token changes that. */
+.nav-icon-btn {
+  display: grid;
+  place-items: center;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  flex-shrink: 0;
+  border-radius: var(--r-xs);
+  color: var(--faint);
+  cursor: pointer;
+}
+.nav-icon-btn:hover:not(:disabled) { color: var(--ink); background: var(--solid); }
+.nav-icon-btn.is-on { color: var(--accent); background: var(--accent-soft); }
+/* A disabled arrow is not dead weight here — it is the only thing left saying
+   which surface you are on, now that the labels are gone. Dimmed enough to read
+   as unavailable, not so far that it stops being legible. */
+.nav-icon-btn:disabled { opacity: 0.35; cursor: default; }
+/* The per-persona "+". It was `opacity: 0` until you hovered its row, on the theory
+   that a column of assistants should not read as a column of buttons. But the
+   project rows in Workspace have carried a permanent "+" all along and do not read
+   that way, because --faint is quiet enough on its own: hiding it bought nothing
+   and cost the two things a hover-gated control always costs — you cannot find it
+   without already suspecting it is there, and it is invisible on any input that
+   does not hover. Same kind of row, same treatment.
+
+   The negative margin cancels most of the row's 10px gap so the "+" and the
+   disclosure chevron read as one trailing pair rather than two loose icons. 4px is
+   not a guess: it is what the project row leaves between exactly the same two
+   controls. Each icon already sits in a 24px box with ~5px of its own inset, so the
+   full 10px on top of that pushed them a third of the row apart. */
+.nav-row-plus { margin-right: calc(var(--s-2) * -1); }
+
+/* The More menu opens beside the rail, clear of the sidebar's own right padding, rather than
+   dropping over the lists underneath it. */
+.rail-flyout { left: calc(100% + var(--s-5)); }
+
+/* The new-session menu: at least as wide as the rail, wider when a description needs it,
+   and never wider than a column of text should be. */
+.newsplit-menu { min-width: 100%; width: max-content; max-width: 320px; }
+.newsplit-tagline {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--muted);
+}
+
+/* The pair reads as one control: a recessed track behind two halves. Without it
+   they were two loose icons among four others in the same row, and nothing said
+   they were a set or that the unlit one was pressable. */
+.nav-seg {
+  display: inline-flex;
+  gap: 1px;
+  padding: 1px;
+  border-radius: var(--r-sm);
+  /* A recessed track: a little ink over whatever ground it sits on, in every theme. */
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+/* Each half is a square icon; its name is the tooltip (`data-tip`) and the aria-label.
+   Square so the pair stays 50px wide — the desktop title bar has no room for words. */
+.nav-seg-btn {
+  display: inline-grid; place-items: center;
+  width: var(--ctl-h-sm); height: var(--ctl-h-sm); padding: 0;
+  border-radius: calc(var(--r-sm) - 1px);
+  color: var(--muted);
+  cursor: pointer;
+}
+.nav-seg-btn:hover { color: var(--ink); }
+/* The selected half sits up out of the track: the lightest surface on a light theme, a lit
+   one on a dark theme (where --paper was darker than the track and read as a hole). */
+.nav-seg-btn.is-on { color: var(--ink); background: var(--panel); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+html[data-theme="dark"] .nav-seg-btn.is-on {
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* A row's height is its TEXT, never its hover controls. The kebab is 24px on purpose (rows
+   sit too close for the WCAG 2.5.8 spacing exception to rescue a smaller one), and in-flow
+   it pushed every session row to 32px while the nav rows beside them were 26 — the list
+   read as looser than the nav for a reason that had nothing to do with the list. Out of
+   flow it keeps its size and stops setting everyone else's. */
+.sidebar .list-row > .absolute { pointer-events: auto; }
+
+.brand-wordmark {
+  /* The sidebar's wordmark: a root prompt (`#`) on a tile, then the name in spaced
+     mono capitals — the same voice as the section headings under it. */
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  line-height: var(--t-sm-lh);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+  /* It sits in the window-drag strip: let the press fall through to the strip. */
+  pointer-events: none;
+  /* Shrinkable, so an over-subscribed row clips the brand name rather than pushing the
+     controls beside it off the sidebar. A clipped wordmark is ugly and the e2e guard
+     fails on it; a search button shoved past the edge is invisible and silent. Given the
+     choice this picks the failure you can see. */
+  min-width: 0;
+  overflow: hidden;
+}
+/* The prompt glyph sits on a solid tile; the dark theme turns the tile to chrome. Never
+   shrinks, so a crowded row clips the name and keeps the mark. */
+.brand-wordmark .mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--i-lg);
+  height: var(--i-lg);
+  border-radius: var(--r-xs);
+  background: var(--ink);
+  color: var(--paper);
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.brand-wordmark .word { min-width: 0; overflow: hidden; }
+/* The name beside the mark shows only when the row has room for it and its controls. In
+   the desktop title bar 84px of the row belongs to the traffic lights, so there it is the
+   mark alone until the sidebar is dragged wider. A container query, not a breakpoint: the
+   row is as wide as the sidebar, and the sidebar is as wide as the person makes it. */
+.sidebar .brand { container-type: inline-size; }
+@container (max-width: 199px) {
+  .brand-wordmark .word { display: none; }
+}
+/* With the Home/Workspace arrows and tabs in the row there is 56px less for the name: it
+   needs 253px, so it shows from 260px (slack for font differences), and below that the
+   whole wordmark steps aside rather than leave the `#` tile wedged against the tabs like
+   a fourth button — the row then reads as the controls alone. */
+@container (max-width: 259px) {
+  .brand:has(.nav-seg) .brand-wordmark { display: none; }
+}
+
+/* The account row's "local" marker steps aside in a narrow sidebar, so "Not signed in" is
+   never clipped; the button's tooltip carries the same reassurance in words. 236px is the
+   row the avatar, the full label, the marker, the Inbox chip and the gear all fit in. */
+.acct { container-type: inline-size; }
+@container (max-width: 235px) {
+  .acct-local { display: none; }
+}
+
+/* A scheduled row's short cadence ("Mon 9:30 am") shows only when the row has room for it
+   beside a whole name; narrower, the name has the row and the cadence is in the tooltip. */
+.sched-list { container-type: inline-size; }
+@container (max-width: 279px) {
+  .sched-when { display: none; }
+}

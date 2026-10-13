@@ -1,0 +1,185 @@
+/* A long prompt, folded. Clamped by LINE COUNT — how much of the screen your own
+   question is taking is a question about height, not about how many characters you
+   typed. The last visible line fades rather than being cut mid-stroke, so it reads
+   as "there is more" instead of as a rendering fault. */
+.user-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+  overflow: hidden;
+}
+/* The fade IS the affordance — it says "there is more below" — so it belongs only on
+   a box that is actually hiding something. On the base rule it fell on every prompt,
+   and a two-line question came out with its second line greyed to about half ink,
+   reading as disabled or de-emphasised text rather than as truncation. The clamp is
+   harmless when it does not bite; the fade is not, so it is gated on the same
+   measurement that decides whether "Show more" appears at all.
+
+   It is a mask on the same box rather than an overlay, so that it survives the
+   -webkit-box clamp without needing to know the line height. */
+.user-clamp.is-clamped {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--t-prose-lh)), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--t-prose-lh)), transparent);
+}
+/* No mask to unset: `is-clamped` and `is-open` are mutually exclusive by construction. */
+.user-clamp.is-open {
+  -webkit-line-clamp: unset;
+  display: block;
+  overflow: visible;
+}
+.user-clamp-more {
+  /* inline-flex and the control floor, because this is a block-level button and the
+     WCAG 2.5.8 exception for a link inside a sentence does not cover it. It measured
+     64x18. Nothing about the look changes — still a bare text link — the box around
+     the words simply reaches 24px, which is the size a pointer target has to be. */
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ctl-h-sm);
+  margin-top: var(--s-2);
+  font-size: var(--t-sm);
+  line-height: var(--t-md-lh);
+  color: var(--muted);
+  cursor: pointer;
+}
+.user-clamp-more:hover { color: var(--ink); }
+
+/* markdown-rendered assistant content (the bubble's pre-wrap would double-space block output) */
+.md { white-space: normal; font-size: var(--t-md); line-height: var(--t-prose-lh); color: var(--ink); }
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0 0 var(--s-6); }
+.md strong { font-weight: 600; color: var(--ink); }
+
+/* headings — a clear hierarchy with generous space above so sections breathe */
+.md h1, .md h2, .md h3, .md h4, .md h5 {
+  /* 600, not 650: only 400/500/600 of Inter are loaded, so 650 was synthesised — the
+     browser smearing the 600 face, which is why markdown headings looked heavier and
+     blurrier than every other heading in the app. */
+  margin: 22px 0 var(--s-4); line-height: 1.3; font-weight: 600; letter-spacing: var(--ls-tight); color: var(--ink);
+}
+.md h1 { font-size: var(--t-xl); }
+.md h2 { font-size: var(--t-lg); }
+.md h3 { font-size: var(--t-lg); }
+.md h4, .md h5 { font-size: var(--t-md); }
+
+/* lists — visible markers + comfortable item spacing (was a run-together wall of text) */
+.md ul, .md ol { margin: var(--s-2) 0 var(--s-7); padding-left: 22px; }
+.md ul { list-style: disc; }
+.md ol { list-style: decimal; }
+.md li { margin: var(--s-3) 0; padding-left: var(--s-1); }
+.md li::marker { color: var(--faint); }
+.md li > ul, .md li > ol { margin: var(--s-3) 0; }
+.md li > p { margin: 0 0 var(--s-3); }
+.md li > p:last-child { margin-bottom: 0; }
+
+/* code */
+.md code {
+  /* A step on the scale, not a fraction of the prose: 0.86em of 13px is 11.18px,
+     a size that exists nowhere else and lands off the pixel grid. Mono runs
+     visually larger than the text around it at the same nominal size, so it takes
+     the step below rather than matching. */
+  /* The app has one monospace face, and it is the token. */
+  font-family: var(--mono); font-size: var(--t-sm);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-xs); padding: 1px var(--s-2);
+}
+.md pre {
+  margin: var(--s-2) 0 var(--s-7); padding: var(--s-6) var(--s-7); overflow-x: auto;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-lg);
+}
+.md pre code { background: none; border: none; padding: 0; font-size: var(--t-sm); line-height: 1.55; }
+
+/* blockquote */
+.md blockquote { margin: var(--s-2) 0 var(--s-7); padding: var(--s-2) var(--s-7); border-left: 3px solid var(--line-strong); color: var(--muted); }
+.md blockquote p:last-child { margin-bottom: 0; }
+
+/* tables — header tint, zebra rows, roomier cells (kept block-scrollable for wide tables) */
+.md table { display: block; overflow-x: auto; border-collapse: collapse; margin: var(--s-3) 0 var(--s-7); font-size: var(--t-md); }
+.md th, .md td { border: 1px solid var(--line); padding: var(--s-3) var(--s-6); text-align: left; vertical-align: top; }
+.md th { background: var(--paper); font-weight: 600; color: var(--muted); white-space: nowrap; }
+.md tbody tr:nth-child(even) { background: color-mix(in srgb, var(--paper) 45%, transparent); }
+
+/* A summary the agent composed. Sits in the same block a chart and a table do.
+
+   The tone colours the LEFT EDGE and the title glyph, never the numbers: a red
+   figure at 12px on this ground is unreadable, and the tone is context about the
+   result rather than part of it. */
+.factcard {
+  border: 1px solid var(--line); border-left: 3px solid var(--line-strong);
+  border-radius: var(--r-md); background: var(--panel); padding: var(--s-5) var(--s-6);
+}
+.factcard[data-tone="good"] { border-left-color: var(--ok); }
+.factcard[data-tone="warn"] { border-left-color: var(--warn-ink); }
+.factcard[data-tone="bad"]  { border-left-color: var(--danger); }
+.factcard[data-tone="neutral"] { border-left-color: var(--accent); }
+.factcard-title {
+  margin: 0 0 var(--s-4); display: flex; align-items: center; gap: var(--s-3);
+  font-size: var(--t-md); font-weight: 600; color: var(--ink);
+}
+.factcard[data-tone="good"] .factcard-title svg { color: var(--ok); }
+.factcard[data-tone="bad"] .factcard-title svg { color: var(--danger); }
+.factcard[data-tone="warn"] .factcard-title svg { color: var(--warn-ink); }
+.factcard[data-tone="neutral"] .factcard-title svg { color: var(--accent); }
+.factcard-facts { margin: 0; display: grid; gap: var(--s-3); }
+.factcard-fact { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-5); }
+.factcard-fact dt { color: var(--muted); font-size: var(--t-sm); min-width: 0; }
+.factcard-fact dd {
+  margin: 0; color: var(--ink); font-size: var(--t-md);
+  font-variant-numeric: tabular-nums; text-align: right;
+}
+/* The one figure the card is about. Size, not colour — it has to stay readable. */
+.factcard-fact.is-lead dd { font-size: var(--t-xl); font-weight: 600; line-height: 1.2; }
+/* Metrics: the same rows, with how each figure moved said beside it rather than
+   coloured — a red number is unreadable at this size, and "down" is not always bad. */
+.factcard-delta { margin-left: var(--s-3); color: var(--muted); font-size: var(--t-sm); font-weight: 400; }
+/* A checklist: what was checked, and what passed. The mark carries the state and the
+   row keeps the same rhythm as a fact, so a card of either reads the same way. */
+.factcard-checks { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-3); }
+.factcard-check { display: flex; align-items: baseline; gap: var(--s-3); }
+.factcard-check[data-done="yes"] svg { color: var(--ok); }
+.factcard-check[data-done="no"] svg { color: var(--muted); }
+.factcard-check-label { flex: 1; min-width: 0; color: var(--ink); font-size: var(--t-md); }
+.factcard-check-value { color: var(--muted); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+.factcard-note {
+  margin: var(--s-5) 0 0; padding-top: var(--s-4); border-top: 1px solid var(--line);
+  color: var(--muted); font-size: var(--t-sm); line-height: var(--t-prose-lh);
+}
+.factcard-source { margin: var(--s-3) 0 0; color: var(--faint); font-size: var(--t-xs); }
+
+/* A table the agent emitted as data. Sits in the same block a chart does, so a turn
+   that shows one and then the other reads as one sequence rather than two widgets.
+   Numeric columns are right-aligned and tabular-figured, which is the whole reason
+   this exists rather than a markdown table. */
+.datatable {
+  margin: 0; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--panel); overflow: hidden;
+}
+.datatable-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-5); border-bottom: 1px solid var(--line);
+}
+.datatable-title { font-size: var(--t-md); font-weight: 500; color: var(--ink); min-width: 0; }
+.datatable-copy {
+  width: var(--ctl-h-sm); height: var(--ctl-h-sm); display: grid; place-items: center;
+  border: 0; border-radius: var(--r-xs); background: transparent; color: var(--faint); cursor: pointer;
+}
+.datatable-copy:hover { color: var(--ink); background: var(--paper); }
+.datatable-scroll { overflow-x: auto; }
+.datatable table { border-collapse: collapse; width: 100%; font-size: var(--t-md); }
+.datatable th, .datatable td {
+  border-bottom: 1px solid var(--line); padding: var(--s-3) var(--s-5);
+  text-align: left; vertical-align: top; white-space: nowrap;
+}
+.datatable tbody tr:last-child td { border-bottom: 0; }
+.datatable th { background: var(--paper); padding: 0; }
+.datatable .is-num { text-align: right; font-variant-numeric: tabular-nums; }
+.datatable-sort {
+  width: 100%; display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-3) var(--s-5); border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--t-sm); font-weight: 600; color: var(--muted); text-align: inherit;
+}
+.datatable th.is-num .datatable-sort { justify-content: flex-end; }
+.datatable-sort:hover { color: var(--ink); }
+.datatable-sort.is-on { color: var(--accent); }
+.datatable-caret { font-size: var(--t-xs); }
+.datatable-note { margin: 0; padding: var(--s-4) var(--s-5); color: var(--muted); font-size: var(--t-sm); line-height: var(--t-prose-lh); border-top: 1px solid var(--line); }
+.datatable-source { margin: 0; padding: 0 var(--s-5) var(--s-4); color: var(--faint); font-size: var(--t-xs); }

@@ -1,0 +1,12 @@
+# `surfaces/site` resolves its own dependencies, the same way `surfaces/gui` does.
+# The repo root has a pnpm-workspace.yaml with no `packages:` field, so a project
+# under it is not a workspace member — and running `pnpm install` here without this
+# file makes pnpm treat the root as its context and do nothing at all, leaving no
+# node_modules and reporting "Already up to date".
+
+# esbuild needs its postinstall to fetch its platform binary. Without this, every
+# `pnpm -C surfaces/site …` fails: pnpm runs a deps check that re-runs install, and
+# install exits non-zero on the unapproved script — so `dev` never gets to start.
+# Same allowance the repo root already makes.
+allowBuilds:
+  esbuild: true

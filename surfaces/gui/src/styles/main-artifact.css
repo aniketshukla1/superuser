@@ -1,0 +1,182 @@
+/* Facts about the open file, separated by a hairline dot so they read as one quiet
+   line rather than four competing labels. */
+.artifact-meta {
+  display: flex; align-items: center; flex-wrap: wrap;
+  font-size: var(--t-xs); color: var(--faint); margin-top: var(--s-1); min-width: 0;
+}
+.artifact-meta > span { white-space: nowrap; }
+.artifact-meta > span + span::before {
+  content: "·"; margin: 0 var(--s-3); opacity: 0.55;
+}
+.artifact-dir {
+  overflow: hidden; text-overflow: ellipsis; max-width: 22ch;
+  font-variant-numeric: tabular-nums;
+}
+.artifact-preview { min-height: 0; flex: 1; overflow: auto; background: var(--panel); }
+.artifact-frame { width: 100%; height: 100%; min-height: calc(100vh - 86px); border: 0; background: #fff; }
+/* Checkerboard backdrop so white/transparent images still read as an image, not a blank pane. */
+.artifact-image {
+  max-width: 100%; display: block; margin: 20px auto; border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 0 0 / 20px 20px;
+}
+.artifact-code { margin: 0; padding: 22px 26px; font-family: var(--mono); font-size: var(--t-sm); line-height: 1.55; white-space: pre-wrap; color: var(--ink); }
+/* Non-previewable binaries (Office docs): a centered prompt to open in the default app. */
+.artifact-open-prompt {
+  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s-7); padding: 40px; text-align: center; color: var(--muted);
+}
+.artifact-open-prompt p { margin: 0; max-width: 280px; }
+/* pdf.js-rendered pages, stacked like a document scroll */
+.artifact-pdfjs { padding: var(--s-8) var(--s-8); }
+.artifact-pdf-page {
+  display: block; width: 100%; height: auto; margin: 0 auto var(--s-7);
+  border: 1px solid var(--line); border-radius: var(--r-xs); background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* csv / spreadsheet preview */
+.artifact-tablewrap { padding: var(--s-7) var(--s-8) 40px; overflow: auto; }
+.artifact-table { border-collapse: collapse; font-size: var(--t-sm); white-space: nowrap; }
+.artifact-table th, .artifact-table td { border: 1px solid var(--line); padding: var(--s-2) var(--s-5); text-align: left; max-width: 340px; overflow: hidden; text-overflow: ellipsis; }
+.artifact-table th { background: var(--paper); font-weight: 600; position: sticky; top: 0; }
+.artifact-table-note { padding: var(--s-5) var(--s-8); }
+/* Univer draws to a canvas and needs a definite box to size against — a flex child
+   with `min-height: 0` and an explicit 100% height, or it collapses to nothing. */
+.univer-wrap { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.univer-note { flex: 0 0 auto; padding: var(--s-3) var(--s-5); }
+.univer-host { flex: 1 1 auto; min-height: 0; height: 100%; width: 100%; }
+.univer-stale { display: flex; align-items: center; gap: var(--s-5); font-size: var(--t-sm); color: var(--muted); }
+
+/* markdown artifacts reuse the shared .md renderer inside a readable padded column */
+.artifact-md { padding: 26px 28px 70px; font-size: var(--t-lg); line-height: 1.6; color: var(--ink); }
+.artifact-md .md h2 { font-size: var(--t-xl); margin-top: 22px; }
+
+/* working-directory bar */
+/* Workspace chip lives INSIDE the composer card's head row (top chip row, Tailwind-laid-out). */
+.wschip {
+  display: inline-flex; align-items: center; gap: var(--s-3);
+  font: inherit; font-size: var(--t-sm); color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: var(--ctl-pad-y) var(--ctl-pad-x-sm); cursor: pointer; max-width: 60%;
+}
+.wschip:hover { border-color: var(--line-strong); }
+/* Icon-only variant (composer folder control): just the folder glyph + a small chevron, no name,
+   no border/background — sits inline with the other borderless row controls. */
+.wschip-icon { gap: var(--s-1); padding: var(--s-2); border: none; background: none; color: var(--muted); max-width: none; }
+.wschip-icon:hover { background: var(--paper); color: var(--ink); border: none; }
+.wschip .edit { color: var(--faint); flex: none; }
+.wschip:hover .edit { color: var(--muted); }
+.wsbranch { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--t-sm); color: var(--faint); }
+
+/* roots manager (orphan Cowork directories) */
+.rootsbar { position: relative; display: inline-flex; }
+.rootsbar .wschip { max-width: none; }
+.roots-pop {
+  position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 30;
+  width: 420px; max-width: 70vw; padding: var(--s-4);
+  background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+.roots-head { font-size: var(--t-xs); color: var(--faint); padding: var(--s-1) var(--s-3) var(--s-4); }
+.root-row { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-2) var(--s-3); border-radius: var(--r-md); }
+.root-row:hover { background: var(--paper); }
+.root-row.missing { opacity: 0.6; }
+.root-ico { color: var(--muted); flex: none; }
+.root-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.root-label { font-size: var(--t-md); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.root-path { font-size: var(--t-xs); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
+.root-tag { font-size: var(--t-xs); color: var(--muted); background: var(--line); border-radius: var(--r-xs); padding: 1px var(--s-2); flex: none; }
+.root-tag.warn { color: var(--warn-ink); background: var(--warn-soft); }
+.root-access {
+  font: inherit; font-size: var(--t-xs); cursor: pointer; flex: none;
+  border: 1px solid var(--line); border-radius: var(--r-sm); padding: var(--s-1) var(--s-3); background: var(--paper); color: var(--muted);
+}
+.root-access.rw { color: var(--ok); border-color: var(--ok-line); background: var(--ok-soft); }
+.root-access:disabled { cursor: default; opacity: 0.7; }
+/* Read/Write for one source. Deliberately the same vocabulary as .root-access above —
+   folders and sources are two halves of one trust model, so they should not look like
+   two unrelated inventions. Write is the green/"wider" end, matching .root-access.rw. */
+.scope-picker { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; flex: none; }
+.scope-opt {
+  font: inherit; font-size: var(--t-xs); line-height: 1; cursor: pointer;
+  border: none; background: var(--paper); color: var(--muted); padding: var(--s-1) var(--s-3);
+}
+.scope-opt + .scope-opt { border-left: 1px solid var(--line); }
+.scope-opt:hover:not(:disabled):not(.on) { color: var(--ink); }
+.scope-opt.on { color: var(--ok); background: var(--ok-soft); }
+.scope-picker:has(.scope-opt[data-testid="scope-read"].on) .scope-opt.on { color: var(--ink); background: var(--glass-soft); }
+.scope-opt:disabled { cursor: default; opacity: 0.55; }
+.root-x { font: inherit; font-size: var(--t-lg); line-height: 1; color: var(--faint); background: none; border: none; cursor: pointer; padding: 0 var(--s-2); flex: none; }
+.root-x:hover { color: var(--ink); }
+.roots-add { padding: var(--s-4) var(--s-1) var(--s-1); border-top: 1px solid var(--line); margin-top: var(--s-3); }
+.roots-err { color: var(--danger); font-size: var(--t-sm); padding: var(--s-3) var(--s-3) var(--s-1); }
+
+/* add-folder form (shared: roots popover + session start panel) */
+.addfolder-trigger {
+  display: inline-flex; align-items: center; gap: var(--s-3); width: 100%; justify-content: center;
+  font: inherit; font-size: var(--t-sm); cursor: pointer; color: var(--ink);
+  background: var(--paper); border: 1px dashed var(--line-strong); border-radius: var(--r-md); padding: var(--s-3) var(--s-5);
+}
+.addfolder-trigger:hover { border-color: var(--accent); color: var(--accent); }
+.addfolder-trigger.compact { font-size: var(--t-sm); padding: var(--s-3) var(--s-4); }
+.addfolder-form { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-1); }
+.addfolder-row { display: flex; gap: var(--s-4); align-items: center; }
+.addfolder-path {
+  flex: 1; font: inherit; font-size: var(--t-md); color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); outline: none;
+}
+.addfolder-path:focus { border-color: var(--accent); }
+.addfolder-actions { display: flex; align-items: center; gap: var(--s-5); }
+.addfolder-write { display: inline-flex; align-items: center; gap: var(--s-3); font-size: var(--t-sm); color: var(--muted); cursor: pointer; }
+.addfolder-actions .spacer { flex: 1; }
+
+/* Cowork session start panel */
+.intro { max-width: 640px; margin: 0 auto; padding: 40px 20px 24px; }
+.intro .greeting { font-weight: 600; display: flex; align-items: center; gap: var(--s-5); }
+.intro .greeting .mark { color: var(--accent); }
+.intro-lede { color: var(--muted); font-size: var(--t-lg); line-height: 1.5; margin: var(--s-4) 0 0; }
+
+/* Template tasks on the Cowork start screen (§27): flat hairline rows, no icon tiles — the
+   title is the row. Connector dots on the sub-line (brand color = live for this session,
+   grayscale = not; §23's vocabulary); sub-line copy is the task's OUTCOME, never connection
+   state. Ready row: hover colors the title and reveals the action. Gated row: "Configure ›"
+   stays visible at rest — the setup action IS the row's meaning. Staggered entrance. */
+.intro-tasks { margin-top: 30px; display: flex; flex-direction: column; }
+.task-card {
+  display: flex; align-items: center; gap: var(--s-7);
+  width: 100%; text-align: left; cursor: pointer;
+  padding: var(--s-6) var(--s-3);
+  background: none; border: none; border-top: 1px solid var(--line);
+  font: inherit; color: var(--ink);
+  opacity: 0; transform: translateY(4px);
+  animation: task-rise 0.35s ease forwards;
+}
+.task-card:nth-of-type(1) { animation-delay: 0.10s; }
+.task-card:nth-of-type(2) { animation-delay: 0.22s; }
+.task-card:nth-of-type(3) { animation-delay: 0.34s; }
+@keyframes task-rise { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .task-card { animation: none; opacity: 1; transform: none; }
+}
+.task-card:first-child { border-top: none; }
+.task-card-body { flex: 1; min-width: 0; }
+.task-card-title { display: block; font-size: var(--t-lg); transition: color 0.12s; }
+.task-card:hover .task-card-title { color: var(--accent); }
+.task-card-sub {
+  display: flex; align-items: center; gap: var(--s-3);
+  font-size: var(--t-sm); color: var(--faint); margin-top: var(--s-1);
+}
+.task-dot {
+  width: 18px; height: 18px; border-radius: var(--r-circle); flex: none;
+  display: grid; place-items: center;
+  background: var(--panel); border: 1px solid var(--line);
+}
+.task-dot + .task-dot { margin-left: -4px; }
+.task-dot.off { filter: grayscale(1); opacity: 0.7; }
+.task-card-act {
+  color: var(--faint); font-size: var(--t-sm); flex: none;
+  opacity: 0; transition: opacity 0.12s;
+}
+.task-card:hover .task-card-act { opacity: 1; color: var(--accent); }
+.task-card.gated .task-card-act { opacity: 1; color: var(--accent); }

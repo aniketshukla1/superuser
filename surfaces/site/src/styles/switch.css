@@ -1,0 +1,44 @@
+/* ---------- the switch ---------- */
+
+.switch {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--sp-12);
+  align-items: center;
+}
+@media (max-width: 880px) {
+  .switch {
+    grid-template-columns: 1fr;
+    gap: var(--sp-8);
+  }
+}
+.log {
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: var(--sp-4);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.85;
+  overflow-x: auto;
+}
+.log-row {
+  display: flex;
+  gap: var(--sp-3);
+  white-space: nowrap;
+}
+.log-row .verb {
+  color: var(--faint);
+  min-width: 4.5em;
+}
+.log-row .host {
+  color: var(--ink);
+}
+.log-row .why {
+  margin-left: auto;
+  color: var(--accent);
+  padding-left: var(--sp-4);
+}
+.log-row.blocked .why {
+  color: var(--ok);
+}

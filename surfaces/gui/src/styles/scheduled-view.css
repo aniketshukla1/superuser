@@ -1,0 +1,108 @@
+/* -- Scheduled view (page shell + head are Tailwind, §28) -------------------- */
+.sched-detail { display: flex; flex-direction: column; gap: var(--s-5); }
+.sched-detail-head { display: flex; align-items: center; justify-content: space-between; }
+.sched-actions { display: flex; align-items: center; gap: var(--s-6); }
+/* Read-only instructions read as text, not as a field: in a bordered box on the panel fill they
+   looked exactly like the textarea Edit opens, and people clicked into them to type. */
+.sched-instructions { max-width: 68ch; padding-left: var(--s-6); border-left: 2px solid var(--line-strong); font-size: var(--t-md); line-height: var(--t-prose-lh); color: var(--ink); white-space: pre-wrap; }
+/* The automation's on/off, on its own row with its state beside it. */
+.sched-state { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4); font-size: var(--t-sm); line-height: var(--t-sm-lh); }
+.sched-state-label { font-weight: 600; color: var(--ink); }
+.sched-state-meta { color: var(--muted); }
+/* "Allowed without asking" — the automation's standing-approval revoke list (§25). */
+.sched-grants { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.sched-grant { display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); padding: var(--s-4) var(--s-6); border-bottom: 1px solid var(--line); font-size: var(--t-md); }
+.sched-grant:last-child { border-bottom: none; }
+.sched-grant-rule code { font-family: var(--mono); font-size: var(--t-sm); color: var(--ink); }
+.sched-grant-target { font-family: var(--mono); font-size: var(--t-sm); color: var(--muted); overflow-wrap: anywhere; }
+/* Quick-delete on a list card: revealed on hover, never steals the row click. */
+.sched-card-del {
+  display: grid; place-items: center; flex: none;
+  width: 26px; height: 26px; border-radius: var(--r-sm); border: none;
+  background: transparent; color: var(--faint); cursor: pointer;
+  opacity: 0; transition: opacity 0.12s, color 0.12s, background 0.12s;
+}
+/* Revealed on hover OR on keyboard focus — `opacity: 0` alone made this a mouse-only
+   control, the same trap the session kebab fell into (UX-REPORT §7). */
+.sched-card:hover .sched-card-del,
+.sched-card:focus-within .sched-card-del,
+.sched-card-del:focus-visible,
+.sched-card-del.confirming { opacity: 1; }
+.sched-card-del:hover { color: var(--danger); background: var(--paper); }
+/* Armed: the second click deletes, so it stops being a quiet glyph. */
+.sched-card-del.confirming {
+  width: auto; padding: 0 var(--s-4); color: var(--danger); background: var(--danger-soft);
+}
+/* Detail "Delete" button — danger-tinted line button with the trash glyph. */
+button.btn.sm.danger-btn { display: inline-flex; align-items: center; gap: var(--s-2); color: var(--danger); border-color: var(--line-strong); }
+button.btn.sm.danger-btn:hover { border-color: var(--danger); }
+.sched-edit-title { font-size: var(--t-lg); font-weight: 600; max-width: 360px; }
+.sched-edit-sched { margin: var(--s-6) 0 var(--s-2); }
+.sched-edit-instr { min-height: 96px; }
+.sched-run { border-bottom: 1px solid var(--line); }
+.sched-run-row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-4);
+  width: 100%; padding: var(--s-3) var(--s-1); text-align: left;
+  font-size: var(--t-md); line-height: var(--t-md-lh); color: var(--muted); cursor: pointer;
+}
+.run-ok { color: var(--ok); } .run-error { color: var(--danger); } .run-running { color: var(--muted); }
+/* A run still "running" hours later was cut off; saying so is not an alarm. */
+.run-stale { color: var(--warn-ink); }
+/* UX-023, said once: a count of the runs newer than the seen mark captured when the detail
+   opened, and a rule where they end — not a pill on every row. */
+.run-new-note { margin-bottom: var(--s-3); font-size: var(--t-sm); line-height: var(--t-sm-lh); font-weight: 500; color: var(--accent); }
+.run-divider { display: flex; align-items: center; gap: var(--s-4); margin: var(--s-4) 0 var(--s-3); font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--faint); }
+.run-divider::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.sched-run.open.is-new { border-color: var(--line-strong); }
+/* Run row = a launcher into the run's conversation. */
+.sched-run.open { border: 1px solid var(--line); border-radius: var(--r-lg); margin-bottom: var(--s-4); padding: var(--s-2) var(--s-6) var(--s-4); cursor: pointer; background: var(--panel); }
+.sched-run.open:hover { border-color: var(--line-strong); background: var(--paper); }
+.sched-run.open .sched-run-row { cursor: pointer; }
+.sched-run-chev { color: var(--faint); font-size: var(--t-sm); }
+/* Going to the conversation is now a deliberate control rather than the whole row,
+   so it looks like one. */
+.sched-run-go { margin-top: var(--s-4); color: var(--accent); font-weight: 500; }
+.sched-run-peek {
+  margin-top: var(--s-1);
+  font-size: var(--t-sm); line-height: var(--t-md-lh); color: var(--muted);
+  /* Two lines while collapsed — enough to recognise a run, not enough to read it, which is
+     the point of the expansion — and an ellipsis where it stops. A max-height cut the text
+     mid-word with nothing to say more was there. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: pre-line;
+}
+.sched-run-result { margin-top: var(--s-2); font-size: var(--t-md); color: var(--ink); }
+.sched-run-result .md > :first-child { margin-top: 0; }
+.sched-run-noconv { margin-top: var(--s-4); font-size: var(--t-sm); line-height: var(--t-md-lh); color: var(--faint); }
+
+/* Boot splash host — shown while the sidecar comes up, then laid over the app while the
+   splash plays its exit (App.tsx). Transparent itself: the splash paints its own ground,
+   so fading the splash reveals the app rather than an empty page. */
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  color: var(--ink);
+  font-family: var(--sans);
+}
+.boot-splash.boot-leaving { pointer-events: none; }
+
+/* Dev-only fake traffic lights (?overlay=1) at the SAME position the real app uses
+   at the macOS default for an Overlay title bar, so the desktop top-left previews in the
+   browser. (No Rust-side inset is configured; the number here is the observed position.) */
+.sim-traffic-lights {
+  position: fixed;
+  left: 19px;
+  top: 24px;
+  display: flex;
+  gap: var(--s-4);
+  z-index: 200;
+  pointer-events: none;
+}
+.sim-traffic-lights span { width: 12px; height: 12px; border-radius: var(--r-circle); }
+.sim-traffic-lights span:nth-child(1) { background: #ff5f57; }
+.sim-traffic-lights span:nth-child(2) { background: #febc2e; }
+.sim-traffic-lights span:nth-child(3) { background: #28c840; }

@@ -1,0 +1,29 @@
+/* ---------- footer ---------- */
+
+.foot-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+.foot-links a {
+  color: var(--muted);
+}
+.foot-note {
+  font-size: 12.5px;
+}
+
+/* A jump to a section lands below the sticky bar, not under it. */
+[id] {
+  scroll-margin-top: 72px;
+}
+.start-note {
+  font-family: var(--sans);
+  font-size: 14px;
+}

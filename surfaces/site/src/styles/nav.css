@@ -1,0 +1,35 @@
+/* ---------- nav ---------- */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.nav-in {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  height: 56px;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  margin-left: auto;
+  font-size: 13.5px;
+}
+.nav-links a {
+  color: var(--muted);
+}
+.nav-links a:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+@media (max-width: 640px) {
+  .nav-links a.hide-sm {
+    display: none;
+  }
+}

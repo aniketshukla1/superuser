@@ -1,0 +1,186 @@
+/* Section headings in the sidebar (Pinned, Scheduled, Recent): one style for all three,
+   spaced mono capitals. Line-height inherits, so a heading in a .list-row keeps the 26px
+   row rhythm. */
+.nav-sec {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: inherit;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* Any strip that moves the window must not select its own text while you drag it — a
+   native title bar doesn't, and the sidebar's brand row IS the title bar on macOS. The
+   boot splash's `.titlebar-brand` had this and the app's did not, so dragging the real
+   window by the wordmark highlighted it (found by e2e-tauri/tauri.spec.ts, which is the
+   first suite to look at the desktop chrome at all). Stated against the attribute rather
+   than the class, so a future drag region gets it for free. */
+[data-tauri-drag-region] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+:root, .theme-preview[data-palette="porcelain"] {
+  color-scheme: light;
+  /* Porcelain, the default light theme: white panels on a soft grey ground, near-black
+     ink, and graphite for what you press — the light counterpart of Carbon (the dark
+     base below), not a second design. The accent is the ink itself, so a link carries
+     an underline and the primary button carries the metal. Other light themes are the
+     `data-palette` blocks after the dark base; every one is checked by
+     palette.contrast.test.ts against all three of its surfaces. */
+  --paper: #F6F6F7;          /* nav: sidebar, side panel, window ground */
+  --canvas: #FFFFFF;         /* the chat and every page beside the nav */
+  --panel: #FFFFFF;          /* cards, inputs */
+  --ink: #16161A;
+  --muted: #5B5B65;          /* 5.6:1 on solid */
+  /* Measured against all three light surfaces; `solid` is the binding one, same as it
+     is in dark. 4.56:1 at worst. */
+  --faint: #696972;
+  --line: #E7E7EB;
+  --line-strong: #D7D7DD;
+  /* The outline of a field you type into — the one border held to 3:1 (see the form-field
+     rules below and palette.contrast.test.ts). 3.27:1 on solid, the binding surface. */
+  --field-line: #818183;
+  --accent: #16161A;         /* the ink: what you press is graphite, not a hue */
+  --accent-soft: #F1F1F1;
+  --on-accent: #FFFFFF;
+  /* Graphite metal for the primary button and the brand tile (white on its lightest stop
+     is 6.7:1), and the same metal as lettering for page titles (5.4:1 at its lightest). */
+  --chrome: linear-gradient(180deg, #5C5C5F 0%, #2D2D31 38%, #16161A 52%, #29292C 72%, #4E4E51 100%);
+  --chrome-text: linear-gradient(180deg, #16161A 0%, #656568 48%, #16161A 70%, #37373A 100%);
+  --ok: #1B7845;             /* 4.55:1 on solid, the binding surface */
+  --ok-soft: #E8F2ED;
+  --ok-line: #BBD9C8;
+  --ok-dot: #348D5B;
+  /* Vendor artwork is drawn for a light ground, so the tile keeps one in every theme —
+     dimmed in the dark themes so a row of logos does not glare. */
+  --logo-plate: #F2F2F3;
+  --warn-ink: #8E6000;
+  --warn-soft: #F0E9DB;
+  --danger: #BF3737;
+  --danger-soft: #FAEBEB;
+  --teal-ink: #0F6F75;       /* connector approval badges */
+  --teal-line: #C3DBDD;
+  --teal-soft: #E7F1F1;
+  --solid: #EBEBED;          /* user bubble, hover fill */
+  --on-solid: #16161A;
+  --glass: rgba(255, 255, 255, 0.9);        /* frosted bars over content */
+  --glass-strong: rgba(255, 255, 255, 0.96);
+  --glass-soft: rgba(255, 255, 255, 0.78);
+  --scrim: rgba(15, 15, 18, 0.38);          /* modal / gate overlays */
+  --check-a: #E9E9EA;         /* image-viewer checkerboard */
+  --check-b: #F2F2F3;
+  /* Headings take the mono stack: the machine's voice for anything the machine
+     says — commands, paths, labels, the mark. Body is a real text face now,
+     because the old setup aliased --serif to --mono and the serif role did
+     nothing at all. Both are bundled, not fetched: this app is local-first, and
+     a webfont request on every launch contradicts that. */
+  /* ------------------------------------------------------------------ *
+   *  The scales. One home for every number that decides how things sit.
+   *
+   *  Before this there were eleven radii (2,3,4,5,6,7,8,9,10,12,16),
+   *  eighteen type sizes and fourteen button padding pairs — which is not a
+   *  system, it is a spread. Each of those was a reasonable local decision
+   *  made without a place to look the answer up. So: the answers live here,
+   *  Tailwind's utilities point at them, and a test stands over both.
+   * ------------------------------------------------------------------ */
+
+  /* RADIUS. Linear +2px rather than geometric: at these sizes a geometric
+     scale gives 4/6/9/13.5 and the steps stop being tellable apart. The
+     absolute values come from measuring the artifact against the owner's
+     reference, where everything ran ~38% too round; see tailwind.config.js
+     for that history. Shapes (pill, circle) are not sizes and aren't on it. */
+  --r-xs: 4px;      /* key caps, swatches, the smallest chrome */
+  --r-sm: 6px;      /* rows, inputs, buttons — anything one line tall */
+  --r-md: 8px;      /* larger controls, nested groups */
+  --r-lg: 10px;     /* cards, panels, modals */
+  --r-pill: 999px;
+  --r-circle: 50%;
+
+  /* TYPE. Size and line-height travel together, and line-height is always
+     whole pixels. A unitless 1.45 on a 12.5px font is 18.125px, which the
+     browser rounds per-element — so the same "paragraph gap" measures
+     differently in two places, which is what made cards feel loose. Every
+     step is an even number of pixels so rows stack on a 2px grid. */
+  --t-xs: 11px;     --t-xs-lh: 15px;   /* captions, key caps, badges */
+  --t-sm: 12px;     --t-sm-lh: 16px;   /* secondary text, dense labels */
+  --t-md: 13px;     --t-md-lh: 18px;   /* body, rows, buttons — the default */
+  --t-lg: 15px;     --t-lg-lh: 22px;   /* card and section titles */
+  --t-xl: 19px;     --t-xl-lh: 26px;   /* section and dialog headings */
+  /* One display step, for the title of a top-level page (Inbox, Brain, Connectors) and
+     nothing else. The scale stopped at --t-xl on purpose; this was agreed with the black +
+     silver theme (2026-10-07), when a 19px page title was part of what read as generic. */
+  --t-display: 30px; --t-display-lh: 38px;
+  /* Prose sets at --t-md, but a paragraph is not a row: 18px is the right line box
+     for a 13px control and a tight one for something you read several lines of.
+     Still on the 4px grid, so bubbles stack with everything else. */
+  --t-prose-lh: 20px;
+  /* Headings tighten by this much and no other amount. The stylesheet used -0.01em
+     in two places while thirteen components used Tailwind's `tracking-tight`, which
+     is -0.025em — so a markdown h1 and a page h1, both --t-xl, were tracked 2.5x
+     differently. Tailwind's `tracking-tight` now points here, which fixes all
+     thirteen without touching them. */
+  --ls-tight: -0.01em;
+
+  /* SPACE. 4px base with 2px half-steps, which is what the codebase already
+     lands on; the drift was never the grid, it was using three different
+     values for the same job. */
+  /* Every even step from 2 to 16, because that is what the design actually uses. The
+     scale used to skip 10 and 14 — and the app used them 262 times anyway (p-2.5 and
+     p-3.5, 157 uses; 105 more in this file). A scale the work routes around is not a
+     scale, it is a suggestion. These are Tailwind's own 0.5 through 4, so the two
+     languages now step together instead of one of them being "off-scale" by definition.
+
+     Renumbered to stay positional: --s-5 was 12 and is now 10, --s-6 was 16 and is now
+     12. The eight uses of --s-5 moved to --s-6 in the same commit; --s-6 had none. */
+  /* The narrowest the conversation may get. Mirrored from CHAT_MIN_W in
+     components/ResizeHandle.tsx, which is what actually enforces it; this is here so the
+     stylesheet can reason about the same number, and a test asserts the two agree. */
+  --chat-min: 420px;
+  --s-1: 2px;
+  --s-2: 4px;
+  --s-3: 6px;
+  --s-4: 8px;
+  --s-5: 10px;
+  --s-6: 12px;
+  --s-7: 14px;
+  --s-8: 16px;
+
+  /* CONTROLS. Derived, not chosen — a control is its line box plus padding,
+     so the height follows from the type scale. This is the fix for a 12.5px
+     label sitting in a 35px-tall button: `px-3 py-2` is 8px of padding either
+     side of an inherited 1.5 line-height, and nobody chose 35, it just came
+     out. A row-height control is 18 + 5 + 5 = 28px. */
+  --ctl-h: 28px;          /* standard button / input / select */
+  --ctl-h-sm: 24px;       /* dense: toolbar icons, chips, table rows */
+  --ctl-pad-y: 5px;
+  --ctl-pad-x: 10px;
+  --ctl-pad-x-sm: 8px;
+  /* The roomy step. `.ca-btn` and `.starter-chip` are the app's two "do the thing"
+     buttons and both were hand-sized at roughly this, a size the tokens could not
+     express. A scale that cannot say what the UI already does is not a scale yet. */
+  /* Icon sizes, matching components/Icon.tsx's ICON. Two languages, one scale — a box
+     that holds a 15px glyph and a glyph that renders at 15px should not be able to
+     disagree about what 15 is. */
+  --i-sm: 12px;
+  --i-md: 15px;
+  --i-lg: 18px;
+  --i-xl: 28px;
+  --ctl-pad-y-lg: 7px;
+  --ctl-pad-x-lg: 14px;
+
+  /* The activity grid. Not layout spacing: how big a day is and how much air sits
+     between two days is a decision about reading DENSITY. Big cells with a hairline
+     between them read as one surface with texture; small cells with a visible gap
+     read as a row of separate chips, which is what it was. */
+  --heat-cell: 18px;
+  --heat-gap: 2px;
+
+  --serif: var(--mono);
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  /* The right rail's width while reading an artifact (wider than the 332px inspector). */
+  --artifact-rail-w: min(62vw, 960px);
+}

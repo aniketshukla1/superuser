@@ -1,0 +1,41 @@
+/* ---------- the memory timeline ---------- */
+/* An ordered list because the claim is the ORDER — week one then week three then
+   week ten. Numbered markers would be decoration; the weeks are the information,
+   so the weeks are what is shown. */
+
+.steps {
+  list-style: none;
+  margin: var(--sp-12) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.step {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  gap: var(--sp-6);
+  align-items: baseline;
+  padding: var(--sp-4) 0;
+  border-top: 1px solid var(--line);
+}
+.step:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.step-when {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.step-what {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 58ch;
+}
+@media (max-width: 620px) {
+  .step {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+}

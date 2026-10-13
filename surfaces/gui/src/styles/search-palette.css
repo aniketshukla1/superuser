@@ -1,0 +1,4 @@
+/* The search palette's field: the palette is already the focused thing, so its input shows
+   focus as the row's underline turning to ink rather than a box drawn inside the box. */
+.search-head:focus-within { border-bottom-color: var(--accent); }
+.search-head .field-bare:focus-visible { outline: none; }

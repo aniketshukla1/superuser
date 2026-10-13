@@ -1,0 +1,170 @@
+/* ---- Onboarding wizard ----------------------------------------------------- */
+.ob-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.ob {
+  width: 760px;
+  height: 540px;                 /* fixed — steps never resize the dialog */
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 64px);
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  grid-template-rows: 1fr auto;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+.ob-rail {
+  grid-row: 1 / 3;
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.ob-rail-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r-md);
+  font-size: var(--t-md);
+  color: var(--muted);
+}
+.ob-rail-item.active { color: var(--ink); background: var(--accent-soft); }
+.ob-rail-item.done { color: var(--ink); }
+.ob-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-circle);
+  display: grid;
+  place-items: center;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  background: var(--line);
+  color: var(--muted);
+  flex: none;
+}
+.ob-rail-item.active .ob-dot { background: var(--accent); color: var(--on-accent); }
+.ob-rail-item.done .ob-dot { background: var(--ok); color: #fff; }
+.ob-body { grid-column: 2; padding: 40px 40px var(--s-8); overflow-y: auto; }
+.ob-step h2 { font-family: var(--serif); margin: 0 0 var(--s-4); font-size: var(--t-xl); line-height: var(--t-xl-lh); color: var(--ink); }
+.ob-sub { color: var(--muted); font-size: var(--t-lg); line-height: 1.55; margin: 0 0 22px; }
+.ob-mark { color: var(--accent); font-size: var(--t-xl); line-height: var(--t-xl-lh); margin-bottom: var(--s-6); }
+.ob-label { display: block; font-size: var(--t-xs); color: var(--faint); margin: 20px 0 var(--s-3); }
+.ob-ok { color: var(--ok); text-transform: none; letter-spacing: 0; font-weight: 500; }
+.ob-row { display: flex; gap: var(--s-4); align-items: center; }
+.ob-row input, .ob-select, .ob-input {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  padding: var(--s-5) var(--s-6);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-lg);
+  outline: none;
+}
+.ob-row input:focus, .ob-select:focus, .ob-input:focus { border-color: var(--accent); }
+.ob-select, .ob-input { width: 100%; }
+.ob-input { box-sizing: border-box; display: block; }
+.ob-note { font-size: var(--t-sm); margin-top: var(--s-4); color: var(--ink); }
+.ob-note.dim, .dim { color: var(--faint); }
+.ob-toggle {
+  display: flex;
+  gap: var(--s-6);
+  align-items: flex-start;
+  padding: var(--s-7) 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+.ob-toggle.disabled { opacity: 0.5; cursor: default; }
+.ob-toggle input { margin-top: var(--s-1); accent-color: var(--accent); }
+.ob-toggle span { display: flex; flex-direction: column; gap: var(--s-1); }
+.ob-toggle strong { font-weight: 500; font-size: var(--t-md); color: var(--ink); }
+.ob-toggle small { color: var(--muted); font-size: var(--t-sm); }
+.ob-check {
+  display: flex;
+  gap: var(--s-4);
+  align-items: center;
+  margin-top: 24px;
+  font-size: var(--t-md);
+  color: var(--muted);
+}
+.ob-check input { accent-color: var(--accent); }
+.ob-foot {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-8) 40px;
+  border-top: 1px solid var(--line);
+}
+.ob-foot-right { display: flex; gap: var(--s-5); }
+button.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+button.btn.ghost:hover { color: var(--ink); }
+
+/* Welcome value-prop bullets */
+.ob-valueprops { list-style: none; margin: 0 0 var(--s-8); padding: 0; display: flex; flex-direction: column; gap: var(--s-5); }
+.ob-valueprops li { position: relative; padding-left: 22px; font-size: var(--t-md); color: var(--muted); line-height: 1.5; }
+.ob-valueprops li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--ok); font-weight: 700; }
+.ob-valueprops strong { color: var(--ink); font-weight: 600; }
+
+/* Model step: detect / verify status (one line) + key help — generous spacing so the stacked
+   states don't feel cramped. */
+.ob-status { margin-top: var(--s-6); font-size: var(--t-sm); line-height: 1.5; }
+.ob-status.ob-ok { color: var(--ok); }
+.ob-status.ob-detected { color: var(--ok); }
+.ob-status.ob-err { color: var(--danger); }
+.ob-keyhelp { margin-top: var(--s-8); }
+.ob-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); font: inherit; font-size: var(--t-sm);
+}
+.ob-link:hover { text-decoration: underline; }
+.ob-keyhelp-body {
+  margin-top: var(--s-4); padding: var(--s-5) var(--s-6);
+  background: var(--accent-soft); border: 1px solid var(--line);
+  border-radius: var(--r-md); font-size: var(--t-sm); color: var(--ink);
+}
+.ob-url {
+  flex: 1; font-size: var(--t-xs); color: var(--muted);
+  overflow-wrap: anywhere; user-select: all;
+}
+
+/* Skip-without-a-model warning bar */
+.ob-skipwarn {
+  grid-column: 2; margin: 0 40px; padding: var(--s-6) var(--s-7);
+  background: var(--warn-soft); border: 1px solid var(--warn-ink);
+  border-radius: var(--r-lg); font-size: var(--t-sm); color: var(--warn-ink);
+  display: flex; flex-direction: column; gap: var(--s-5);
+}
+.ob-skipwarn-actions { display: flex; gap: var(--s-4); }
+
+/* "BETA" beside the product name in the setup wizard's heading: a small mono capsule, set
+   off from the name rather than run into it. */
+.beta-tag {
+  display: inline-block;
+  margin-left: var(--s-4);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  vertical-align: middle;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}

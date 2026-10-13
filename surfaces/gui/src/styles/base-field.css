@@ -1,0 +1,89 @@
+/* Chalk — highest contrast. faint 7.27:1, muted 10.38:1, field-line 3.25:1 at worst; white on chrome's lightest stop 7.3:1; chrome text lightest on paper 6.0:1; on-accent on accent 19.4:1. */
+:is(html, .theme-preview)[data-palette="chalk"] {
+  color-scheme: light;
+  --paper: #F7F7F7;
+  --canvas: #FFFFFF;
+  --panel: #FFFFFF;
+  --solid: #ECECEC;
+  --on-solid: #0D0D0D;
+  --ink: #0D0D0D;
+  --muted: #353535;
+  --faint: #4C4C4C;
+  --line: #E9E9E9;
+  --line-strong: #DADADA;
+  --field-line: #828282;
+  --accent: #0D0D0D;
+  --accent-soft: #F0F0F0;
+  --on-accent: #FFFFFF;
+  --chrome: linear-gradient(180deg, #565656 0%, #252525 38%, #0D0D0D 52%, #202020 72%, #474747 100%);
+  --chrome-text: linear-gradient(180deg, #0D0D0D 0%, #5F5F5F 48%, #0D0D0D 70%, #2F2F2F 100%);
+  --ok: #1B7845;
+  --ok-soft: #E8F2ED;
+  --ok-line: #BBD9C8;
+  --ok-dot: #348D5B;
+  --warn-ink: #906100;
+  --warn-soft: #F0E9DB;
+  --danger: #C13838;
+  --danger-soft: #FAEBEB;
+  --teal-ink: #0F6F75;
+  --teal-line: #C3DBDD;
+  --teal-soft: #E7F1F1;
+  --logo-plate: #F2F2F2;
+  --glass: rgba(255, 255, 255, 0.9);
+  --glass-strong: rgba(255, 255, 255, 0.96);
+  --glass-soft: rgba(255, 255, 255, 0.78);
+  --scrim: rgba(9, 9, 9, 0.38);
+  --check-a: #E9E9E9;
+  --check-b: #F2F2F2;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Form fields ------------------------------------------------------------
+   A field's outline is the one border in this design that carries meaning: it is how you
+   find where to type. Dividers stay hairlines on purpose (palette.contrast.test.ts explains
+   why); a field's edge is held to WCAG's 3:1 non-text contrast instead. It was `--line` —
+   1.16:1 against the page in dark, with the field's fill identical to the page — so a
+   settings form read as labels floating over nothing.
+
+   Colour only, set here once rather than in the ten INPUT constants that each said
+   `border-line`: a field with no border width is unaffected, and one that deliberately has
+   no outline opts out with `.field-bare`. */
+:is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="hidden"], [type="submit"], [type="button"]), textarea, select):not(.field-bare) {
+  border-color: var(--field-line);
+}
+:is(input, textarea, select):not(.field-bare):focus { border-color: var(--accent); }
+/* Tailwind's preflight paints placeholders #9CA3AF — a grey from no palette here, and
+   brighter than the app's own secondary text, so an example like "12345678" read as a value
+   someone had already entered. */
+input::placeholder,
+textarea::placeholder { color: var(--faint); opacity: 1; }
+/* Native checkboxes and radios take the accent. They were the platform blue: the one control
+   in the app that ignored the palette. */
+input[type="checkbox"],
+input[type="radio"] { accent-color: var(--accent); }
+
+/* One focus ring. Most controls carried the browser's own — a thin ring in the platform's
+   blue, drawn tight against the glyph — while a handful drew a 2px accent ring of their own,
+   so tabbing through a page changed the look of "focused" three times. `:where` keeps this at
+   zero specificity: the components that already style their focus still win, and everything
+   else inherits the same ring rather than the platform's. */
+:where(a[href], button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: var(--nav-w, 240px) 1fr;
+  grid-template-rows: minmax(0, 1fr); /* row fills viewport AND allows children to shrink */
+  height: 100vh;
+  overflow: hidden;
+}

@@ -1,0 +1,27 @@
+/* ============ Scrollbars ============ */
+/* Thin and quiet, on every platform.
+   This was scoped to `data-platform="windows"` and linux, on the reasoning that
+   macOS has overlay scrollbars and should keep its native behaviour. True only
+   while "Show scroll bars" is on Automatically: set it to Always and macOS draws
+   the same permanent grey slab Windows does, ~15px of it, right down the side of
+   the sidebar. The app cannot see that setting, so the honest thing is to style
+   the scrollbar it might be given rather than assume the one it usually is.
+
+   Overlay behaviour is preserved where it exists: a transparent track and a
+   background-clipped thumb means nothing is painted until there is something to
+   scroll. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--r-pill);
+  /* The border is transparent and clipped away, so the thumb reads as ~4px of ink
+     inside an 8px lane — a hairline with a comfortable grab area, rather than a
+     4px target you have to aim at. */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--faint); background-clip: content-box; }
+/* Firefox and anything else honouring the standard property. */
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }

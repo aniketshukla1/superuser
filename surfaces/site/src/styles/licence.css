@@ -1,0 +1,61 @@
+/* ---------- the licence ---------- */
+
+.terms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-12);
+}
+@media (max-width: 720px) {
+  .terms {
+    grid-template-columns: 1fr;
+  }
+}
+.term {
+  padding: var(--sp-6);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.term h3 {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ok);
+}
+.term-not h3 {
+  color: var(--muted);
+}
+.term ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+}
+.term li {
+  position: relative;
+  padding-left: 26px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.term li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  font-family: var(--mono);
+  color: var(--ok);
+}
+.term-not li::before {
+  content: "✕";
+  color: var(--faint);
+}
+.terms-foot {
+  max-width: 70ch;
+  margin-top: var(--sp-6);
+  font-size: 14.5px;
+  color: var(--muted);
+}

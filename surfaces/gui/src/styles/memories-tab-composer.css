@@ -1,0 +1,171 @@
+.composer-menu-heading {
+  padding: var(--s-2) var(--s-3) var(--s-1);
+  font-size: var(--t-xs); line-height: var(--t-xs-lh);
+  color: var(--faint);
+}
+.composer-menu-divider { margin: var(--s-2) 0; border-top: 1px solid var(--line); }
+
+.composer-menu-row {
+  width: 100%; display: flex; align-items: flex-start; gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-sm); text-align: left; cursor: pointer;
+}
+/* Rows with no description are a single line and centre their parts. */
+.composer-menu-row.is-flat { align-items: center; }
+.composer-menu-row:hover:not(.is-disabled) { background: var(--paper); }
+.composer-menu-row.is-disabled { cursor: default; opacity: .5; }
+.composer-menu-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.composer-menu-name {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-size: var(--t-md); line-height: var(--t-md-lh); color: var(--ink);
+}
+.composer-menu-desc {
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--faint);
+}
+.composer-menu-icon { color: var(--muted); flex-shrink: 0; }
+.composer-menu-check { color: var(--accent); flex-shrink: 0; margin-top: var(--s-1); }
+.composer-menu-row.is-flat .composer-menu-check { margin-top: 0; color: var(--faint); }
+.composer-menu-badge,
+.composer-menu-soon,
+.composer-menu-note {
+  padding: 0 var(--s-2); border-radius: var(--r-xs);
+  font-size: var(--t-xs); line-height: calc(var(--t-xs-lh) + 2px);
+  background: var(--solid); color: var(--muted); white-space: nowrap;
+}
+.composer-menu-note { background: transparent; color: var(--faint); padding: 0; }
+.composer-menu-action { font-size: var(--t-sm); color: var(--accent); white-space: nowrap; }
+.composer-menu-action.is-danger { color: var(--danger); }
+/* The one row in this menu that removes a safeguard, asking before it does. */
+.composer-menu-danger {
+  display: flex; flex-direction: column; gap: 1px;
+  margin: var(--s-2) 0; padding: var(--s-4);
+  border: 1px solid var(--danger); border-radius: var(--r-md); background: var(--paper);
+}
+.composer-menu-danger .composer-menu-name { color: var(--danger); }
+/* The number on a row is a promise that the key works — see useNumberKeys. */
+.composer-menu-key {
+  min-width: 18px; height: 18px; padding: 0 var(--s-2);
+  display: grid; place-items: center;
+  border-radius: var(--r-xs); border: 1px solid var(--line);
+  font-family: inherit; font-size: var(--t-xs); color: var(--faint);
+  flex-shrink: 0;
+}
+.composer-menu-toggle {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+}
+.composer-menu-toggle.is-disabled { opacity: .55; }
+.composer-menu-toggle .composer-menu-name,
+.composer-menu-toggle .composer-menu-desc { display: block; }
+.composer-menu-hint {
+  padding: var(--s-1) var(--s-3) var(--s-2);
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--faint);
+}
+
+.composer-effort-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--s-2) var(--s-3) 0;
+}
+.composer-effort-level { color: var(--muted); }
+.composer-effort-ends {
+  display: flex; justify-content: space-between;
+  padding: var(--s-2) var(--s-3) var(--s-1);
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--faint);
+}
+.composer-effort-range {
+  -webkit-appearance: none; appearance: none;
+  width: calc(100% - var(--s-3) * 2); margin: 0 var(--s-3) var(--s-2);
+  height: 20px; background: transparent; cursor: pointer;
+}
+.composer-effort-range::-webkit-slider-runnable-track {
+  height: 6px; border-radius: var(--r-pill); background: var(--line);
+}
+.composer-effort-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; margin-top: -4px;
+  border-radius: var(--r-circle); background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / .4);
+}
+.composer-effort-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+
+.composer-ring-track { fill: none; stroke: var(--line); stroke-width: 2.5; }
+.composer-ring-fill {
+  fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round;
+  transition: stroke-dasharray .2s;
+}
+
+.composer-usage-row { padding: var(--s-2) var(--s-3); display: flex; flex-direction: column; gap: var(--s-2); }
+.composer-usage-head { display: flex; align-items: baseline; gap: var(--s-3); }
+.composer-usage-head .composer-menu-name { flex: 1; min-width: 0; }
+.composer-usage-when { font-size: var(--t-sm); color: var(--faint); white-space: nowrap; }
+.composer-usage-total { font-size: var(--t-sm); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.composer-usage-track { height: 6px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+.composer-usage-fill { height: 100%; background: var(--accent); border-radius: var(--r-pill); transition: width .2s; }
+.composer-usage-row .composer-menu-hint { padding: 0; }
+
+/* ── the "/" command list ──────────────────────────────────────────────────
+   A floating panel above the input, not a block inside it. In the flow it pushed
+   the composer up the page as you typed and grew without limit; floating, it
+   overlays the transcript and caps its own height, so the input stays where your
+   hands are. */
+.slash-popup {
+  position: absolute; z-index: 40; bottom: 100%; left: 0;
+  margin-bottom: var(--s-2);
+  min-width: 260px; max-width: min(460px, 100%);
+  /* Fifteen rows and then it scrolls. A list you have to page through is a list you
+     should be filtering instead, and the filter is the thing you are already typing. */
+  max-height: calc(var(--ctl-h-sm) * 15);
+  overflow-y: auto; overscroll-behavior: contain;
+  border-radius: var(--r-lg); border: 1px solid var(--line);
+  background: var(--panel); box-shadow: 0 12px 32px rgb(0 0 0 / .45);
+  padding: var(--s-2);
+}
+.slash-row {
+  display: flex; align-items: baseline; gap: var(--s-4); width: 100%; text-align: left;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-sm);
+  font-size: var(--t-md); line-height: var(--t-md-lh);
+  color: var(--ink);
+  white-space: nowrap; overflow: hidden;
+  cursor: pointer;
+}
+.slash-name { flex: none; }
+/* What it does, in the space left over. It shrinks to an ellipsis before the name does:
+   you came here for the name, and the description is how you tell two names apart. */
+.slash-hint {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--faint);
+}
+.slash-row:hover, .slash-row.is-active { background: var(--paper); }
+.slash-empty {
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--faint);
+}
+
+/* The wiki layer — what reviews have learned, beside what they changed.
+   Patterns read as a list of claims, not a log: the kind and the recurrence count
+   carry the meaning, so they lead the row and the prose follows underneath. */
+.wiki-head { display: flex; align-items: baseline; gap: var(--s-3); margin-bottom: var(--s-2); }
+.wiki-kind {
+  flex: none; font-family: var(--mono); font-size: var(--t-xs); line-height: var(--t-xs-lh);
+  letter-spacing: var(--ls-tight); padding: 0 var(--s-2); border-radius: var(--r-xs);
+  color: var(--warn-ink); background: var(--warn-soft);
+}
+.wiki-kind.is-strategy { color: var(--ok); background: var(--ok-soft); }
+.wiki-title { font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--ink); font-weight: 600; }
+/* Recurrence is the signal that earns a skill change, so it keeps its own column
+   rather than being folded into the title. */
+.wiki-seen {
+  margin-left: auto; flex: none; font-family: var(--mono);
+  font-size: var(--t-xs); line-height: var(--t-xs-lh); color: var(--faint);
+}
+.wiki-rejected { margin-top: var(--s-8); padding-top: var(--s-6); border-top: 1px solid var(--line); }
+.wiki-rejected-h { font-size: var(--t-sm); line-height: var(--t-sm-lh); font-weight: 600; color: var(--ink); margin: 0; }
+.wiki-row {
+  display: flex; align-items: baseline; gap: var(--s-4); padding: var(--s-3) 0;
+  font-size: var(--t-sm); line-height: var(--t-sm-lh); border-bottom: 1px solid var(--line);
+}
+.wiki-row:last-child { border-bottom: 0; }
+.wiki-target { flex: none; font-family: var(--mono); font-size: var(--t-xs); color: var(--ink); }
+.wiki-note { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiki-at { margin-left: auto; flex: none; font-family: var(--mono); font-size: var(--t-xs); color: var(--faint); }

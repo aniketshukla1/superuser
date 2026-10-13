@@ -1,0 +1,150 @@
+/* ---- the launch film: the machine checking the work, and the capture ---- */
+
+/* Brackets, on a screen it locked (they travel on with it) and on the reticle. */
+.film-lock { position: absolute; inset: -6px; color: var(--film-mint); opacity: 0; animation: film-lock 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
+@keyframes film-lock {
+  from { transform: scale(1.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.film-lock i, .film-reticle-corners i { position: absolute; width: 11px; height: 11px; }
+.film-lock .tl, .film-reticle-corners .tl { left: 0; top: 0; border-left: 1.5px solid; border-top: 1.5px solid; }
+.film-lock .tr, .film-reticle-corners .tr { right: 0; top: 0; border-right: 1.5px solid; border-top: 1.5px solid; }
+.film-lock .bl, .film-reticle-corners .bl { left: 0; bottom: 0; border-left: 1.5px solid; border-bottom: 1.5px solid; }
+.film-lock .br, .film-reticle-corners .br { right: 0; bottom: 0; border-right: 1.5px solid; border-bottom: 1.5px solid; }
+
+/* What it decided, under the screen: "working…", then the verdict typed over it. */
+.film-verdict {
+  position: absolute;
+  left: 2px;
+  bottom: -20px;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+/* Linear, not a step: a step waiting for a progress of exactly 1 can miss it. */
+.film-assessing { color: rgb(238 243 248 / 0.7); animation: film-assess 0.38s linear forwards; }
+@keyframes film-assess {
+  0%, 96% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.film-verdict-text { position: absolute; left: 0; top: 0; color: var(--film-mint); }
+
+/* ---- the reticle, the lines home, the count ---- */
+.film-search { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.film-pings { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.film-ping {
+  stroke: rgb(238 243 248 / 0.5);
+  stroke-width: 0.8;
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  animation: film-ping 0.7s cubic-bezier(0.3, 0.6, 0.2, 1) forwards;
+}
+@keyframes film-ping {
+  0% { stroke-dashoffset: var(--len); opacity: 0.9; }
+  55% { stroke-dashoffset: 0; opacity: 0.6; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+.film-reticle { position: fixed; left: 0; top: 0; color: rgb(238 243 248 / 0.92); }
+.film-reticle-corners { position: absolute; inset: 0; }
+.film-reticle-corners i { width: 16px; height: 16px; }
+.film-reticle-label {
+  position: absolute;
+  left: 0;
+  top: -18px;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(238 243 248 / 0.8);
+}
+.film-hud {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(238 243 248 / 0.55);
+  opacity: 0;
+  animation: film-wash 0.6s ease-out calc(var(--feeds) + 500ms) forwards;
+}
+/* The desktop title bar keeps its top-left corner for the window's own buttons. */
+.tauri-overlay .film-hud { top: 48px; }
+.film-hud-title { color: rgb(238 243 248 / 0.85); }
+.film-hud b { font-weight: 500; color: var(--film-mint); }
+
+/* ---- the capture: one finished task, brought forward and stamped ---- */
+.film-capture {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 4;
+  width: min(620px, 64vw);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation:
+    film-capture-in 0.6s cubic-bezier(0.2, 0.85, 0.25, 1) var(--in) both,
+    film-capture-out 0.5s cubic-bezier(0.6, 0, 0.9, 0.4) var(--out) forwards;
+}
+@keyframes film-capture-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.55); filter: blur(6px); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+}
+/* Folding into the centre, where the mark is about to draw. */
+@keyframes film-capture-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -64%) scale(0.06); }
+}
+.film-capture-card {
+  position: relative;
+  padding: var(--s-6);
+  border: 1px solid rgb(238 243 248 / 0.26);
+  background: rgb(22 22 22 / 0.94);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.6);
+}
+.film-capture-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-4); margin: var(--s-4) 0; }
+.film-kpi { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-4) var(--s-6); background: rgb(238 243 248 / 0.05); }
+.film-kpi span { font-family: var(--mono); font-size: var(--t-xs); line-height: var(--t-xs-lh); letter-spacing: 0.14em; text-transform: uppercase; color: rgb(238 243 248 / 0.45); }
+.film-kpi b { font-size: var(--t-xl); line-height: var(--t-xl-lh); font-weight: 600; color: var(--film-ink); }
+.film-kpi em { font-family: var(--mono); font-size: var(--t-xs); line-height: var(--t-xs-lh); font-style: normal; color: var(--film-mint); }
+.film-capture-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-6); }
+.film-capture-lock { inset: -12px; animation-delay: var(--shot); }
+.film-capture-lock i { width: 18px; height: 18px; }
+.film-done {
+  margin-top: var(--s-8);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--t-lg);
+  line-height: var(--t-lg-lh);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--film-mint);
+  text-shadow: 0 0 18px rgb(94 230 194 / 0.45);
+}
+.film-done-meta {
+  margin-top: var(--s-2);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: var(--t-xs-lh);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(238 243 248 / 0.55);
+  opacity: 0;
+  animation: film-wash 0.4s ease-out forwards;
+}
+/* The shutter. */
+.film-flash { position: absolute; inset: 0; z-index: 5; background: #ffffff; opacity: 0; pointer-events: none; animation: film-flash 0.42s ease-out var(--shot) both; }
+@keyframes film-flash {
+  0% { opacity: 0; }
+  12% { opacity: 0.32; }
+  100% { opacity: 0; }
+}

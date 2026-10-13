@@ -1,0 +1,22 @@
+{
+  "name": "superuser",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Superuser \u2014 a privacy-first, local-first AI coworker (Tauri + Rust + React).",
+  "scripts": {
+    "app": "tauri dev",
+    "tauri": "tauri",
+    "build": "tauri build",
+    "dev": "npm --prefix surfaces/gui run dev",
+    "test": "npm --prefix surfaces/gui run test && cd src-tauri && cargo test",
+    "test:gui": "npm --prefix surfaces/gui run test",
+    "test:rust": "cd src-tauri && cargo test",
+    "test:e2e": "cd src-tauri && cargo test -- --ignored",
+    "prebuild": "node scripts/preflight-cmake.mjs",
+    "preapp": "node scripts/preflight-cmake.mjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

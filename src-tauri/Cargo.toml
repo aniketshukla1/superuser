@@ -1,0 +1,83 @@
+[package]
+name = "superuser"
+version = "0.1.0"
+description = "Superuser — a privacy-first, local-first AI coworker."
+authors = ["Aniket Shukla"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "superuser_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+regex = "1"
+# "unstable" unlocks multi-webview (Window::add_child) — the in-app browser is a real
+# child WKWebView, not an iframe, because "open any website" and X-Frame-Options are
+# mutually exclusive in an iframe (google.com, github.com and most banks refuse to frame).
+tauri = { version = "2", features = ["macos-private-api", "unstable", "tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10"
+tokio = { version = "1", features = ["full"] }
+# "stream" gives Response::bytes_stream — the model reply is consumed as it arrives so
+# the UI can paint tokens instead of waiting for the whole turn.
+reqwest = { version = "0.12", features = ["json", "stream"] }
+keyring = "3"
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1"
+thiserror = "2"
+dirs = "5"
+walkdir = "2"
+sha2 = "0.10"
+base64 = "0.22"
+ring = "0.17"
+# Named time zones for automations, read from the system zone database — no bundled copy
+# (default features would pull one in, and this build resolves offline).
+jiff = { version = "0.2", default-features = false, features = ["std", "tz-system", "tzdb-zoneinfo"] }
+rand = "0.8"
+pdf-extract = "0.7"
+calamine = "0.26"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+enigo = "0.2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+portable-pty = "0.8"
+imap = "3.0.0-alpha.15"
+native-tls = "0.2.13"
+lettre = "0.11"
+axum = { version = "0.7", features = ["ws"] }
+futures-util = "0.3.33"
+tower-http = { version = "0.7.0", features = ["cors"] }
+# Already in the tree via reqwest and axum. Named directly so `core::egress` can
+# mirror reqwest's own `header()` bounds, which mention `http::Error`.
+http = "1"
+whisper-rs = "0.16"
+cpal = "0.18"
+hound = "3.5"
+umya-spreadsheet = "3.1"
+docx-rs = "0.4"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+macos-accessibility-client = "0.0.1"
+
+# The assistant's own browser talks to Chrome over `--remote-debugging-pipe`: two
+# pipes handed to the child as fds 3 and 4, so there is no debugging port on the
+# machine for anything else to reach. Setting those fds up needs `pipe`, `dup2` and
+# `setpgid` between fork and exec. Already in the tree through tokio.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+# Router tests drive the real route table through `oneshot` rather than calling the
+# handlers directly — a handler called directly still passes when its route is
+# missing or its path pattern matches nothing, which is the bug these tests exist
+# to catch. Test-only; nothing here ships.
+tower = { version = "0.5", features = ["util"] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

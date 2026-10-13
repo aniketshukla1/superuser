@@ -1,0 +1,19 @@
+<!-- The Superuser mark: root's shell prompt, drawn as itself. Same four strokes as
+     `Icon.tsx` case "logo" on the same 24 grid, so the tab, the app chrome and the dock
+     icon are one mark.
+
+     It was a terminal window with a chevron inside, in green. Both were stale: the glyph
+     was redrawn as a bare `#` because the box dominated at small sizes and the part
+     carrying the meaning was three pixels of chevron, and the brand colour moved from
+     green to iris. This file kept claiming it matched Icon.tsx the whole time. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1024" height="1024">
+  <rect width="24" height="24" rx="5.37" fill="#0B0D0F"/>
+  <g transform="translate(12,12) scale(0.62) translate(-12,-12)"
+     fill="none" stroke="#8A8CF0" stroke-width="2.05"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.4 4.2 L7.2 19.8"/>
+    <path d="M16.8 4.2 L14.6 19.8"/>
+    <path d="M4.6 9.6 H19.4"/>
+    <path d="M3.8 14.4 H18.6"/>
+  </g>
+</svg>

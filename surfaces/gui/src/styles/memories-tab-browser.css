@@ -1,0 +1,189 @@
+/* ── The browser's start page ─────────────────────────────────────────────────
+   What you almost always want in here is this project running, so the workspace's
+   own dev servers are the offer — not a search engine. */
+.browser-start {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-7);
+  padding: 24px;
+  text-align: center;
+}
+.browser-start-lede { color: var(--muted); font-size: var(--t-md); max-width: 44ch; margin: 0; }
+.browser-start-hint { color: var(--faint); font-size: var(--t-xs); margin: 0; }
+.browser-servers { display: flex; flex-direction: column; gap: var(--s-3); width: min(420px, 100%); }
+.browser-server {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  padding: var(--s-5) var(--s-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--glass-soft);
+  text-align: left;
+}
+.browser-server-name { flex: 1 1 auto; font-size: var(--t-md); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.browser-server-port { color: var(--faint); font-size: var(--t-sm); font-family: var(--mono); }
+.browser-server-run {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 26px;
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+.browser-server-run:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.browser-server-run:disabled { opacity: 0.5; cursor: default; }
+
+/* The Access tab is a settings surface, so it wants the padding the other tabs
+   handle internally. */
+.wp-pane-pad { padding: var(--s-6) var(--s-7); }
+
+/* Which folder the start page read its servers from — always shown, always changeable. */
+.browser-project {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--t-xs);
+  color: var(--faint);
+  max-width: min(420px, 100%);
+}
+.browser-project-path {
+  font-family: var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.browser-project-change {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: var(--t-xs);
+  cursor: pointer;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-xs);
+  flex: 0 0 auto;
+}
+.browser-project-change:hover { background: var(--glass-soft); }
+
+/* The hidden terminal behind the browser: a dev server's own output, shown in place
+   so a failure (wrong folder, missing package.json) is readable without leaving. */
+.browser-server-wrap { display: flex; flex-direction: column; }
+.browser-server-log {
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  cursor: pointer;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-xs);
+  flex: 0 0 auto;
+}
+.browser-server-log:hover { background: var(--paper); color: var(--ink); }
+.browser-server-run.stop { border-color: var(--line); color: var(--muted); }
+.browser-server-run.stop:hover { border-color: var(--danger); color: var(--danger); }
+.browser-server-output {
+  margin: var(--s-2) 0 0;
+  padding: var(--s-4) var(--s-5);
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: var(--t-xs);
+  line-height: 1.45;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---- transcript navigator (TranscriptNav.tsx) -------------------------------
+   Collapsed: a column of ticks in the left gutter, one per question, the current one
+   longer and brighter. Expanded on hover or focus: the questions themselves.
+
+   It floats over the pane rather than taking a column, because on a narrow window there is
+   no gutter to give it and a map that steals width from the thing it maps is a bad trade.
+   Ticks are 2px tall and the row is 12px, so collapsed it never reaches the text; expanded
+   it does overlay, which is fine for something transient you opened with the pointer. */
+.tnav {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-4) var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-lg);
+  max-height: 70%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.tnav::-webkit-scrollbar { display: none; }
+.tnav-open {
+  background: var(--panel);
+  border-color: var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  max-width: min(320px, 42vw);
+}
+.tnav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  padding: var(--s-1) var(--s-3);
+  border: 0;
+  background: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  color: var(--muted);
+  /* 24px, not 12. The ticks are 2px tall and sat 12px apart, which made every mark on
+     this rail a 32x12 target — under the 24px minimum, and with no exception available:
+     the spacing carve-out in WCAG 2.5.8 wants 24px circles that do not intersect, and
+     at 12px apart they overlap their neighbours. The tick is unchanged, so the rail
+     still reads as a minimap; there is simply room to hit it. It already scrolls at 70%
+     viewport height, so a long conversation is no worse off than before. */
+  min-height: var(--ctl-h-sm);
+}
+.tnav-open .tnav-item { min-height: 26px; }
+.tnav-item:hover { background: var(--solid); color: var(--ink); }
+.tnav-item.is-current { color: var(--ink); }
+/* Focus must be visible even collapsed, where the label is not rendered at all. */
+.tnav-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tnav-tick {
+  display: block;
+  width: 14px;
+  height: 2px;
+  border-radius: var(--r-xs);
+  background: var(--line-strong);
+  flex-shrink: 0;
+  transition: background 120ms ease, width 120ms ease;
+}
+.tnav-item:hover .tnav-tick { background: var(--muted); }
+.tnav-item.is-current .tnav-tick { background: var(--ink); width: 20px; }
+.tnav-label {
+  display: none;
+  font-size: var(--t-md);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tnav-open .tnav-label { display: block; }
+.tnav-item.is-current .tnav-label { font-weight: 600; }
+@media (prefers-reduced-motion: reduce) {
+  .tnav-tick { transition: none; }
+}

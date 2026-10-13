@@ -1,0 +1,28 @@
+/* (The checkbox-and-slider switch that lived here was the app's second switch; Toggle.tsx is the one.) */
+
+/* -- Connectors tab --------------------------------------------------------- */
+.conn-name { font-size: var(--t-lg); color: var(--ink); display: flex; align-items: center; gap: var(--s-4); }
+.conn-meta { font-size: var(--t-xs); color: var(--faint); margin-top: var(--s-1); display: flex; align-items: center; gap: var(--s-2); }
+.conn-meta.ok, .conn-meta .ok { color: var(--ok); }
+.conn-meta.danger, .conn-meta .danger { color: var(--danger); }
+
+.conn-field { display: flex; flex-direction: column; gap: var(--s-2); }
+.conn-field-label { font-size: var(--t-sm); color: var(--ink); }
+.conn-field-label em { color: var(--faint); font-style: normal; }
+.conn-field input { font: inherit; font-size: var(--t-md); padding: var(--s-4) var(--s-5); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--paper); color: var(--ink); outline: none; }
+.conn-field input:focus { border-color: var(--accent); }
+/* Match the <select> (provider picker) to the text inputs: same box + a custom chevron so it
+   isn't the browser-default control. */
+.conn-field select {
+  font: inherit; font-size: var(--t-md); padding: var(--s-4) 32px var(--s-4) var(--s-5);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background-color: var(--paper); color: var(--ink); outline: none; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center; background-size: 12px;
+}
+.conn-field select:focus { border-color: var(--accent); }
+.conn-field-help { font-size: var(--t-xs); color: var(--faint); }
+
+.sa-sub { font-size: var(--t-xs); color: var(--faint); margin-top: var(--s-2); }
+.dim { color: var(--faint); }

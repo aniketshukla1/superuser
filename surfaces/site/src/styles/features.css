@@ -1,0 +1,42 @@
+/* ---------- features ---------- */
+
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-12);
+}
+@media (max-width: 880px) {
+  .feat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .feat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.feat {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: var(--sp-6);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.feat-ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: var(--sp-2);
+}
+.feat p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.55;
+}
