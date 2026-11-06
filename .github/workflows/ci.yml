@@ -32,7 +32,8 @@ jobs:
 
   core:
     name: Rust core (tests)
-    runs-on: macos-14
+    # macos-14 was retired: GitHub cancels a job that asks for it before it starts.
+    runs-on: macos-latest
     env:
       CARGO_INCREMENTAL: 0
     steps:
