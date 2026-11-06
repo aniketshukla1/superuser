@@ -65,12 +65,12 @@ A built-in assistant is a markdown file in `src-tauri/src/core/personas_builtin/
 
 ## Regenerating the README images
 
-The screenshots and the demo GIF are the real interface over the mock backend, with invented data from `surfaces/gui/e2e-demo/`:
+The screenshots and the demo GIF are the real interface over the mock backend, with invented data from `surfaces/gui/e2e-demo/`. The hero, the buttons, the numbers strip and the architecture drawing come from `e2e-demo/readmeArt.spec.ts`, in the app's own fonts:
 
 ```bash
 cd surfaces/gui
 node node_modules/@playwright/test/cli.js test -c playwright.demo.config.ts   # raw captures
-python3 ../../scripts/readme-assets.py                                        # sized images and the GIF
+python3 ../../scripts/readme-assets.py                                        # sized images, the GIF, the hero loop
 ```
 
 `python3 scripts/readme-assets.py --extract` refreshes the assistants and boundary presets the demo shows, straight from the Rust source.

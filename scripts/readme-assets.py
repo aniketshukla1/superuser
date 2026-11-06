@@ -7,6 +7,9 @@ Two steps, because the first needs a browser and the second does not:
     node node_modules/@playwright/test/cli.js test -c playwright.demo.config.ts   # docs/assets/raw/
     python3 ../../scripts/readme-assets.py                                        # docs/assets/
 
+readmeArt.spec.ts draws the hero (a loop of frames, assembled here into an animated WebP), the
+buttons, the numbers strip and the architecture; demo.spec.ts takes the screenshots.
+
 The captures are the real UI over a mock backend with invented data (surfaces/gui/e2e-demo),
 so nothing in them is anybody's mail, chats or accounts. `--extract` refreshes the part of
 that data which is NOT invented: the built-in assistants and the boundary presets, read from
@@ -27,6 +30,10 @@ OUT = os.path.join(ROOT, "docs", "assets")
 SCREEN_W = 1600  # the README shows them at half a column; 1600 keeps text sharp on a retina display
 GIF_W = 1200
 FRAME_MS = 2800
+HERO_W = 1600  # the hero shows at most ~900px wide
+HERO_MS = 83  # 72 frames: one turn of the light in six seconds, at 12 frames a second
+# Drawn by readmeArt.spec.ts, kept at the size they were drawn.
+DRAWN = ("social-", "btn-", "stats-", "architecture-")
 
 
 def extract():
@@ -95,12 +102,22 @@ def build():
         if name.startswith("frame-"):
             continue
         im = Image.open(path)
-        if name.startswith(("banner-", "social-")):
+        if name.startswith(DRAWN):
             target = os.path.join(OUT, name)
             im.save(target, optimize=True)
         else:
             target = os.path.join(OUT, "screen-" + name)
             fit(im.convert("RGB"), SCREEN_W).save(target, optimize=True)
+        made.append(target)
+
+    for theme in ("dark", "light"):
+        paths = sorted(glob.glob(os.path.join(RAW, "hero", f"hero-{theme}-*.png")))
+        if not paths:
+            continue
+        target = os.path.join(OUT, f"hero-{theme}.webp")
+        loop = [fit(Image.open(p).convert("RGBA"), HERO_W) for p in paths]
+        # Not minimize_size: its partial frames left blocky seams in the dark around the headline.
+        loop[0].save(target, save_all=True, append_images=loop[1:], duration=HERO_MS, loop=0, quality=78, method=6)
         made.append(target)
 
     frames = [

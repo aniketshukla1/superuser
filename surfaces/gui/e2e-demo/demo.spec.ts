@@ -7,7 +7,8 @@ import { dress, serve } from "./dress";
 
 // The README's images, taken from the real UI over the hermetic mock with the demo data laid
 // on top. `DEMO_OUT` overrides where they land (default: docs/assets/raw at the repo root);
-// scripts/readme-assets.py turns the raw frames into the GIF and the sized screenshots.
+// scripts/readme-assets.py turns the raw frames into the GIF and the sized screenshots. The
+// banner, buttons, numbers and diagram are drawn by readmeArt.spec.ts.
 const SIZE = { width: 1440, height: 900 };
 const OUT = process.env.DEMO_OUT || path.resolve(process.cwd(), "..", "..", "docs", "assets", "raw");
 
@@ -88,49 +89,3 @@ test("README screenshot: local-only refuses", async ({ page }) => {
   frame = 90; // after the tour's frames, whatever order the two tests ran in
   await shot(page, "network-local-only", "Local-only mode: nothing leaves, and every refusal is on the record.");
 });
-
-// ---- the banner and the social-preview card, in the app's own type ----
-const PALETTE = {
-  dark: { paper: "#0b0d0f", panel: "#121517", ink: "#e8eaed", muted: "#8b9299", faint: "#788188", line: "#22262a", accent: "#8a8cf0" },
-  light: { paper: "#f4f6f7", panel: "#ffffff", ink: "#14181b", muted: "#545e66", faint: "#656e75", line: "#c9d0d5", accent: "#5457c8" },
-};
-
-function card(theme: "dark" | "light", w: number, h: number, big: boolean) {
-  const c = PALETTE[theme];
-  const h1 = big ? 76 : 62;
-  return `
-  <div id="card" style="box-sizing:border-box;width:${w}px;height:${h}px;padding:${big ? 72 : 54}px ${big ? 84 : 72}px;
-      background:radial-gradient(900px 520px at 88% 12%, ${c.accent}26, transparent 62%), ${c.paper};
-      color:${c.ink};font-family:Inter,system-ui,sans-serif;display:flex;flex-direction:column;justify-content:center;gap:${big ? 26 : 20}px;
-      border:1px solid ${c.line};${big ? "" : "border-radius:16px;"}overflow:hidden">
-    <div style="display:flex;align-items:center;gap:12px;font:500 ${big ? 26 : 22}px/1 'JetBrains Mono',monospace;letter-spacing:-0.01em">
-      <span style="display:inline-flex;align-items:center;gap:4px"><span style="color:${c.accent}">#</span><span style="display:inline-block;width:0.42em;height:0.92em;background:${c.ink};border-radius:1px"></span></span>
-      <span>superuser</span>
-    </div>
-    <div style="font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:${c.accent}">A coworker that lives on your computer</div>
-    <div style="font-size:${h1}px;line-height:1.05;font-weight:600;letter-spacing:-0.028em">The AI you can tell everything.</div>
-    <div style="font-size:${big ? 23 : 20}px;line-height:1.5;color:${c.muted};max-width:${big ? 860 : 780}px">It runs on your machine, asks before it acts, and shows you everything that left.</div>
-    <div style="font:400 ${big ? 15 : 14}px/1 'JetBrains Mono',monospace;color:${c.faint}">no account &nbsp;·&nbsp; no telemetry &nbsp;·&nbsp; runs with the Wi-Fi off</div>
-  </div>`;
-}
-
-test("README banner and social preview", async ({ page }) => {
-  mkdirSync(OUT, { recursive: true });
-  await page.setViewportSize({ width: 1300, height: 700 });
-  await page.goto("/");
-  await page.locator(".side, aside, nav").first().waitFor({ state: "visible", timeout: 30_000 });
-  const draw = async (html: string, file: string) => {
-    await page.evaluate((h) => {
-      document.documentElement.style.background = "transparent";
-      document.body.style.cssText = "margin:0;background:transparent";
-      document.body.innerHTML = h;
-    }, html);
-    await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(250);
-    await page.locator("#card").screenshot({ path: path.join(OUT, file), omitBackground: true });
-  };
-  await draw(card("dark", 1280, 400, false), "banner-dark.png");
-  await draw(card("light", 1280, 400, false), "banner-light.png");
-  await draw(card("dark", 1280, 640, true), "social-preview.png");
-});
-
