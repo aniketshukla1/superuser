@@ -9,6 +9,7 @@ import { ExpensesSection } from "../ExpensesSection";
 import { ChiefOfStaffSection } from "../ChiefOfStaffSection";
 import { BugReproSection } from "../BugReproSection";
 import { PerfSection } from "../PerfSection";
+import { TalentSection } from "../TalentSection";
 import { TelegramSection } from "../TelegramSection";
 import { reportIfFailed } from "../../notify";
 import { CARD, FIELD_HELP, FIELD_LABEL } from "../../ui";
@@ -111,6 +112,7 @@ export function AppearanceSection() {
       <ChiefOfStaffSection />
       <BugReproSection />
       <PerfSection />
+      <TalentSection />
     </section>
   );
 }

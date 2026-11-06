@@ -31,9 +31,9 @@ pub(super) fn start_local_api(handle: tauri::AppHandle) {
                         // port is picked up without a reload. A boot error left from a failed
                         // first attempt goes, because it is no longer true.
                         let js = format!(
-                            "window.__COWORKER_HTTP__='http://127.0.0.1:{port}';\
-                             window.__COWORKER_WS__='ws://127.0.0.1:{port}';\
-                             window.__COWORKER_API_TOKEN__='{token}';\
+                            "window.__SUPERUSER_HTTP__='http://127.0.0.1:{port}';\
+                             window.__SUPERUSER_WS__='ws://127.0.0.1:{port}';\
+                             window.__SUPERUSER_API_TOKEN__='{token}';\
                              (function(){{var e=document.getElementById('su-boot-error');if(e)e.remove();}})();"
                         );
                         let _ = w.eval(&js);
@@ -68,7 +68,7 @@ pub(super) fn start_local_api(handle: tauri::AppHandle) {
                         if let Some(w) = handle.get_webview_window("main") {
                             let detail = e.replace('\\', "\\\\").replace('\'', "\\'");
                             let _ = w.eval(&format!(
-                                r#"window.__COWORKER_BOOT_ERROR__='{detail}';
+                                r#"window.__SUPERUSER_BOOT_ERROR__='{detail}';
                                 (function(){{
                                   function show(){{
                                     if (document.getElementById('su-boot-error')) return;
@@ -81,7 +81,7 @@ pub(super) fn start_local_api(handle: tauri::AppHandle) {
                                       +'<div style="color:#8B9299;margin-bottom:14px">Everything in this app runs through a server on your own machine. It could not start, so nothing here will load.</div>'
                                       +'<div style="color:#8B9299;margin-bottom:14px">This is almost always another copy of Superuser already running. Quit it and open this one again.</div>'
                                       +'<pre style="white-space:pre-wrap;word-break:break-word;background:#121517;border:1px solid #1A1E21;border-radius:8px;padding:10px 12px;color:#8B9299;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;margin:0">'
-                                      + window.__COWORKER_BOOT_ERROR__ + '</pre></div>';
+                                      + window.__SUPERUSER_BOOT_ERROR__ + '</pre></div>';
                                     document.body.appendChild(d);
                                   }}
                                   if (document.body) show();

@@ -14,8 +14,8 @@ pub fn parse_manifest(
         Some(explicit) => {
             if !id_re().is_match(explicit) {
                 return Err(format!(
-                    "persona id '{explicit}' is invalid: lowercase letters, digits, '-' or '_' only, \
-                     starting with a letter/digit, max 64 chars"
+                    "persona id '{explicit}' isn't allowed: use up to 64 lowercase letters, digits, '-' and '_', \
+                     beginning with a letter or digit"
                 ));
             }
             explicit.to_string()
@@ -23,7 +23,7 @@ pub fn parse_manifest(
         None => {
             let s = slugify(fallback_id.unwrap_or(""));
             if s.is_empty() {
-                return Err("manifest needs an `id` (or a filename to derive one from)".into());
+                return Err("manifest has no `id`, and no filename to make one from".into());
             }
             s
         }
@@ -165,10 +165,10 @@ pub(in crate::core::personas) fn parse_recommends(persona_id: &str, raw: Option<
 pub(in crate::core::personas) fn split_frontmatter(text: &str) -> Result<(RawManifest, String), String> {
     let t = text.strip_prefix('\u{feff}').unwrap_or(text); // tolerate a BOM
     if !t.starts_with("---") {
-        return Err("manifest must start with a YAML frontmatter block (---)".into());
+        return Err("manifest has to open with a `---` YAML frontmatter block".into());
     }
     let after = &t[3..];
-    let end = after.find("\n---").ok_or("unterminated frontmatter block (missing closing ---)")?;
+    let end = after.find("\n---").ok_or("frontmatter block never closes (no second `---`)")?;
     let raw_yaml = &after[..end];
     let body = after[end + 4..].trim_start_matches('\n').to_string();
     let raw: RawManifest =

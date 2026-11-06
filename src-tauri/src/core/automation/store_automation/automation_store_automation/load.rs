@@ -172,7 +172,7 @@ impl AutomationStore {
             }
             self.save();
             return Some(format!(
-                "This automation has failed {FATIGUE_LIMIT} times in a row, so I've switched it off. Ask me to turn it back on when whatever it needs is working."
+                "I've switched this automation off after {FATIGUE_LIMIT} failures in a row. Once whatever it depends on is fixed, ask me and I'll turn it back on."
             ));
         }
         (failures == 1).then(|| format!("This automation failed: {}", reason.chars().take(160).collect::<String>()))

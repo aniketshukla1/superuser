@@ -44,7 +44,7 @@ export function InstallationGroup({
         {empty ? (
           <div className={ROW}>
             <span className="min-w-0 flex-1 text-sm text-muted">
-              No one allowed yet — @ocw-agent mentions show up here for your OK.
+              No one allowed yet — @superuser-agent mentions show up here for your OK.
             </span>
             <DisconnectBtn id={inst.installation_id} busy={busy} onClick={disconnect} />
           </div>

@@ -76,9 +76,8 @@ impl Settings {
     /// the rule for when they conflict with the assistant's role. Empty when there
     /// are none, so a user who never wrote any sends nothing.
     ///
-    /// The precedence sentence is the part that makes this safe
-    /// to put beside any role: "the role decides what you do and these decide how
-    /// you do it." Without it, "always reply in three bullets" would fight a
+    /// The precedence sentence is what makes this safe to put beside any role: the
+    /// role settles what to do, these settle how. Without it, "always reply in three bullets" would fight a
     /// security reviewer's report format, and the model would pick one at random.
     pub fn standing_block(&self) -> String {
         let text = self.standing_instructions.trim();
@@ -90,7 +89,7 @@ impl Settings {
             "\n\n## The user's standing instructions\n\n\
              The user wrote these instructions for every assistant and every task, alongside your role:\n\n\
              {text}\n\n\
-             Where the two conflict, the role decides what you do and these decide how you do it."
+             If the two ever disagree, your role settles what to do; these instructions settle how to do it."
         )
     }
 }

@@ -1,32 +1,25 @@
 import { ProviderMark, type ProviderSetupState } from "./ProviderSetupState";
 
-/** The gallery: one card per provider, each wearing its own state. */
-export function ProviderCards({
-  ps,
-  tp,
-  gridClass = "grid grid-cols-2 gap-2.5",
-  lastUsed = false,
-}: {
+const CARD = "bg-panel border border-line flex gap-2.5 hover:border-lineStrong items-center px-3 py-2.5 rounded-xl text-left transition-colors";
+
+type Props = {
   ps: ProviderSetupState;
-  tp: string; // testid prefix ("ob" onboarding, "set" settings)
+  /** Test-id prefix: "ob" in onboarding, "set" in Settings. */
+  tp: string;
   gridClass?: string;
   lastUsed?: boolean;
-}) {
-  const card =
-    "flex items-center gap-2.5 rounded-xl border border-line bg-panel px-3 py-2.5 text-left hover:border-lineStrong transition-colors";
+};
+
+/** The gallery: a card per provider, each showing where it stands. */
+export function ProviderCards({ ps, tp, gridClass = "gap-2.5 grid grid-cols-2", lastUsed = false }: Props) {
   return (
     <div className={gridClass}>
-      {ps.ordered.map((p) => (
-        <button
-          key={p.name}
-          className={card}
-          data-testid={`${tp}-provider-${p.name}`}
-          onClick={() => ps.openProvider(p.name)}
-        >
-          <ProviderMark name={p.name} title={p.title} />
-          <span className="min-w-0 flex-1">
-            <span className="block text-md font-semibold leading-tight truncate">{p.title}</span>
-            {ps.statusFor(p, { lastUsed })}
+      {ps.ordered.map((provider) => (
+        <button key={provider.name} className={CARD} data-testid={`${tp}-provider-${provider.name}`} onClick={() => ps.openProvider(provider.name)}>
+          <ProviderMark name={provider.name} title={provider.title} />
+          <span className="flex-1 min-w-0">
+            <span className="block font-semibold leading-tight text-md truncate">{provider.title}</span>
+            {ps.statusFor(provider, { lastUsed })}
           </span>
           <span className="text-faint text-lg">›</span>
         </button>

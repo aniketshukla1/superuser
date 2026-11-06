@@ -1,95 +1,65 @@
-import { normalizeTodos, newId, updateLastTool, FILE_WRITE_TOOLS } from "../../appHelpers";
-import type { WsEvent } from "../../../types";
+import type { Item, WsEvent } from "../../../types";
+import { FILE_WRITE_TOOLS, newId, normalizeTodos, updateLastTool } from "../../appHelpers";
 import type { SocketCtx } from "./handleEvent";
 
-/** What the agent asks for or reports mid-turn: tools, permissions, folders, plans, questions, the browser. */
-export function onRequestEvent(c: SocketCtx, ev: WsEvent, d: WsEvent["data"], flushPartialStream: () => void) {
-  const { agent, setItems, setTodo, unattendedRef, setBrowserRefreshKey } = c;
-  switch (ev.type) {
+type Data = WsEvent["data"];
+
+/** Requests that an Unattended session parks in the Inbox; no live card is shown for them. */
+const PARKED_WHEN_UNATTENDED = new Set(["permission_required", "directory_requested", "plan_proposed"]);
+
+const text = (value: unknown, fallback = "") => String(value || fallback);
+
+/** The transcript item an event adds, or null when it adds none. */
+function itemFor(type: WsEvent["type"], d: Data, agent: string): Item | null {
+  switch (type) {
     case "tool_proposed":
-      // Whatever the model said before reaching for a tool is finished text: promote it
-      // to a narration row in this turn's group. Local models only started streaming
-      // once `stream: false` was lifted, and without this their per-step narration
-      // stayed in the live buffer and got glued onto the next step's text.
-      flushPartialStream();
-      if (d.name === "todo_write" && (d.arguments?.todos || d.arguments?.items))
-        setTodo(normalizeTodos(d.arguments.todos ?? d.arguments.items));
-      setItems((p) => [
-        ...p,
-        { kind: "tool", id: newId(), name: d.name, args: d.arguments, status: "…" },
-      ]);
-      break;
+      return { kind: "tool", id: newId(), name: d.name, args: d.arguments, status: "…" };
     case "permission_required":
-      // Unattended → the backend parked it in the Inbox; don't also surface a live card.
-      if (unattendedRef.current) break;
-      setItems((p) => [
-        ...p,
-        {
-          kind: "approval",
-          name: d.name,
-          args: d.arguments,
-          reason: d.reason,
-          category: d.category,
-          standingTarget: d.standing_target || undefined,
-        },
-      ]);
-      break;
+      return { kind: "approval", name: d.name, args: d.arguments, reason: d.reason, category: d.category, standingTarget: d.standing_target || undefined };
     case "directory_requested":
-      if (unattendedRef.current) break;
-      setItems((p) => [
-        ...p,
-        { kind: "dirreq", reason: d.reason || "", path: d.path || "", writable: !!d.writable },
-      ]);
-      break;
+      return { kind: "dirreq", reason: d.reason || "", path: d.path || "", writable: Boolean(d.writable) };
     case "plan_proposed":
-      if (unattendedRef.current) break;
-      setItems((p) => [...p, { kind: "planreq", plan: d.plan || "" }]);
-      break;
+      return { kind: "planreq", plan: d.plan || "" };
     case "question_requested":
-      // ask_user in an attended session — answered inline (not routed to the Inbox).
-      setItems((p) => [...p, { kind: "question", questions: Array.isArray(d.questions) ? d.questions : [] }]);
-      break;
-    // The assistant's own browser. A kept screen joins the turn; the two requests block
-    // it until answered in the composer head, like a question does.
-    case "computer_frame":
-      if (d.persona && d.frame)
-        setItems((p) => [
-          ...p,
-          { kind: "computer", persona: String(d.persona), frame: String(d.frame), url: String(d.url || ""), title: String(d.title || "") },
-        ]);
-      break;
-    case "computer_help":
-      setItems((p) => [
-        ...p,
-        { kind: "computer_help", persona: String(d.persona || agent), reason: String(d.reason || ""), url: String(d.url || "") },
-      ]);
-      break;
-    case "computer_secret":
-      setItems((p) => [...p, { kind: "computer_secret", persona: String(d.persona || agent), label: String(d.label || "a value") }]);
-      break;
+      // ask_user in an attended session, answered right here rather than in the Inbox.
+      return { kind: "question", questions: Array.isArray(d.questions) ? d.questions : [] };
     case "form_requested":
-      // ask_form: the same rendezvous, a different card.
-      setItems((p) => [
-        ...p,
-        { kind: "form", form: { title: d.title, intro: d.intro, fields: Array.isArray(d.fields) ? d.fields : [] } },
-      ]);
-      break;
-    case "tool_finished":
-      setItems((p) =>
-        updateLastTool(
-          p,
-          d.name,
-          d.status,
-          d.result_preview || d.reason,
-          d.display?.hidden_by_filters,
-          d.standing_rule,
-        ),
-      );
-      // Refresh the right rail when something it shows may have changed: browser state, or a
-      // file write that should appear under Artifacts immediately (not only after the turn).
-      if (String(d.name || "").startsWith("browser_") || FILE_WRITE_TOOLS.has(d.name)) {
-        setBrowserRefreshKey((k) => k + 1);
-      }
-      break;
+      // ask_form: the same hand-off as a question, with a different card.
+      return { kind: "form", form: { title: d.title, intro: d.intro, fields: Array.isArray(d.fields) ? d.fields : [] } };
+    // The assistant's own browser. A kept screen joins the turn; the two requests hold the turn
+    // until they are answered at the head of the composer, as a question does.
+    case "computer_frame":
+      return d.persona && d.frame ? { kind: "computer", persona: text(d.persona), frame: text(d.frame), url: text(d.url), title: text(d.title) } : null;
+    case "computer_help":
+      return { kind: "computer_help", persona: text(d.persona, agent), reason: text(d.reason), url: text(d.url) };
+    case "computer_secret":
+      return { kind: "computer_secret", persona: text(d.persona, agent), label: text(d.label, "a value") };
+    default:
+      return null;
   }
+}
+
+/** What the agent asks for or reports during a turn: tools, permissions, folders, plans,
+ *  questions, forms and its browser. */
+export function onRequestEvent(c: SocketCtx, ev: WsEvent, d: Data, keepPartial: () => void) {
+  if (ev.type === "tool_finished") {
+    c.setItems((before) => updateLastTool(before, d.name, d.status, d.result_preview || d.reason, d.display?.hidden_by_filters, d.standing_rule));
+    // The panel refreshes when what it shows may have changed: the browser, or a written file
+    // that belongs under Artifacts now rather than when the turn ends.
+    if (String(d.name || "").startsWith("browser_") || FILE_WRITE_TOOLS.has(d.name)) c.setBrowserRefreshKey((key) => key + 1);
+    return;
+  }
+  if (ev.type === "tool_proposed") {
+    // What the model said before reaching for a tool is finished text, so it becomes a
+    // narration row in this turn's group. Local models began streaming once `stream: false`
+    // was lifted, and without this their narration stayed in the live buffer and ran into the
+    // next step's text.
+    keepPartial();
+    const todos = d.arguments?.todos || d.arguments?.items;
+    if (d.name === "todo_write" && todos) c.setTodo(normalizeTodos(d.arguments.todos ?? d.arguments.items));
+  }
+  // Unattended: the server put it in the Inbox, so there's no live card as well.
+  if (PARKED_WHEN_UNATTENDED.has(ev.type) && c.unattendedRef.current) return;
+  const item = itemFor(ev.type, d, c.agent);
+  if (item) c.setItems((before) => [...before, item]);
 }

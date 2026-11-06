@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "ai.superuser.app",
   "build": {
-    "beforeDevCommand": "COWORKER_STATE_DIR=\"$HOME/Library/Application Support/ai.superuser.app\" npm --prefix surfaces/gui run dev",
+    "beforeDevCommand": "SUPERUSER_STATE_DIR=\"$HOME/Library/Application Support/ai.superuser.app\" npm --prefix surfaces/gui run dev",
     "devUrl": "http://localhost:1421",
     "beforeBuildCommand": "npm --prefix surfaces/gui run build",
     "frontendDist": "../surfaces/gui/dist"

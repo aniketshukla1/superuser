@@ -13,7 +13,7 @@ npm install
 npm run dev        # → http://localhost:1421
 ```
 
-It finds the API at `http://127.0.0.1:8765` (override with `VITE_COWORKER_HTTP` and `VITE_COWORKER_WS`) and reads that launch's token from the app's data folder.
+It finds the API at `http://127.0.0.1:8765` (override with `VITE_SUPERUSER_HTTP` and `VITE_SUPERUSER_WS`) and reads that launch's token from the app's data folder.
 
 ## Test it
 

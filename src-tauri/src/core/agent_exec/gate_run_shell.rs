@@ -3,8 +3,8 @@ use super::*;
 /// Consult the auto-approve reviewer, if the user turned it on.
 ///
 /// Called only on a decision the gate already marked `Ask` — never on a `Deny`.
-/// That ordering is the invariant: the reviewer can turn *ask the human* into *go
-/// ahead*, and nothing else. A model that can talk its way past a refusal is not a
+/// That ordering is the invariant: the reviewer may only upgrade *ask the person* to
+/// *proceed*, and nothing else. A model that can talk its way past a refusal is not a
 /// reviewer, it is a bypass.
 ///
 /// **Deliberately, a reviewer `deny` does not block the call** and leave the

@@ -28,6 +28,8 @@ export { getJournal, runDream } from "./api/wikiLayer";
 export type { WikiPattern, WikiImpact, Wiki, DreamResult } from "./api/wikiLayer";
 export { getEmailBot, setEmailBot, getExpenses, setExpenses, addExpenseRoutine, getChief, setChief, addChiefRoutine, getBugRepro, setBugRepro, getPerf, setPerf, checkPerf, addPerfRoutine, getTelegram } from "./api/EmailBotSetup";
 export type { EmailBotSetup, ExpensesSetup, ChiefSetup, BugReproSetup, PerfSetup, PerfCheck, TelegramSetup } from "./api/EmailBotSetup";
+export { getTalent, setTalent, pickTalentExport, forgetTalentShortlist } from "./api/TalentSetup";
+export type { TalentSetup } from "./api/TalentSetup";
 export { setTelegram } from "./api/setTelegram";
 export { getKnowledge, deleteKnowledgePage, undoEvolution, setCoreMemory, getPersonas, updatePersona, deletePersona, getCloudGallery, getCloudGalleryDetail, installPersona } from "./api/knowledgeBase";
 export type { KnowledgePage, GalleryPersona, GalleryDetail } from "./api/knowledgeBase";

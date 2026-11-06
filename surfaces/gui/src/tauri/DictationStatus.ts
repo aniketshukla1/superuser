@@ -1,78 +1,83 @@
-// Thin bridge to the Tauri desktop shell. In the browser these are inert (isTauri() === false),
-// so the SPA stays a single codebase. We use the injected `window.__TAURI__` global (the shell
-// sets `withGlobalTauri`) instead of the @tauri-apps npm packages, so the browser build needs
-// no Tauri dependencies.
+// The basics of the bridge to the Tauri desktop shell: telling whether it is there, which
+// platform it runs on, and calling its commands. In a browser every call is inert, so one
+// codebase serves both; see tauri.ts.
 
-export const isTauri = (): boolean =>
-  typeof (globalThis as any).__TAURI__ !== "undefined";
+const tauriGlobal = () => (globalThis as any).__TAURI__;
 
-// "macos" | "windows" | "linux" — injected by the shell (std::env::consts::OS) before the
-// SPA loads; userAgent fallback covers browser dev. The macOS overlay-titlebar layout (and
-// its traffic-light compensations) must NEVER apply on Windows, which keeps its native
-// title bar (alignment bug, caught on Windows 2026-07-21).
-export const platformOS = (): string => {
-  const injected = (globalThis as any).__OCW_PLATFORM__;
+export const isTauri = (): boolean => tauriGlobal() !== undefined;
+
+/** "macos", "windows" or "linux". The shell may inject it before the page loads (from
+ *  std::env::consts::OS); otherwise the user agent decides, which covers the browser in
+ *  development. The macOS overlay title bar, and the room it leaves for the window buttons,
+ *  must NEVER apply on Windows, which keeps its native title bar (caught there 2026-07-21). */
+export function platformOS(): string {
+  const injected = (globalThis as any).__SUPERUSER_PLATFORM__;
   if (typeof injected === "string" && injected) return injected;
-  return /mac/i.test(navigator.userAgent) ? "macos" : /win/i.test(navigator.userAgent) ? "windows" : "linux";
-};
+  const agent = navigator.userAgent;
+  if (/mac/i.test(agent)) return "macos";
+  return /win/i.test(agent) ? "windows" : "linux";
+}
 
+/** What the voice dictation engine reports. */
 export type DictationStatus = {
-  recording: boolean;
-  model_installed: boolean;
-  model_verified: boolean;
-  test_passed: boolean;
-  download_in_progress: boolean;
+  supported: boolean;
+  compatibility_reason: string | null;
+  device_summary: string;
   model_name: string;
   model_bytes: number;
-  supported: boolean;
-  device_summary: string;
-  compatibility_reason: string | null;
+  model_installed: boolean;
+  model_verified: boolean;
+  download_in_progress: boolean;
+  test_passed: boolean;
+  recording: boolean;
 };
 
 export type DictationDownloadProgress = {
-  downloaded_bytes: number;
   total_bytes: number;
+  downloaded_bytes: number;
 };
 
-export const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T | null> => {
-  const tauri = (globalThis as any).__TAURI__;
-  if (!tauri?.core?.invoke) return null;
+/** Run a shell command; null outside the desktop app or when the command fails. */
+export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T | null> {
+  const run = tauriGlobal()?.core?.invoke;
+  if (!run) return null;
   try {
-    return (await tauri.core.invoke(cmd, args)) as T;
+    return (await run(cmd, args)) as T;
   } catch {
     return null;
   }
-};
-
-export const invokeStrict = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T> => {
-  const tauri = (globalThis as any).__TAURI__;
-  if (!tauri?.core?.invoke) throw new Error("This feature is available in the desktop app.");
-  return (await tauri.core.invoke(cmd, args)) as T;
-};
-
-/** Open the native macOS folder picker (Tauri only). Returns the chosen path, or null. */
-export async function pickFolder(): Promise<string | null> {
-  const path = await invoke<string>("pick_folder");
-  return typeof path === "string" && path ? path : null;
 }
 
-/** The folder picker that works EVERYWHERE: Tauri's native dialog in the desktop shell, else the
- * sidecar-opened OS dialog (the sidecar is local, so the browser GUI still gets a real picker —
- * owner report 2026-07-04: "Browse" was desktop-only and the browser had paste-a-path only). */
+/** Run a shell command and let its failure through; outside the desktop app it fails at once. */
+export async function invokeStrict<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  const run = tauriGlobal()?.core?.invoke;
+  if (!run) throw new Error("This feature is available in the desktop app.");
+  return (await run(cmd, args)) as T;
+}
+
+/** The system folder picker, in the desktop app only; the chosen path or null. */
+export async function pickFolder(): Promise<string | null> {
+  const chosen = await invoke<string>("pick_folder");
+  return typeof chosen === "string" && chosen !== "" ? chosen : null;
+}
+
+/** A folder picker that works EVERYWHERE: the desktop's own dialog, or else the one the local
+ *  sidecar opens, so the browser still gets a real picker (owner, 2026-07-04: "Browse" was
+ *  desktop-only and the browser could only take a pasted path). */
 export async function chooseFolder(): Promise<string | null> {
   if (isTauri()) return pickFolder();
   const { pickFolderViaServer } = await import("../api");
   return pickFolderViaServer();
 }
 
-/** Open-at-login (macOS LaunchAgent). */
+/** Open at login (a LaunchAgent on macOS). */
 export const getAutostart = () => invoke<boolean>("get_autostart");
 export const setAutostart = (enabled: boolean) => invoke<boolean>("set_autostart", { enabled });
 
-/** Keep this system awake so scheduled tasks fire while idle (caffeinate on macOS,
- * SetThreadExecutionState on Windows). Persists across restarts. */
+/** Keep the computer awake so scheduled tasks fire while it is idle (caffeinate on macOS,
+ *  SetThreadExecutionState on Windows). Remembered across restarts. */
 export const getKeepAwake = () => invoke<boolean>("get_keep_awake");
 export const setKeepAwake = (enabled: boolean) => invoke<boolean>("set_keep_awake", { enabled });
 
-/** Begin native window dragging from a custom title/header region. */
+/** Start dragging the window from a custom title or header area. */
 export const startWindowDrag = () => invoke<boolean>("start_window_drag");

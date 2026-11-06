@@ -21,12 +21,12 @@ use super::*;
     }
 
     #[test]
-    fn rules_written_elsewhere_read_the_same_here() {
-        // Three presets as they are written elsewhere, verbatim. If these stop
-        // parsing, a rule copied in from another deployment stops meaning anything.
-        assert!(yes(r#"(intent == "activate" && contains(element.name, "submit")) || ((tool.name == "computer_key" || tool.name == "computer_type") && key == "Enter")"#));
-        assert!(!yes(r#"intent == "type" && contains(element.name, "password")"#));
-        assert!(!yes(r#"intent == "navigate" && (contains(page.host, "facebook.com") || contains(page.host, "x.com"))"#));
+    fn rules_with_nesting_and_lists_read_as_written() {
+        // Rules the way a person writes them on the Boundaries page, with grouping, lists
+        // and functions. If these stop parsing, saved rules stop meaning anything.
+        assert!(yes(r#"(tool.name in ["browser_click", "browser_key"] && contains(element.name, "order")) || (intent == "type" && key == "Enter")"#));
+        assert!(!yes(r#"intent == "navigate" && startsWith(page.host, "mail.")"#));
+        assert!(!yes(r#"(contains(page.host, "bank") || endsWith(page.host, ".gov")) && intent == "activate""#));
         assert!(yes("true"));
     }
 

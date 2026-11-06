@@ -1,148 +1,142 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import type { Attachment } from "../../types";
-import { type Persona, getPersonas, PERSONAS_CHANGED, type InboxItem, setUnattended, announceInboxUnlock, resolveInboxItem, getInbox, Session, getSessions, getRecentWorkspaces } from "../../api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  announceInboxUnlock, getInbox, getPersonas, getRecentWorkspaces, getSessions, PERSONAS_CHANGED, resolveInboxItem,
+  setUnattended, type InboxItem, type Persona, type Session,
+} from "../../api";
 import { reportIfFailed } from "../../notify";
+import { agentSharesShell, isProjectScoped, showsBrowser, showsTerminal } from "../../personaScope";
 import { stillOpen } from "../../sessionInbox";
-import { needsWorkspaceFallback, gatesWorkspaceFallback } from "../appHelpers";
-import { isProjectScoped, showsTerminal, agentSharesShell, showsBrowser } from "../../personaScope";
+import type { Attachment } from "../../types";
+import { gatesWorkspaceFallback, needsWorkspaceFallback } from "../appHelpers";
 import type { useAppState } from "./useAppState";
-import type { useNavigationState } from "./useNavigationState";
 import type { useLayout } from "./useLayout";
+import type { useNavigationState } from "./useNavigationState";
 
-/** The persona roster, per-session inboxes, unattended mode and session refs. */
-export function usePersonas(prev: ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout>) {
-  const { sessionId, openSettings, setSessions, setProjects } = prev;
+type Deps = ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout>;
+
+const ROSTER_RETRIES = 5;
+
+/** Calls `handler` whenever `event` is sent on the window, for the life of the component. */
+function useWindowEvent(event: string, handler: () => void) {
+  useEffect(() => {
+    window.addEventListener(event, handler);
+    return () => window.removeEventListener(event, handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+}
+
+/** The assistants, the open session's Inbox items, Unattended mode, and the refs the session
+ *  machinery shares. */
+export function usePersonas(prev: Deps) {
+  const { openSettings, sessionId, setProjects, setSessions } = prev;
   const [onboarding, setOnboarding] = useState(false);
-  // A pending composer prefill (text + attachments) pushed from the session start panel.
+  /** Text and attachments the start panel wants put into the composer. */
   const [composerPrefill, setComposerPrefill] = useState<{ text: string; attachments?: Attachment[]; nonce: number }>();
 
-  // Persona metadata drives workspace behavior by FAMILY, not by hardcoded id (so a DevOps/SecOps
-  // code-family persona gates a folder like Code, and a knowledge persona starts orphan like Cowork).
+  // An assistant's FAMILY decides how folders behave, not a list of ids: a code-family
+  // assistant (DevOps, SecOps) asks for a folder as Code does, a knowledge one starts without.
   const [personas, setPersonas] = useState<Persona[] | null>(null);
   useEffect(() => {
     let stopped = false;
-    // An EMPTY roster is impossible. The built-ins are compiled into the binary, so
-    // the server can never honestly answer with none — and `listOf` turns every
-    // failure, including the 404 you get while the sidecar is still binding, into
-    // `[]`. Storing that is how a boot race becomes permanent: `personas` is then a
-    // truthy empty array, so nothing falls back, and everything derived from it
-    // degrades quietly. The header shows a raw id instead of a name, `hasShell` is
-    // false so a Coder loses its Terminal and Browser buttons, `gatesWorkspace`
-    // drops to guessing from the id. Nothing looks broken; things are just absent.
-    //
-    // Health already retries the sidecar's boot. This did not, and it is fetched at
-    // mount, which is exactly when the sidecar may not be listening yet.
-    const load = async (attempt = 0) => {
-      const rows = await getPersonas().catch(() => [] as Persona[]);
+    // An EMPTY list can't be true: the built-in assistants are compiled into the server, so it
+    // never really has none. But `listOf` turns every failure into `[]`, the 404 from a sidecar
+    // still starting up included, and storing that makes a start-up race permanent: an empty
+    // list is truthy, nothing falls back, and everything read from it quietly goes missing
+    // (raw ids for names, no Terminal or Browser for a Coder, folder rules guessed from ids).
+    // So an empty answer is retried, the way health is, since this runs at mount: the very
+    // moment the sidecar may not be listening.
+    const read = async (attempt: number) => {
+      const roster = await getPersonas().catch((): Persona[] => []);
       if (stopped) return;
-      if (rows.length) {
-        setPersonas(rows);
-        return;
-      }
-      if (attempt < 5) setTimeout(() => load(attempt + 1), 250 * (attempt + 1));
+      if (roster.length > 0) setPersonas(roster);
+      else if (attempt < ROSTER_RETRIES) setTimeout(() => read(attempt + 1), 250 * (attempt + 1));
     };
-    const reload = () => void load();
-    load();
-    // Re-read when the roster changes. Fetched once on mount, this list went stale the
-    // moment someone created an assistant — and the create flow drops you straight into a
-    // session with it, so `personaOf` missed and the top bar showed the raw slug
-    // ("modal-check") while the sidebar, which does re-read, showed "Modal Check".
-    // Everything else keyed off this list — the family, and therefore whether the session
-    // gates a folder — was guessing from the id at the same time.
-    window.addEventListener(PERSONAS_CHANGED, reload);
+    // Read again whenever the assistants change. Read only once, the list went stale as soon
+    // as someone created an assistant, and creating one opens a session with it straight away:
+    // the top bar showed its raw slug ("modal-check") while the sidebar said "Modal Check".
+    const reread = () => void read(0);
+    void read(0);
+    window.addEventListener(PERSONAS_CHANGED, reread);
     return () => {
       stopped = true;
-      window.removeEventListener(PERSONAS_CHANGED, reload);
+      window.removeEventListener(PERSONAS_CHANGED, reread);
     };
   }, []);
-  const personaOf = (a: string) => personas?.find((p) => p.id === a);
+  const personaOf = (id: string) => personas?.find((p) => p.id === id);
 
-  // Pending Inbox items for the ACTIVE session — surfaced inline above the composer so an
-  // unattended session's blocking question/approval can be answered in context (resolving the
-  // same item the Inbox shows; first responder wins).
+  /** The ACTIVE session's pending Inbox items, shown above the composer so an unattended
+   *  session's blocking question or approval can be answered where it arose. It settles the
+   *  same item the Inbox shows; whoever answers first wins. */
   const [sessionInbox, setSessionInbox] = useState<InboxItem[]>([]);
-  // Whether the active session is Unattended — when true, the agent's prompts route to the Inbox,
-  // so we suppress the inline live cards (the Inbox / answer-in-context path shows them instead).
-  // A ref too, because the WS event handler closes over stale state.
+  // Whether the active session is Unattended. Then the agent's prompts go to the Inbox, so the
+  // live cards stay hidden here. Kept in a ref as well, for socket handlers holding old state.
   const [unattended, setUnattendedState] = useState(false);
   const unattendedRef = useRef(false);
   const markUnattended = useCallback((on: boolean) => {
     unattendedRef.current = on;
     setUnattendedState(on);
   }, []);
-  // The Mode menu's "Send approvals to Inbox" toggle (§22 — the old InboxControl, folded in).
-  const toggleUnattended = async (on: boolean) => {
-    await setUnattended(sessionId, on);
-    markUnattended(on);
-    // First Unattended enable = Inbox machinery engaged → the account row's chip unlocks (§26).
-    if (on) announceInboxUnlock();
-  };
-  const resolveSessionInbox = async (id: string, resolution: string) => {
-    // Reported as "clicking the options does nothing", and it was two bugs: the
-    // server handed back an item that was already resolved, and this swallowed the
-    // failed resolve without a word. The second is why the first was invisible —
-    // a click that silently achieves nothing is indistinguishable from a dead button.
-    const ok = await reportIfFailed(
-      resolveInboxItem(id, resolution),
-      "Couldn't send that answer.",
-    );
-    getInbox(sessionId, "pending")
-      .then((items) => setSessionInbox(stillOpen(items)))
-      .catch(() => setSessionInbox([]));
-    if (ok) refreshSessions(); // attention badge should drop right away
-  };
-  // Shows a working-area chip / project grouping. Persona's needs_workspace; fallback before load.
-  const needsWorkspace = (a: string) => personaOf(a)?.needs_workspace ?? needsWorkspaceFallback(a);
-  // MUST pick a folder before starting — project-scoped personas (git-bound Code, project-bound
-  // Ops). Scratch/deliverable personas start orphan: the server auto-provisions a per-conversation
-  // scratch dir and reports it in the `ready` event.
-  const gatesWorkspace = (a: string) => {
-    const p = personaOf(a);
-    return p ? isProjectScoped(p) : gatesWorkspaceFallback(a);
-  };
-  // Has a shell, so the terminal and the browser have something behind them.
-  //
-  // The guard used to be `agent !== "chat"` — back when "chat" was the one persona
-  // without a shell. There is no "chat" persona now, so that read as `true` for
-  // everyone and every knowledge assistant grew a Terminal button opening onto
-  // nothing. The comment beside it had said "only for personas that have a shell"
-  // the whole time; this is that sentence, as code.
-  // See `personaScope` for why these three are not the same question. Browser is a
-  // capability button: without `web` the panel it opens can never be filled. The
-  // terminal is a user surface and is always offered — `shell` decides only whether
-  // the AGENT types into it too, which is a difference the label has to carry.
-  const hasShell = (a: string) => showsTerminal(personaOf(a));
-  const sharesShell = (a: string) => agentSharesShell(personaOf(a));
-  const hasBrowser = (a: string) => showsBrowser(personaOf(a));
-
-  // The desktop tray's "Settings" item dispatches this on the window.
-  useEffect(() => {
-    const open = () => openSettings("appearance");
-    window.addEventListener("assistant:open-settings", open);
-    return () => window.removeEventListener("assistant:open-settings", open);
-  }, []);
-
-  // "Run setup again" (from Settings) re-opens the wizard.
-  useEffect(() => {
-    const open = () => {
-      setOnboarding(true);
-    };
-    window.addEventListener("assistant:open-onboarding", open);
-    return () => window.removeEventListener("assistant:open-onboarding", open);
-  }, []);
 
   const sessionRef = useRef<Session | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  // A prompt to auto-send once the next session connects (used by "Run now").
+  /** A prompt to send by itself when the next session connects ("Run now"). */
   const pendingPromptRef = useRef<string | null>(null);
-  // The in-flight manual run to finalize after its first turn ({taskId, runId, sessionId}).
+  /** The manual run to finish after its first turn. */
   const activeRunRef = useRef<{ taskId: string; runId: string; sessionId: string } | null>(null);
 
-  // Fetch ALL sessions + known projects so the sidebar can group them.
+  /** Every session and known project, so the sidebar can group them. */
   const refreshSessions = useCallback(() => {
     getSessions().then(setSessions).catch(() => setSessions([]));
     getRecentWorkspaces().then(setProjects).catch(() => setProjects([]));
   }, []);
 
-  return { onboarding, setOnboarding, composerPrefill, setComposerPrefill, personas, personaOf, sessionInbox, setSessionInbox, unattended, unattendedRef, markUnattended, toggleUnattended, resolveSessionInbox, needsWorkspace, gatesWorkspace, hasShell, sharesShell, hasBrowser, sessionRef, scrollRef, pendingPromptRef, activeRunRef, refreshSessions };
+  /** The Mode menu's "Send approvals to Inbox" switch (§22; it was the separate InboxControl). */
+  const toggleUnattended = async (on: boolean) => {
+    await setUnattended(sessionId, on);
+    markUnattended(on);
+    // The first time a session goes Unattended the Inbox is in use, and the account row's chip appears (§26).
+    if (on) announceInboxUnlock();
+  };
+
+  const resolveSessionInbox = async (id: string, resolution: string) => {
+    // "Clicking the options does nothing" was two bugs: the server handed back an item already
+    // answered, and a failed answer here was swallowed in silence, which is what hid the first.
+    // A click that quietly achieves nothing looks exactly like a dead button.
+    const sent = await reportIfFailed(resolveInboxItem(id, resolution), "Couldn't send that answer.");
+    getInbox(sessionId, "pending")
+      .then((pending) => setSessionInbox(stillOpen(pending)))
+      .catch(() => setSessionInbox([]));
+    // The attention badge should drop at once.
+    if (sent) refreshSessions();
+  };
+
+  /** Whether the assistant shows a working-folder chip and groups by project. */
+  const needsWorkspace = (id: string) => personaOf(id)?.needs_workspace ?? needsWorkspaceFallback(id);
+  /** Whether a folder MUST be chosen before starting: assistants tied to a project (Code to a
+   *  repo, Ops to a project). The rest start without one; the server makes a scratch folder per
+   *  conversation and reports it in the `ready` event. */
+  const gatesWorkspace = (id: string) => {
+    const persona = personaOf(id);
+    return persona ? isProjectScoped(persona) : gatesWorkspaceFallback(id);
+  };
+  // Three different questions; `personaScope` explains each. The browser button needs `web`,
+  // since without it nothing can fill that panel. The terminal is the user's and always
+  // offered; `shell` only decides whether the AGENT types into it too, which its label has to
+  // say. (The old guard was `agent !== "chat"`, from when "chat" was the one assistant without
+  // a shell; with no "chat" left it was true for all, and knowledge assistants got a Terminal
+  // button opening onto nothing.)
+  const hasShell = (id: string) => showsTerminal(personaOf(id));
+  const sharesShell = (id: string) => agentSharesShell(personaOf(id));
+  const hasBrowser = (id: string) => showsBrowser(personaOf(id));
+
+  // The tray's "Settings" item sends this on the window.
+  useWindowEvent("assistant:open-settings", () => openSettings("appearance"));
+  // "Run setup again" in Settings opens the wizard again.
+  useWindowEvent("assistant:open-onboarding", () => setOnboarding(true));
+
+  return {
+    onboarding, setOnboarding, composerPrefill, setComposerPrefill, personas, personaOf, sessionInbox, setSessionInbox,
+    unattended, unattendedRef, markUnattended, toggleUnattended, resolveSessionInbox, needsWorkspace, gatesWorkspace,
+    hasShell, sharesShell, hasBrowser, sessionRef, scrollRef, pendingPromptRef, activeRunRef, refreshSessions,
+  };
 }

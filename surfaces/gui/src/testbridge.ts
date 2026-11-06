@@ -77,7 +77,7 @@ async function describeWindows() {
   }
   return {
     tauri: true,
-    platform: (globalThis as any).__OCW_PLATFORM__ ?? null,
+    platform: (globalThis as any).__SUPERUSER_PLATFORM__ ?? null,
     windows,
     viewport: { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio },
     theme: document.documentElement.dataset.theme ?? null,

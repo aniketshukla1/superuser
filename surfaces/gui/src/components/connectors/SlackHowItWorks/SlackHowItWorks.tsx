@@ -13,7 +13,7 @@ import { SceneTeammates } from "./SceneTeammates";
 // "Listen to a channel" is deliberately absent: owner wants that scene reworked
 // before it ships (UX-027 rev 4).
 
-export const KEY = "ocw.slack.howitworks.collapsed";
+export const KEY = "superuser.slack.howitworks.collapsed";
 export const DUR = 8000; // per-scene loop, ms
 export const TABS = ["Mention → session", "Threads stay connected", "Allow teammates"];
 export const CAPTIONS = [

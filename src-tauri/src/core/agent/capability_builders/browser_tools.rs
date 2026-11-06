@@ -11,80 +11,81 @@ use super::super::*;
 /// given these when the user switches the browser on in Settings (`commands::run_agent_inner`);
 /// `browser` exists as a capability so a persona can declare it explicitly too.
 pub fn browser_tools() -> Vec<ToolSpec> {
-    let r#ref = json!({"type": "string", "description": "The ref from your latest browser_snapshot, e.g. \"e4\"."});
-    let snapshot_id = json!({"type": "integer", "description": "The snapshot_id that snapshot gave you."});
+    let r#ref = json!({"type": "string", "description": "The ref your latest browser_snapshot gave the element, e.g. \"e4\"."});
+    let snapshot_id = json!({"type": "integer", "description": "The snapshot_id returned with that snapshot."});
     vec![
         tool("browser_navigate",
-            "Open a web page in your own browser — a real Chrome that stays signed in to the sites the user signed it into, \
-             and that the user can watch. Use it to act on a site, or to read a page that needs a sign-in or JavaScript. \
-             Returns the page's title and readable text; answer from that. (For a public page you only need to read, \
-             web_fetch is lighter. To show the user a page, use browser_open.)",
+            "Load a web page in your own browser: a real Chrome, kept signed in to the sites the user has signed it \
+             into, which the user can watch. Use it to do something on a site, or to read a page that needs a sign-in or \
+             runs JavaScript. You get back the page's title and readable text to answer from. (web_fetch is lighter for a \
+             public page you only need to read; browser_open shows a page to the user.)",
             "browser", RiskClass::External,
-            params(json!({"url": {"type": "string", "description": "The full address, including https://."}}), &["url"])),
+            params(json!({"url": {"type": "string", "description": "The complete address, with https://."}}), &["url"])),
         tool("browser_read",
-            "Read the page open in your browser now, without going anywhere. Use it after clicking or submitting something, \
-             to find out what the page says.",
+            "Get the text of the page your browser is on now, without loading anything new. Useful after a click or a \
+             submit, to see what the page says.",
             "browser", RiskClass::Read, params(json!({}), &[])),
         tool("browser_snapshot",
-            "List what you can act on in the current page — fields, buttons, links, checkboxes, dropdowns — each with a ref \
-             such as e4, its label and its current value, plus a snapshot_id. Call it BEFORE clicking or typing, and use only \
-             the refs it returns. If an action says your refs are out of date, the page changed: call it again.",
+            "List the things on the current page you can act on (fields, buttons, links, checkboxes, dropdowns), each \
+             with a ref like e4, its label and its current value, plus a snapshot_id. Take one BEFORE you click or type, and \
+             act only on refs from it. If an action says your refs are out of date, the page has moved on: snapshot again.",
             "browser", RiskClass::Read, params(json!({}), &[])),
         tool("browser_click",
-            "Click a button, link, checkbox, radio option or tab, by its ref from your latest snapshot.",
+            "Click something by the ref your latest snapshot gave it: a button, link, checkbox, radio option or tab.",
             "browser", RiskClass::External,
             params(json!({"ref": r#ref, "snapshot_id": snapshot_id}), &["ref", "snapshot_id"])),
         tool("browser_type",
-            "Put text into a field, replacing what is already there. For a dropdown, give the option's label. Set submit to \
-             press Enter afterwards. Never use this for a password or a one-time code — use browser_request_secret.",
+            "Fill a field with text, replacing its current contents; for a dropdown, give the label of the option. Set \
+             submit to press Enter afterwards. Passwords and one-time codes never go through this tool: use \
+             browser_request_secret.",
             "browser", RiskClass::External,
             params(json!({
                 "ref": r#ref, "snapshot_id": snapshot_id,
-                "text": {"type": "string", "description": "What to put in the field."},
-                "submit": {"type": "boolean", "description": "Press Enter after typing, e.g. to run a search."}
+                "text": {"type": "string", "description": "The text for the field."},
+                "submit": {"type": "boolean", "description": "Also press Enter, e.g. to start a search."}
             }), &["ref", "snapshot_id", "text"])),
         tool("browser_key",
-            "Press a key — Enter, Tab, Escape, ArrowDown, Backspace, or a combination such as Control+A — on a field by its \
-             ref, or on the page when you give no ref.",
+            "Press a key (Enter, Tab, Escape, ArrowDown, Backspace) or a combination such as Control+A, on the field with \
+             this ref, or on the page itself when no ref is given.",
             "browser", RiskClass::External,
             params(json!({
-                "key": {"type": "string", "description": "The key name, e.g. \"Enter\"."},
+                "key": {"type": "string", "description": "Which key, e.g. \"Enter\"."},
                 "ref": r#ref, "snapshot_id": snapshot_id
             }), &["key"])),
         tool("browser_scroll",
-            "Scroll the page to bring more of it into view, then take a new snapshot.",
+            "Scroll to bring more of the page into view; snapshot again afterwards.",
             "browser", RiskClass::WriteLocal,
             params(json!({
                 "direction": {"type": "string", "enum": ["down", "up"]},
-                "pages": {"type": "integer", "description": "How far, in screens. Default 1."}
+                "pages": {"type": "integer", "description": "Distance in screens. 1 if left out."}
             }), &[])),
         tool("browser_request_help",
-            "Hand your browser to the user for something only they can do: sign in, pass a two-factor check or a CAPTCHA. \
-             Say exactly what they need to do. They take control, do it, and hand it back, and you carry on from there. \
-             Calling this IS asking: writing 'please sign in and let me know' in your answer reaches nobody and leaves the \
-             page where it is. Never ask the user for a password or a code in the conversation instead.",
+            "Give the user your browser for a step only they can take: signing in, a two-factor check, a CAPTCHA. Tell \
+             them precisely what to do. They take over, finish, and give it back, and you continue. This call is the \
+             request itself: a line in your reply asking them to sign in is seen by no one and changes nothing on the \
+             page. Never ask for a password or code in the conversation as a substitute.",
             "browser", RiskClass::Read,
-            params(json!({"reason": {"type": "string", "description": "What the user needs to do, in one sentence, e.g. \"This page wants the code sent to your phone.\""}}), &["reason"])),
+            params(json!({"reason": {"type": "string", "description": "One sentence on what the user has to do, e.g. \"The site is asking for the code it texted you.\""}}), &["reason"])),
         tool("browser_request_secret",
-            "Ask the user for ONE value you must not see — a password, a one-time code, a card number — for the field with \
-             this ref. They type it into a masked box that goes straight into the page; you are only told that it arrived. \
-             Prefer this to handing over the whole browser when one field is all that's needed. Submitting the form \
-             afterwards is up to you.",
+            "Get ONE value from the user that you must never see (a password, a one-time code, a card number) for the \
+             field with this ref. The user types it into a hidden input that fills the page directly, and you only learn \
+             that it arrived. When a single field is all you need, use this rather than handing over the whole browser. \
+             You still submit the form yourself.",
             "browser", RiskClass::Read,
             params(json!({
-                "label": {"type": "string", "description": "What you need, in a few words, e.g. \"your account password\"."},
+                "label": {"type": "string", "description": "Names the value for the user, e.g. \"your account password\"."},
                 "ref": r#ref, "snapshot_id": snapshot_id
             }), &["label", "ref", "snapshot_id"])),
         tool("browser_console",
-            "What the page reported on its own since you last looked — console errors and warnings, uncaught exceptions, \
-             and requests that failed or answered with an error — and the browser and system it ran on. For a bug report. \
-             Each look takes what's there, so look once before the step you're checking and again after it.",
+            "Everything the page logged by itself since your last look (console errors and warnings, uncaught \
+             exceptions, requests that failed or returned an error), plus the browser and system it ran on. Meant for bug \
+             reports. Each call empties what it reads, so look once before the step you're testing and once after.",
             "browser", RiskClass::Read, params(json!({}), &[])),
         tool("browser_screenshot",
-            "Keep a picture of the page as it looks right now — the moment a bug shows, say. It appears in the conversation \
-             and stays with it. A page you navigate to is kept already; this is for what happens after.",
+            "Save a picture of the page exactly as it is now, for example the moment a bug appears. It shows in the \
+             conversation and stays there. Pages you navigate to are captured already; use this for what happens after.",
             "browser", RiskClass::Read,
-            params(json!({"why": {"type": "string", "description": "What the picture shows, in a few words, e.g. \"the error after Pay\"."}}), &[])),
+            params(json!({"why": {"type": "string", "description": "A few words on what it shows, e.g. \"the error after Pay\"."}}), &[])),
     ]
 }
 

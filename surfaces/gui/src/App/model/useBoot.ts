@@ -1,177 +1,195 @@
-import { getSettings, getSessions, getRecentWorkspaces, getHealth } from "../../api";
-import { useState, useEffect } from "react";
-import type { SessionInfo } from "../../types";
+import { useEffect, useState } from "react";
+import { getHealth, getRecentWorkspaces, getSessions, getSettings, type Health } from "../../api";
 import { parse } from "../../route";
 import { loadTranscript } from "../../sessionTranscript";
-import { usageFromMessages, emptyUsage } from "../../usage";
 import { isTauri } from "../../tauri";
+import type { SessionInfo } from "../../types";
+import { emptyUsage, usageFromMessages } from "../../usage";
+import { sessionTs } from "../appHelpers";
 import type { useAppState } from "./useAppState";
-import type { useNavigationState } from "./useNavigationState";
 import type { useLayout } from "./useLayout";
+import type { useNavigationState } from "./useNavigationState";
 import type { usePersonas } from "./usePersonas";
 
-/** Boot: health checks, onboarding, and resuming the last session or the gate. */
-export function useBoot(prev: ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> & ReturnType<typeof usePersonas>) {
-  const { setModels, setModelLabels, setModelContextWindows, setModelReady, setSurfaces,
-      setSessions, setAgent, setWorkspace, setBranch, setItems, setUsage, setSessionId,
-      setShowGate, setProjects, gatesWorkspace, agent, openGate, setModel, setOnboarding,
-      connected, showGate } = prev;
+type BootDeps = ReturnType<typeof useAppState> &
+  ReturnType<typeof useNavigationState> &
+  ReturnType<typeof useLayout> &
+  ReturnType<typeof usePersonas>;
+
+const HEALTH_TRIES = 40; // about 20 seconds at one try every half second
+const HEALTH_GAP_MS = 500;
+const REVEAL_ANYWAY_MS = 1500;
+
+/** The conversation a launch should reopen. One named in the URL wins over the most recent:
+ *  `#/chat/<id>` exists so that following it lands there, and reopening "wherever you were"
+ *  over a link just followed would make the address decorative. */
+function sessionToReopen(sessions: SessionInfo[]): SessionInfo | undefined {
+  const route = parse(window.location.hash);
+  const linked = route.surface === "session" && route.id ? sessions.find((s) => s.session_id === route.id) : undefined;
+  if (linked) return linked;
+  let newest: SessionInfo | undefined;
+  for (const s of sessions) if (!newest || sessionTs(s) > sessionTs(newest)) newest = s;
+  return newest;
+}
+
+/** Starting up: wait for the server, show the first-run wizard if needed, and reopen the last
+ *  conversation or put up the folder gate. */
+export function useBoot(prev: BootDeps) {
+  const {
+    agent, connected, showGate, gatesWorkspace, openGate, setAgent, setBranch, setItems, setModel,
+    setModelContextWindows, setModelLabels, setModelReady, setModels, setOnboarding, setProjects,
+    setSessionId, setSessions, setShowGate, setSurfaces, setUsage, setWorkspace,
+  } = prev;
+
   const loadSettings = () =>
     getSettings()
-      .then((s) => {
-        setModels(s.models || []);
-        setModelLabels(s.model_labels || {});
-        setModelContextWindows(s.model_context_windows || {});
-        setModelReady(s.model_ready);
-        if (s.surfaces) setSurfaces(s.surfaces);
+      .then((settings) => {
+        setModels(settings.models || []);
+        setModelLabels(settings.model_labels || {});
+        setModelContextWindows(settings.model_context_windows || {});
+        setModelReady(settings.model_ready);
+        if (settings.surfaces) setSurfaces(settings.surfaces);
       })
       .catch(() => {});
 
-  // initial: adopt the server's seed workspace if any, else force the gate.
-  // Retry health for a while: the desktop shell starts its sidecar in parallel, so the
-  // server may not answer for a second or two. Only fall back to the gate once it's truly up.
+  // The desktop shell starts the sidecar alongside the window, so the server may take a second
+  // or two to answer; health is retried for a while, and the gate only appears once it is up.
   const [booting, setBooting] = useState(true);
-  // True once we've resumed a prior conversation on boot (drives the splash wording).
-  const [resumedExisting, setResumedExisting] = useState(false);
-  // Latched: keep the boot splash up until the restored session is actually CONNECTED (not just
-  // until `booting` clears), so an early click can't land on a session that's still settling.
-  const [uiReady, setUiReady] = useState(false);
-  // What the splash is allowed to claim. The readout used to be a canned list of six
-  // `[ ok ]` lines on a timer — it reported success for steps that had not happened,
-  // including `binding 127.0.0.1` with nothing listening (UX-REPORT §2). These are the
-  // real signals it now prints.
-  const [healthOk, setHealthOk] = useState(false);
-  // How saved credentials are kept, from health — only "locked" is shown (SecretsLockedNotice).
-  const [secrets, setSecrets] = useState<string | undefined>(undefined);
   const [bootFailed, setBootFailed] = useState(false);
-  const [bootKey, setBootKey] = useState(0); // bumped by Retry to re-run the health effect
+  // Retry bumps this to run the health effect again.
+  const [bootKey, setBootKey] = useState(0);
+  // What the splash may truthfully say. It used to print six canned "[ ok ]" lines on a timer,
+  // claiming steps that hadn't happened, "binding 127.0.0.1" with nothing listening among them
+  // (UX-REPORT §2); now it reports these real signals.
+  const [healthOk, setHealthOk] = useState(false);
+  // True once boot reopened an earlier conversation; the splash words itself on it.
+  const [resumedExisting, setResumedExisting] = useState(false);
+  // How saved credentials are stored, from health. Only "locked" is shown (SecretsLockedNotice).
+  const [secrets, setSecrets] = useState<string | undefined>(undefined);
+  // Holds the splash until the reopened session is actually CONNECTED, not merely until
+  // `booting` clears, so an early click can't land on a session still settling. Once set, it
+  // stays set.
+  const [uiReady, setUiReady] = useState(false);
+
   const retryBoot = () => {
     setBootFailed(false);
-    setBootKey((k) => k + 1);
+    setBootKey((key) => key + 1);
   };
 
-  // On boot with no seeded workspace, reopen the last thing the user had — most recent
-  // conversation (restores its folder + agent + transcript), else the most recent project
-  // folder. Only a true first run (nothing to resume) falls through to the folder gate.
-  const resumeLastOrGate = async () => {
-    let loadedSessions: SessionInfo[] = [];
+  const reopen = async (session: SessionInfo) => {
+    setResumedExisting(true);
+    if (session.agent) setAgent(session.agent);
+    if (session.workspace) {
+      setWorkspace(session.workspace);
+      setBranch(null);
+    }
     try {
-      loadedSessions = (await getSessions()).filter((s) => s.session_id && !s.session_id.startsWith("__"));
-      setSessions(loadedSessions);
-      const sess = loadedSessions;
-      const ts = (s: SessionInfo) => Date.parse(s.updated_at || "") || Number(s.updated_at) || 0;
-      // A conversation named in the URL outranks the most recent one: the whole
-      // point of `#/chat/<id>` is that opening it takes you there, and resuming
-      // "wherever you were last" over the top of a link the user just followed
-      // would make the address decorative.
-      const linked = parse(window.location.hash);
-      const deepLinked = linked.surface === "session" && linked.id ? sess.find((s) => s.session_id === linked.id) : undefined;
-      const last = deepLinked ?? [...sess].sort((a, b) => ts(b) - ts(a))[0];
-      if (last) {
-        setResumedExisting(true);
-        if (last.agent) setAgent(last.agent);
-        if (last.workspace) {
-          setWorkspace(last.workspace);
-          setBranch(null);
-        }
-        try {
-          const { messages, items: loaded } = await loadTranscript(last.session_id);
-          setItems(loaded);
-          setUsage(usageFromMessages(messages));
-        } catch {
-          setItems([]);
-          setUsage(emptyUsage());
-        }
-        setSessionId(last.session_id);
-        setShowGate(false);
+      const { messages, items } = await loadTranscript(session.session_id);
+      setItems(items);
+      setUsage(usageFromMessages(messages));
+    } catch {
+      setItems([]);
+      setUsage(emptyUsage());
+    }
+    setSessionId(session.session_id);
+    setShowGate(false);
+  };
+
+  // With no folder seeded by the server, reopen what the user had last: the latest
+  // conversation (its folder, assistant and transcript), or else the latest project folder.
+  // Only a true first run, with nothing to reopen, reaches the folder gate.
+  const reopenOrGate = async () => {
+    try {
+      const sessions = (await getSessions()).filter((s) => s.session_id && !s.session_id.startsWith("__"));
+      setSessions(sessions);
+      const target = sessionToReopen(sessions);
+      if (target) {
+        await reopen(target);
         return;
       }
     } catch {
-      /* fall through */
+      // Go on to the folders.
     }
     try {
       const recents = await getRecentWorkspaces();
       setProjects(recents);
-      // Only auto-adopt a recent folder for gated surfaces (Code). Cowork starts orphan.
-      if (gatesWorkspace(agent)) {
-        const ws = recents.find((w) => w.exists) || recents[0];
-        if (ws) {
-          setWorkspace(ws.path);
-          setShowGate(false);
-          return;
-        }
+      // Only a surface that needs a folder (Code) takes a recent one by itself; Cowork starts without.
+      const folder = gatesWorkspace(agent) ? recents.find((w) => w.exists) || recents[0] : undefined;
+      if (folder) {
+        setWorkspace(folder.path);
+        setShowGate(false);
+        return;
       }
     } catch {
-      /* fall through */
+      // Go on to the gate.
     }
-    // Only Code forces a first-run folder gate — and this one has nothing behind it:
-    // boot got here because there was no conversation to resume.
+    // Only Code insists on a folder at first run, and there is nothing behind this gate: boot is
+    // here because there was no conversation to reopen.
     if (gatesWorkspace(agent)) openGate(null);
     else setShowGate(false);
   };
 
   useEffect(() => {
     let cancelled = false;
-    const attempt = (tries: number) => {
+
+    const onHealthy = async (health: Health) => {
+      setHealthOk(true);
+      setModel(health.model);
+      setSecrets(health.secrets);
+      // The desktop's first-run wizard, until the user finishes or dismisses it.
+      if (isTauri()) {
+        getSettings()
+          .then((settings) => !cancelled && !settings.onboarded && setOnboarding(true))
+          .catch(() => {});
+      }
+      // Decide the active session BEFORE clearing `booting`, which releases the connection
+      // effect: reopening is async, and clearing first would connect the throwaway starting
+      // session against an empty or stale folder, and the server would make a pointless scratch
+      // folder for it before the real session took over. Cowork ignores default_workspace,
+      // which is a Code idea.
+      if (health.default_workspace && gatesWorkspace(agent)) setWorkspace(health.default_workspace);
+      else await reopenOrGate();
+      // The settings load at mount races the sidecar's start and drops its failure; on a cold
+      // start that left "Loading models…" up until someone opened Settings (owner, 2026-07-23).
+      // Health has just answered, so this one gets through.
+      loadSettings();
+      if (!cancelled) setBooting(false);
+    };
+
+    const tryHealth = (left: number) => {
       getHealth()
-        .then(async (h) => {
-          if (cancelled) return;
-          setHealthOk(true);
-          setModel(h.model);
-          setSecrets(h.secrets);
-          // First-run setup wizard (desktop): show until the user completes/dismisses it.
-          if (isTauri()) {
-            getSettings()
-              .then((s) => !cancelled && !s.onboarded && setOnboarding(true))
-              .catch(() => {});
-          }
-          // Settle the active session BEFORE clearing `booting` (which unblocks the connection
-          // effect). resumeLastOrGate is async — if we cleared `booting` first, the throwaway
-          // initial sessionId would connect against an empty/stale workspace and the server
-          // would provision a junk per-conversation scratch dir for it before resume could
-          // flip to the real session. Cowork ignores default_workspace (a Code concept).
-          if (h.default_workspace && gatesWorkspace(agent)) setWorkspace(h.default_workspace);
-          else await resumeLastOrGate();
-          // The mount-time loadSettings races the sidecar boot and swallows its failure —
-          // on a cold start that left "Loading models…" stuck until the user visited
-          // Settings (owner-hit 2026-07-23). Health just answered, so this one lands.
-          loadSettings();
-          if (!cancelled) setBooting(false);
-        })
+        .then((health) => (cancelled ? undefined : onHealthy(health)))
         .catch(() => {
           if (cancelled) return;
-          if (tries <= 0) {
-            // The old fall-through cleared `booting` and opened the folder gate, which
-            // dropped the user into a workspace that looked entirely normal while
-            // nothing was listening (UX-REPORT §3). Stay on the splash and say so.
-            setBootFailed(true);
-          } else {
-            setTimeout(() => attempt(tries - 1), 500);
-          }
+          // Out of tries: stay on the splash and say so. Falling through to the gate used to
+          // drop the user into a workspace that looked normal with nothing listening (UX-REPORT §3).
+          if (left <= 0) setBootFailed(true);
+          else setTimeout(() => tryHealth(left - 1), HEALTH_GAP_MS);
         });
     };
+
     setBooting(true);
     setHealthOk(false);
-    attempt(40); // ~20s of 500ms retries
+    tryHealth(HEALTH_TRIES);
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bootKey]);
 
-  // Reveal the UI once boot has settled AND the restored session is connected (or we're showing
-  // the folder gate). Latched, so later reconnects never flash the splash again.
+  // Show the app when boot has settled and the reopened session is connected, or the folder
+  // gate is up.
   useEffect(() => {
-    if (uiReady || booting) return;
-    if (connected || showGate) setUiReady(true);
+    if (!uiReady && !booting && (connected || showGate)) setUiReady(true);
   }, [uiReady, booting, connected, showGate]);
-  // Safety net: if the restored session never reports connected (backend slow/unreachable), reveal
-  // the UI anyway. Boot already passed the health check, so a live connect is sub-second; this only
-  // bites in the failure case, so keep it short.
+
+  // If the reopened session never reports connected (a slow or unreachable backend), show the
+  // app anyway. Health already passed, so a working connect takes well under a second; this
+  // only matters when something is wrong, so it waits briefly.
   useEffect(() => {
     if (uiReady || booting) return;
-    const t = setTimeout(() => setUiReady(true), 1500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setUiReady(true), REVEAL_ANYWAY_MS);
+    return () => clearTimeout(timer);
   }, [uiReady, booting]);
 
   return { loadSettings, booting, resumedExisting, uiReady, healthOk, secrets, setSecrets, bootFailed, retryBoot };

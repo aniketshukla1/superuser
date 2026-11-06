@@ -118,8 +118,8 @@ impl TrailRow {
 /// The first mechanical check: an outcome is never written for an action
 /// whose decision was not written first.
 ///
-/// "An action that was not recorded did not happen, because there is no path that acts
-/// without writing the row first." Each outcome row consumes the most recent unclaimed
+/// Nothing acts before its decision row exists, so an outcome row must have one to pair
+/// with. Each outcome row consumes the most recent unclaimed
 /// decision row for the same tool before it; an outcome with none to claim is the
 /// gateway having been stepped around.
 pub fn trail_out_of_order(trail: &[TrailRow]) -> Option<String> {

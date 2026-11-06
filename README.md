@@ -49,8 +49,28 @@ Run it entirely on your own hardware with a local model, or point it at Claude, 
 |        | Step | Example |
 | ------ | ---- | ------- |
 | **01** | **Connect** | Your mail, calendar, Slack, GitHub, Jira, Prometheus, or nothing at all. Keys are stored encrypted on your Mac. |
-| **02** | **Ask** | *"Checkout got slower since yesterday's release. Find where, with evidence."* One of 19 assistants takes it from there and shows every step. |
+| **02** | **Ask** | *"Checkout got slower since yesterday's release. Find where, with evidence."* One of 20 assistants takes it from there and shows every step. |
 | **03** | **Approve** | Messages, commands and changes wait in your Inbox. Every request that left your Mac is on the record. |
+
+<br/>
+
+## 🆕 Six assistants that each do a whole job
+
+<p align="center">
+  <a href="https://aniketshukla1.github.io/superuser/assistants.mp4"><img src="docs/assets/assistants.webp" alt="Product Performance finds the one series that moved after a release, with a chart; Talent Scout checks candidates against the ATS and leaves out three already in it; the Inbox holds an email reply and a digest, each waiting for approval" width="860"></a>
+  <br/><sub>The real app over invented demo data. <a href="https://aniketshukla1.github.io/superuser/assistants.mp4">▶ Watch with sound (24 s)</a></sub>
+</p>
+
+Each one owns a job end to end, and the part that has to be right is done by code, not by the model:
+
+| Assistant | The job | What holds the line |
+| --- | --- | --- |
+| **Email Assistant** | Answers mail from senders you allow | Every reply is a draft in your Inbox. Nothing is sent without your yes. |
+| **Expense Manager** | Logs receipts from email, summarises the week | The totals are computed, and each one lists the receipts it adds up. |
+| **Chief of Staff** | What came in since yesterday, mapped to your priorities | It can't send a message or move a meeting. It has nothing that could. |
+| **Bug Reproduction** | Reproduces a bug report with steps, screenshots and a test case | Its browser opens your staging site and nothing else, so production data never reaches it. |
+| **Product Performance** | Finds where a slowdown is, from your Prometheus | Every series is compared before and after the change in code. Only a clear shift is called a hotspot. |
+| **Talent Scout** | Finds candidates who meet the must-haves, and drafts outreach | Your ATS export is checked in code, so nobody already in it makes the list. Nobody is contacted. |
 
 <br/>
 
@@ -107,8 +127,8 @@ Run it entirely on your own hardware with a local model, or point it at Claude, 
 Run on your own hardware with Ollama, or use Claude, GPT, Gemini and 8 more providers. Switching is a dropdown. The local option needs no key, because nobody bills you.
 </td>
 <td align="center" width="33%">
-<h3>🧑‍💼 19 assistants, each different</h3>
-Chief of Staff, Email, Product Performance, Coder, Security, Finance and more, each with its own instructions, tools, skills and model. Create your own in the app.
+<h3>🧑‍💼 20 assistants, each different</h3>
+Chief of Staff, Email, Product Performance, Talent Scout, Coder, Security, Finance and more, each with its own instructions, tools, skills and model. Create your own in the app.
 </td>
 <td align="center" width="33%">
 <h3>🔌 Your actual tools</h3>
@@ -145,7 +165,7 @@ Charts drawn from data it actually read, with the source on every chart. Gates c
 </tr>
 </table>
 
-**Also in the box:** voice dictation that runs on your Mac (whisper.cpp) · a browser of its own for each assistant, which hands you the wheel at sign-in pages · talk to your assistants from Slack, Telegram or email · assistants that delegate to each other · 41 built-in skills (playbooks for code review, budgets, database migrations, interview loops…) · an OpenAI-compatible API on `127.0.0.1` so your other tools can hand it work.
+**Also in the box:** voice dictation that runs on your Mac (whisper.cpp) · a browser of its own for each assistant, which hands you the wheel at sign-in pages · talk to your assistants from Slack, Telegram or email · assistants that delegate to each other · 42 built-in skills (playbooks for code review, budgets, database migrations, sourcing, interview loops…) · an OpenAI-compatible API on `127.0.0.1` so your other tools can hand it work.
 
 <br/>
 
@@ -185,6 +205,7 @@ Charts drawn from data it actually read, with the source on every chart. Gates c
 | ❌ You wrote "never touch `.env`" in a prompt and hoped. | ✅ **Boundaries** are rules checked in code before every action. Deny wins; a broken rule refuses. |
 | ❌ Checkout got slower and you're clicking through dashboards. | ✅ **Product Performance** compares every series before and after the release and writes up the hotspot, with links. |
 | ❌ Your morning starts with triage across mail, Slack and two calendars. | ✅ **Chief of Staff** reads what came in since yesterday and maps it to your priorities before you sit down. |
+| ❌ Sourcing turns up people who are already in your ATS, and you email them twice. | ✅ **Talent Scout** checks every candidate against your ATS export in code, and leaves the outreach as drafts you send. |
 
 <br/>
 
@@ -228,7 +249,7 @@ Per-task results are in [docs/harness/HARNESS-SCOREBOARD.md](docs/harness/HARNES
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
 │  │  Assistants  │  │   Gateway:   │  │    Gates:    │  │   Memory:    │  │
 │  │  and skills  │  │ boundaries,  │  │ no invented  │  │  markdown +  │  │
-│  │   19 + 41    │  │  approvals   │  │ paths, data  │  │  git ledger  │  │
+│  │   20 + 42    │  │  approvals   │  │ paths, data  │  │  git ledger  │  │
 │  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘  │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
 │  │  Connectors  │  │  Scheduler:  │  │  A browser   │  │ Egress: the  │  │
@@ -244,7 +265,7 @@ Per-task results are in [docs/harness/HARNESS-SCOREBOARD.md](docs/harness/HARNES
    └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
 ```
 
-| 19 | 41 | 37 + MCP | 12 | 1,600+ | 0 |
+| 20 | 42 | 37 + MCP | 12 | 1,600+ | 0 |
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | built-in assistants | built-in skills | connectors | model providers | Rust tests | analytics calls |
 
@@ -257,7 +278,7 @@ A Rust core (Tauri 2) with a React interface. The core serves the interface over
 Each assistant is one markdown file: a short header naming its tools and skills, and a body that is its instructions. Pick one per conversation, or create your own in the app.
 
 <details>
-<summary><b>All 19 built-in assistants</b></summary>
+<summary><b>All 20 built-in assistants</b></summary>
 
 | Assistant | What it does |
 | --- | --- |
@@ -266,13 +287,14 @@ Each assistant is one markdown file: a short header naming its tools and skills,
 | **Email Assistant** | Reads your email and drafts the replies you approve |
 | **Product Performance** | Investigates a slowdown in your metrics — the hotspot, the evidence, and links |
 | **Bug Reproduction** | Reproduces a bug report on staging, with exact steps and a test case |
+| **Talent Scout** | Finds candidates who meet the must-haves — none already in your ATS — with outreach drafts |
 | **Coder** | Work in a codebase — edit, run, and ship |
 | **Data Analyst** | Answer the question that was asked, and show the numbers that complicate it |
 | **Finance Analyst** | Say where the money actually went, and when it runs out |
 | **Expense Manager** | Logs receipts from your email and builds summaries that add up |
-| **Ops Assistant** | Operate and investigate — runbooks, logs, infrastructure |
-| **Security Assistant** | Find and fix security issues — scan, triage, PR |
-| **Dependency Audit Assistant** | Vulnerable dependencies — audit, minimal upgrades, PRs |
+| **Ops Assistant** | Incidents and runbooks — logs, metrics, infrastructure |
+| **Security Assistant** | Security problems found and fixed — scan, triage, PR |
+| **Dependency Audit Assistant** | Risky dependencies — audit, smallest upgrades, PRs |
 | **Cloud Posture Assistant** | Review Terraform and cloud config — read-only, evidence first |
 | **QA Analyst** | Find what breaks before someone else does, and say what you didn't check |
 | **Product Manager** | Specify it so it can be built and tested without a meeting |

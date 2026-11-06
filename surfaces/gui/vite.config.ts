@@ -29,7 +29,7 @@ export default defineConfig(({ command }) => {
   let devToken = "";
   if (command === "serve") {
     const state =
-      process.env.COWORKER_STATE_DIR ||
+      process.env.SUPERUSER_STATE_DIR ||
       (process.platform === "win32"
         ? path.join(process.env.APPDATA || os.homedir(), "coworker")
         : path.join(os.homedir(), ".config", "coworker"));
@@ -44,7 +44,7 @@ export default defineConfig(({ command }) => {
     base: "./",
     plugins: [react()],
     server: { port: DEV_PORT, strictPort: true },
-    define: { __COWORKER_DEV_TOKEN__: JSON.stringify(devToken), __APP_VERSION__: JSON.stringify(appVersion()) },
+    define: { __SUPERUSER_DEV_TOKEN__: JSON.stringify(devToken), __APP_VERSION__: JSON.stringify(appVersion()) },
     // `trace(...)` is dropped from a production build, calls and all.
     //
     // `import.meta.env.DEV` alone was not enough. It made `trace` an empty function,

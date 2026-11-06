@@ -39,6 +39,12 @@
         "/v1/sessions/:x/artifacts/reveal",
         "/v1/sessions/:x/roots",
         "/v1/sessions/:x/unattended",
+        // Helpers that take the rest of the path as an argument, so this sweep sees only
+        // their prefix: `connectorUrl(name, rest)` (api/allowUser.ts, api/SlackStatus.ts) and
+        // `panelBrowser(action)` (api/assistantsBrowsers.ts). Every path their callers build
+        // is either served or listed here by name (checked 2026-11-07).
+        "/v1/connectors/:x",
+        "/v1/browser/:x",
         // Superuser's own features.
         "/v1/cloud/login",
         "/v1/cloud/logout",

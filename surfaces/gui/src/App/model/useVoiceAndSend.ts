@@ -84,9 +84,9 @@ export function useVoiceAndSend(prev: ReturnType<typeof useAppState> & ReturnTyp
   };
 
   const send = (text: string, attachments?: Attachment[], skill?: string) => {
-    // Force-run shows exactly what the user typed: "/name rest". Must match the server's
-    // `display` sidecar formula so the turn_start dedupe recognizes the local echo.
-    const shown = skill ? `/${skill}${text ? ` ${text}` : ""}` : text;
+    // A forced skill shows just what was typed, "/name rest". It has to equal the server's
+    // `display` field, or turn_start won't recognise this local copy as the same message.
+    const shown = skill ? [`/${skill}`, text].filter(Boolean).join(" ") : text;
     setItems((p) => [...p, { kind: "user", text: shown, attachments, ts: Date.now() / 1000 }]);
     // The visible model rides along with the message (single source of truth per turn).
     sessionRef.current?.userMessage(text, attachments, model, skill);

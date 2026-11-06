@@ -2,8 +2,8 @@
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let ok = null;
   for (let i = 0; i < 150 && !ok; i++) { ok = document.querySelector(".sidebar .list-row"); if (!ok) await wait(200); }
-  const t = window.__COWORKER_API_TOKEN__;
-  const b = await (await fetch(`${window.__COWORKER_HTTP__}/v1/sessions`, { headers: { "X-Superuser-Token": t } })).json();
+  const t = window.__SUPERUSER_API_TOKEN__;
+  const b = await (await fetch(`${window.__SUPERUSER_HTTP__}/v1/sessions`, { headers: { "X-Superuser-Token": t } })).json();
   window.location.hash = "#/chat/" + (b.sessions || b.items || []).find((x) => (x.messages || 0) > 3).session_id;
   await wait(2800);
   const box = document.querySelector(".composer"), ta = box.querySelector("textarea");

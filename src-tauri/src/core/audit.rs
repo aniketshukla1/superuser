@@ -14,8 +14,7 @@
 //!
 //! * **What was decided, by which rule, and whether it was carried out.** A row for an
 //!   action carries a [`Decision`], written by `core::gateway` *before* the action runs.
-//!   "An action that was not recorded did not happen, because there is no path that
-//!   acts without writing the row first." A failure, a stop, a parked approval or a
+//!   Nothing acts before its row is written, so an action with no row never ran. A failure, a stop, a parked approval or a
 //!   refusal by the user adds a second row after it.
 //! * **What started the run.** An [`Initiator`] — a person, a schedule, a watch, a
 //!   message from outside, a subagent, the API. "Nobody watching" is a filter over it.
@@ -33,8 +32,8 @@
 //! with no hash is reported as "from before the trail was linked", not as a break.
 //!
 //! The file rotates monthly (`audit-2026-08.jsonl`), and the chain runs across the
-//! rotation. Retention is off by default and a setting — deleting somebody's audit
-//! trail because a default said so is the worse failure.
+//! rotation. Retention is off by default and a setting — losing someone's audit
+//! trail to a default would be the worse mistake.
 
 use std::fs::OpenOptions;
 use std::io::Write;

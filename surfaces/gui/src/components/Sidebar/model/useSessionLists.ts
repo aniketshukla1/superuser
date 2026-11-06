@@ -63,7 +63,7 @@ export function useSessionLists(prev: { props: Props } & ReturnType<typeof useAc
   // First pending item ever observed → the inbox chip unlocks and stays (§26 sticky unlock).
   useEffect(() => {
     if (totalAttention > 0 && !inboxUnlocked) {
-      localStorage.setItem("ocw:inbox-unlocked", "1");
+      localStorage.setItem("superuser:inbox-unlocked", "1");
       setInboxUnlocked(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

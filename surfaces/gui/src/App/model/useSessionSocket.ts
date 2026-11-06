@@ -1,75 +1,72 @@
-import { useRef, useEffect } from "react";
-import { rememberLastSession } from "../appHelpers";
-import { TRACE, trace, chars } from "../../trace";
+import { useEffect, useRef } from "react";
 import { Session } from "../../api";
-import type { useAppState } from "./useAppState";
-import type { useNavigationState } from "./useNavigationState";
-import type { useLayout } from "./useLayout";
-import type { usePersonas } from "./usePersonas";
-import type { useBoot } from "./useBoot";
-import type { useSplashAndSettings } from "./useSplashAndSettings";
+import { chars, TRACE, trace } from "../../trace";
+import { rememberLastSession } from "../appHelpers";
 import { eventHandler } from "./sessionEvents/handleEvent";
+import type { useAppState } from "./useAppState";
+import type { useBoot } from "./useBoot";
+import type { useLayout } from "./useLayout";
+import type { useNavigationState } from "./useNavigationState";
+import type { usePersonas } from "./usePersonas";
+import type { useSplashAndSettings } from "./useSplashAndSettings";
 
-/** The live session socket: connect, and apply every event the engine sends. */
-export function useSessionSocket(prev: ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> & ReturnType<typeof usePersonas> & ReturnType<typeof useBoot> & ReturnType<typeof useSplashAndSettings>) {
-  const { surface, agent, sessionId, workspace, booting, gatesWorkspace, setItems, setConnected,
-      refreshSessions, pendingPromptRef, sessionRef } = prev;
+type Deps = ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> &
+  ReturnType<typeof usePersonas> & ReturnType<typeof useBoot> & ReturnType<typeof useSplashAndSettings>;
+
+/** The live session socket: connecting, and applying every event the engine sends. */
+export function useSessionSocket(prev: Deps) {
+  const { agent, booting, gatesWorkspace, pendingPromptRef, refreshSessions, sessionId, sessionRef, setConnected, setItems, surface, workspace } = prev;
   const handsFreeRef = useRef(false);
   const spokenBufRef = useRef("");
 
-  // There used to be a guard here that watched `agent` and switched it away when the
-  // "surface" it belonged to was hidden in Settings. It is gone, and the reason is
-  // worth keeping.
-  //
-  // It was written for a fixed set of three surfaces — cowork, chat, code — that you
-  // could hide individually. The persona roster replaced that: availability is now
-  // `enabled` and `surfaced` per assistant, and `surface_chat` / `surface_code` are
-  // read by nothing else in this app. So the guard compared `agent` against surface
-  // ids no persona has, which made it permanently inert, and I "fixed" it by pointing
-  // it at the real `coder` id — which turned it live against a flag that defaults to
-  // FALSE. Every click on a Coder session then bounced straight back to the general
-  // assistant, opening a different conversation than the one clicked.
-  //
-  // The lesson is not "be careful with that flag". It is that an effect which watches
-  // `agent` and also SETS it can undo an explicit choice the user just made, and does
-  // it one render later where nothing connects cause to effect. `selectSession` is the
-  // user speaking; nothing may overrule it from a `useEffect`. `appEffects.test.ts`
-  // holds that line.
+  // A guard once lived here that watched `agent` and switched away from it when its "surface"
+  // was hidden in Settings. It was written for three fixed surfaces (cowork, chat, code), which
+  // the assistant list replaced, so it compared `agent` with ids no assistant has and did
+  // nothing. Pointing it at the real `coder` id made it act on a flag that defaults to FALSE,
+  // and every click on a Coder session bounced back to the general assistant, opening a
+  // different conversation from the one clicked. The rule that came out of it: an effect that
+  // watches `agent` and also SETS it can overturn a choice the user just made, a render later,
+  // where nothing ties the effect to its cause. `selectSession` is the user speaking, and no
+  // `useEffect` may overrule it (`appEffects.test.ts` holds that line).
 
   useEffect(() => {
     if (surface === "session") rememberLastSession(agent, sessionId, workspace);
   }, [surface, agent, sessionId, workspace]);
 
-  // (re)connect when workspace, session, or agent changes
+  // Connect again whenever the session or the assistant changes.
   useEffect(() => {
-    if (booting) return; // wait until boot/resume settles the session before connecting
-    if (gatesWorkspace(agent) && !workspace) return; // Code needs a folder (gate handles it)
-    const handleEvent = eventHandler({ ...prev, handsFreeRef, spokenBufRef });
+    // Boot and resume decide the session first.
+    if (booting) return;
+    // Code needs a folder before anything connects; the gate deals with that.
+    if (gatesWorkspace(agent) && !workspace) return;
 
-    const session = new Session(sessionId, workspace || "", agent, {
-      onEvent: handleEvent,
+    // A "Run now" session sends its task as soon as it connects.
+    const sendPendingRun = () => {
+      const prompt = pendingPromptRef.current;
+      if (!prompt) return;
+      pendingPromptRef.current = null;
+      setItems((before) => [...before, { kind: "user", text: prompt, ts: Date.now() / 1000 }]);
+      TRACE && trace("chat", "auto-send on connect", { session: sessionId, text: chars(prompt) });
+      sessionRef.current?.userMessage(prompt);
+    };
+
+    const live = new Session(sessionId, workspace || "", agent, {
+      onEvent: eventHandler({ ...prev, handsFreeRef, spokenBufRef }),
       onOpen: () => {
         setConnected(true);
-        // Auto-send the task prompt once a "Run now" session connects.
-        const p = pendingPromptRef.current;
-        if (p) {
-          pendingPromptRef.current = null;
-          setItems((prev) => [...prev, { kind: "user", text: p, ts: Date.now() / 1000 }]);
-          TRACE && trace("chat", "auto-send on connect", { session: sessionId, text: chars(p) });
-          sessionRef.current?.userMessage(p);
-        }
+        sendPendingRun();
       },
       onClose: () => setConnected(false),
     });
-    sessionRef.current = session;
-    return () => session.close();
-    // NOTE: `workspace` is intentionally NOT a dependency. Every real workspace change
-    // (pick folder, select/switch session, new session) is paired with a `sessionId`
-    // change, so the socket still reconnects when it should. The one workspace-only change
-    // is the `ready` handler adopting the server's provisioned Cowork scratch dir — listing
-    // `workspace` here made that adoption tear down and rebuild the socket immediately after
-    // first connect, dropping the user's first message (the "send twice" bug). The scratch
-    // dir is deterministic from `sessionId` server-side, so skipping that reconnect is safe.
+    sessionRef.current = live;
+    return () => live.close();
+    // `workspace` is left out of the dependencies on purpose. Every real change of folder
+    // (choosing one, selecting or switching a session, a new session) comes with a new
+    // `sessionId`, so the socket still reconnects when it should. The one change of folder
+    // alone is `ready` taking the scratch folder the server made for Cowork, and listing
+    // `workspace` made that tear the socket down right after the first connect and lose the
+    // user's first message (the "send twice" bug). The server derives the scratch folder from
+    // `sessionId`, so not reconnecting for it is safe.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booting, sessionId, agent, refreshSessions]);
 

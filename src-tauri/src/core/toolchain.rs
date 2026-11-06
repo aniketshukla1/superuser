@@ -8,8 +8,8 @@
 //! report comes back clean, and "we could not look" has been silently rendered
 //! as "there is nothing there." The user reads a green report and believes it.
 //!
-//! So a check either **runs**, or it is **reported as not run**. There is no
-//! third option, and in particular there is no option where the model simply
+//! So every check ends one of two ways: it **ran**, or the report **says it didn't**. There
+//! is no third option, and in particular there is no option where the model simply
 //! forgets. That is why [`check_tool`](crate::core::agent_exec) writes the
 //! ledger itself, at the moment it discovers a tool is absent, rather than
 //! trusting the model to remember and disclose it later. The model can amend an

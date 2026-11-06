@@ -1,9 +1,7 @@
-// Maps the raw transcript from GET /v1/sessions/{id}/messages into the GUI's `Item[]` model.
-// Extracted from App.tsx so it can be unit-tested without standing up the whole app.
-//
-// A connector-delivered user message carries a structured `source` sidecar (§3.1); when present it
-// becomes a `connector` item (rendered as ConnectorMessageCard) instead of a plain user bubble. This
-// generalizes to any connector via the registry — no Slack special-casing here.
+// From GET /v1/sessions/{id}/messages to the GUI's `Item[]`, kept out of App.tsx so it can be
+// tested by itself. A user message that came in through a connector carries a `source`
+// record (§3.1) and becomes a `connector` item (a ConnectorMessageCard) rather than a plain
+// bubble. The connector registry decides how each one looks, so nothing here is Slack-specific.
 
-export { itemsFromMessages, mergeJournalSteps, userItemFromContent } from "./itemsFromMessages/itemsFromMessages";
 export { settleRunningTools } from "./itemsFromMessages/settleRunningTools";
+export { itemsFromMessages, mergeJournalSteps, userItemFromContent } from "./itemsFromMessages/itemsFromMessages";

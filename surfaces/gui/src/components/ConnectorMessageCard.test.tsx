@@ -8,7 +8,7 @@ const SOURCE: MessageSource = {
   connector: "slack",
   kind: "channel",
   channel_id: "C0BD7KZ1AH5",
-  channel_name: "#ocw-test",
+  channel_name: "#team-test",
   sender_id: "U07JK68S4BH",
   sender_name: "Jordan Lee",
   ts: 1719700000,
@@ -20,7 +20,7 @@ afterEach(cleanup);
 describe("ConnectorMessageCard", () => {
   it("renders the channel name, sender name and the body for a source", () => {
     render(<ConnectorMessageCard source={SOURCE} />);
-    expect(screen.getByText("#ocw-test")).toBeTruthy();
+    expect(screen.getByText("#team-test")).toBeTruthy();
     expect(screen.getByText("Jordan Lee")).toBeTruthy();
     expect(screen.getByText(/staging deploy go out/)).toBeTruthy();
     expect(screen.getByText("via Slack")).toBeTruthy();
@@ -51,7 +51,7 @@ describe("ConnectorMessageCard", () => {
     expect(screen.getByText(/U07JK68S4BH/)).toBeTruthy();
     // the resolved names are hidden while the ids are shown.
     expect(screen.queryByText("Jordan Lee")).toBeNull();
-    expect(screen.queryByText("#ocw-test")).toBeNull();
+    expect(screen.queryByText("#team-test")).toBeNull();
 
     fireEvent.mouseLeave(head);
     expect(screen.getByText("Jordan Lee")).toBeTruthy();
@@ -69,12 +69,12 @@ describe("ConnectorMessageCard", () => {
 describe("itemsFromMessages", () => {
   it("maps a user message carrying source.connector to a `connector` item", () => {
     const items = itemsFromMessages([
-      { role: "user", content: "💬 New message on slack:#ocw-test …", source: SOURCE },
+      { role: "user", content: "💬 New message on slack:#team-test …", source: SOURCE },
     ]);
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe("connector");
     expect((items[0] as Extract<(typeof items)[number], { kind: "connector" }>).source.channel_name).toBe(
-      "#ocw-test",
+      "#team-test",
     );
   });
 

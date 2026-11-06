@@ -24,7 +24,7 @@
 //!    runs code we never parsed; a redirect writes somewhere the rule never
 //!    vetted; an expansion's value was set out of view.
 //! 2. **Argument executors** — `xargs`, `env`, `sudo`, `ssh`, `docker`, `npx`,
-//!    `timeout`. A rule on the outer program can never vouch for the inner one.
+//!    `timeout`. Approving the outer program says nothing about the one it runs.
 //! 3. **Inline code** — `python -c "…"`, `node -e "…"`. The prefix says
 //!    "python"; the effect is in a string the prefix never saw.
 //! 4. **Execution and deletion flags** — `-exec`, `-delete`, `-ok`. This is why
@@ -48,10 +48,10 @@
 ///
 /// The contract, and every line of it is load-bearing:
 ///
-/// - **Local filesystem reads only.** Network clients — `curl`, `wget`, `ssh`,
-///   `nc` — are excluded even for a plain GET. An auto-allowed network command is
-///   an exfiltration channel the moment the run is under prompt injection, and
-///   "it was only a GET" is no comfort when the data is in the URL.
+/// - **Only reads of the local filesystem.** Network clients (`curl`, `wget`, `ssh`,
+///   `nc`) are left out even for a plain GET: once a run is under prompt injection, a
+///   network command that runs without asking can carry data out, and a GET carries it
+///   just as well, in the URL.
 /// - **No interpreters.** `python`, `sh`, `ruby` and friends read local state
 ///   right up until the script says otherwise, and the script is not something
 ///   this function can read.

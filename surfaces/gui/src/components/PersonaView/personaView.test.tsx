@@ -57,7 +57,7 @@ describe("PersonaView", () => {
     render(<PersonaView personaId="ops" />);
 
     expect(await screen.findByText("Ops Assistant")).toBeTruthy();
-    expect(screen.getByText("Operate and investigate")).toBeTruthy();
+    expect(screen.getByText("Incidents and runbooks")).toBeTruthy();
     expect(screen.getByText("A careful, methodical operations engineer.")).toBeTruthy();
     // tools rendered as chips
     expect(screen.getByText("shell")).toBeTruthy();
@@ -131,7 +131,7 @@ describe("PersonaView", () => {
 
 describe("who an assistant may ask", () => {
   const OTHERS = [
-    { id: "ops", name: "Ops Assistant", tagline: "Operate and investigate", enabled: true },
+    { id: "ops", name: "Ops Assistant", tagline: "Incidents and runbooks", enabled: true },
     { id: "analyst", name: "Analyst", tagline: "Reads the numbers", enabled: true },
     { id: "retired", name: "Retired", tagline: "", enabled: false },
   ];

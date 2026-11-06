@@ -1,24 +1,27 @@
 import { fetch, httpBase, listOf } from "./neverRejectingJson";
 
-// -- channel subscriptions (view-only) ----------------------------------------
+// Which sessions listen to which channels. Read-only here.
+
 export interface Subscription {
+  channel: string;
+  /** The channel's display name ("team-test"); the address stays the id. */
+  channel_name?: string | null;
   session_id: string;
   session_title: string;
   agent: string;
-  channel: string;
-  channel_name?: string | null; // resolved display name ("ocw-test"); address stays the id
   routing_target: string | null;
-  collision: boolean; // inbound subscription == outbound Inbox routing on the same channel
+  /** True when a session listens on the same channel the Inbox sends to. */
+  collision: boolean;
 }
 
 export interface RecentChannel {
   channel: string;
-  name?: string | null; // resolved display name, e.g. "ocw-test" (falls back to the address)
-  last_from: string | null;
+  /** Display name such as "team-test"; falls back to the address. */
+  name?: string | null;
   last_text: string | null;
+  last_from: string | null;
 }
 
 export async function getSubscriptions(): Promise<Subscription[]> {
-  const res = await fetch(`${httpBase()}/v1/subscriptions`);
-  return listOf(res, "subscriptions");
+  return listOf(await fetch(`${httpBase()}/v1/subscriptions`), "subscriptions");
 }

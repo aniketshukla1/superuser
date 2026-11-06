@@ -96,8 +96,8 @@ pub struct Subject {
     /// What it touched, in words: a host, a path, a channel, a connected app.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub target: String,
-    /// Verbatim, after [`scrub`]. A rule about a shell can only be written against
-    /// what was actually typed.
+    /// Verbatim, after [`scrub`]: a shell rule has to match the exact command
+    /// that was typed.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub command: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]

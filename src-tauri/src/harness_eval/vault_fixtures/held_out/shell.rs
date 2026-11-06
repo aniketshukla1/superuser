@@ -144,7 +144,7 @@ pub(super) const SHELL: &[Task] = &[
         group: "routine",
         // Worded the way a person writes a routine — "check … and update" — which is
         // exactly the shape that gets mistaken for a question about the routine.
-        prompt: "One of the user's automations is firing right now, on its schedule, and this turn is that firing. Carry out the instruction below in this turn: do the work now, then say what happened. Don't create, list or change any automation unless the instruction itself asks you to.\n\nCheck status.md and update it: replace the word PENDING with {{MARKER}}.",
+        prompt: "This turn is one of the user's automations going off on its schedule. Do what the instruction below says, now, in this turn, and then report what happened. Leave automations alone (no creating, listing or editing them) unless the instruction asks for that.\n\nCheck status.md and update it: replace the word PENDING with {{MARKER}}.",
         fixture: &[("status.md", "# Status\n\nDeploy: PENDING\n")],
         vault: &[],
         boundaries: None,

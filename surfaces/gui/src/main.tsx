@@ -11,10 +11,10 @@ import "@fontsource/inter/800.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { App } from "./App";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import Pet from "./pet/Pet";
+import { App } from "./App";
 import { initTheme } from "./theme";
 import { platformOS } from "./tauri";
 import { startTestBridge } from "./testbridge";
@@ -37,15 +37,14 @@ startTestBridge();
 
 initTheme();
 initTooltips();
-// Platform hook for CSS (html[data-platform="windows"] scrollbar styling etc.).
+// Lets CSS tell platforms apart (html[data-platform="windows"] gets its own scrollbars, for one).
 document.documentElement.dataset.platform = platformOS();
 
-// A file dropped OUTSIDE a drop target (the composer) must never navigate the webview to the
-// file itself — the browser/WKWebView default. Drop targets stopPropagation-free preventDefault
-// in their own handlers; these guards only catch the misses. (The desktop shell disables Tauri's
-// native drag-drop interception so HTML5 drag events reach the DOM at all — see lib.rs.)
-window.addEventListener("dragover", (e) => e.preventDefault());
-window.addEventListener("drop", (e) => e.preventDefault());
+// A file dropped anywhere but a drop target (the composer) would otherwise send the webview to
+// the file itself, which is what browsers and WKWebView do by default. Drop targets call
+// preventDefault in their own handlers; these two catch the rest. (The desktop shell turns off
+// Tauri's own drag-and-drop handling so HTML5 drag events reach the page at all; see lib.rs.)
+for (const type of ["dragover", "drop"] as const) window.addEventListener(type, (e) => e.preventDefault());
 
 // Cards catch a soft light under the pointer (the dark theme's spotlight in styles.css).
 // One listener for the whole app; it only moves two custom properties on the card.
@@ -57,6 +56,4 @@ document.addEventListener("pointermove", (e) => {
   card.style.setProperty("--my", `${e.clientY - r.top}px`);
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>{isPet ? <Pet /> : <App />}</React.StrictMode>,
-);
+createRoot(document.getElementById("root")!).render(<StrictMode>{isPet ? <Pet /> : <App />}</StrictMode>);

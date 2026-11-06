@@ -114,7 +114,7 @@ pub(in crate::core::agentbrowser::computer) fn audit(shared: &Shared, event: &st
 pub(in crate::core::agentbrowser::computer) fn words(err: String) -> String {
     let low = err.to_lowercase();
     if low.contains("no node") || low.contains("could not find node") || low.contains("detached") || low.contains("does not belong to the document") {
-        "That element is no longer on the page. Take a new snapshot and use the refs it returns.".into()
+        "That element is no longer on the page. Take a new snapshot and pick a ref from it.".into()
     } else if err == crate::core::agentbrowser::cdp::CLOSED {
         "Your browser closed. Open the page again with browser_navigate.".into()
     } else {

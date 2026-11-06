@@ -1,26 +1,26 @@
 import { SettingsView } from "../components/SettingsView";
 import type { AppModel } from "./model/useAppModel";
 
+/** What the composer is given when someone starts a skill from the Skills page. */
+const skillRequest = (description?: string) =>
+  `Build a new skill for me: ${description || "(describe what the skill should do)"}`;
+
 /** The Settings surface. */
 export function SettingsSurface({ m }: { m: AppModel }) {
-  const { settingsTab, navigate, openPersona, startNewSession, prefillComposer } = m;
+  // The Skills page's way in (SKILLS-SPEC §5.2): a skill is made by talking. A new session
+  // opens with the description in the composer for the user to read and send; with no
+  // description, the text there asks them to finish the sentence.
+  const createSkill = (description?: string) => {
+    m.startNewSession();
+    m.prefillComposer(skillRequest(description));
+  };
   return (
     <SettingsView
-          key={settingsTab}
-          initialTab={settingsTab}
-          onTabChange={(t) => navigate({ surface: "settings", tab: t }, true)}
-          onOpenPersona={(id) => openPersona(id, "settings")}
-          onCreateSkill={(description) => {
-            // The Skills doorway (SKILLS-SPEC §5.2): creation is a conversation. Fresh
-            // session, description in the composer — the user reads and hits send. With
-            // no description, the prefill invites them to finish the sentence there.
-            startNewSession();
-            prefillComposer(
-              description
-                ? `Build a new skill for me: ${description}`
-                : "Build a new skill for me: (describe what the skill should do)",
-            );
-          }}
-        />
+      key={m.settingsTab}
+      initialTab={m.settingsTab}
+      onTabChange={(tab) => m.navigate({ surface: "settings", tab }, true)}
+      onOpenPersona={(id) => m.openPersona(id, "settings")}
+      onCreateSkill={createSkill}
+    />
   );
 }

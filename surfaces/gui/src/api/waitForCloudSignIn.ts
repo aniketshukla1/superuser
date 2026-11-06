@@ -1,143 +1,126 @@
-import { fetch, httpBase, listOf } from "./neverRejectingJson";
 import type { Connector } from "./connectors";
+import { fetch, httpBase, jsonBody, listOf } from "./neverRejectingJson";
 
-// --- Superuser Cloud (optional sign-in; manual token paste always works) ---
+// Superuser Cloud: an optional sign-in. Pasting a token by hand always works without it.
+// Also the connector list, and the shapes the activity trail records actions with.
+
+const cloudUrl = (path: string) => `${httpBase()}/v1/cloud/${path}`;
+const connectorUrl = (name: string, action: string) => `${httpBase()}/v1/connectors/${encodeURIComponent(name)}/${action}`;
 
 export interface CloudStatus {
   signed_in: boolean;
   account: string;
   user_id: string;
-  telemetry_enabled?: boolean; // Phase 5 opt-out; signed-out users send nothing regardless
+  /** Phase 5 opt-out. Someone signed out sends nothing whatever this says. */
+  telemetry_enabled?: boolean;
 }
 
-/** Flip the product-telemetry preference (local; only meaningful when signed in). */
-export async function setCloudTelemetry(
-  enabled: boolean,
-): Promise<{ ok: boolean; telemetry_enabled?: boolean }> {
-  const res = await fetch(`${httpBase()}/v1/cloud/telemetry`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ enabled }),
-  });
-  return res.json();
+/** Switch product telemetry on or off. Stored here, and it only matters when signed in. */
+export async function setCloudTelemetry(enabled: boolean): Promise<{ ok: boolean; telemetry_enabled?: boolean }> {
+  return (await fetch(cloudUrl("telemetry"), jsonBody("POST", { enabled }))).json();
 }
 
 export async function getCloudStatus(): Promise<CloudStatus> {
-  const res = await fetch(`${httpBase()}/v1/cloud/status`);
-  return res.json();
+  return (await fetch(cloudUrl("status"))).json();
 }
 
+/** The sidecar opens the system browser; the GUI then watches the status. */
 export async function cloudLogin(): Promise<{ ok: boolean }> {
-  // The sidecar opens the system browser; the GUI just polls status after.
-  const res = await fetch(`${httpBase()}/v1/cloud/login`, { method: "POST" });
-  return res.json();
-}
-
-/** Poll cloud status until the browser sign-in lands (or the bound runs out).
- *
- * Fast 500ms polls for the first 20s — the moment the user finishes in the
- * browser they're staring at the app waiting for it to flip, and a 2s interval
- * reads as "sign-in is slow" (owner complaint, 2026-07-16) — then relaxes to 2s
- * for the long tail (~2min total). Calls `onDone` with the signed-in status, or
- * null when it timed out. Returns a cancel function (call on unmount). */
-export function waitForCloudSignIn(
-  onDone: (s: CloudStatus | null) => void,
-): () => void {
-  let cancelled = false;
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  let polls = 0;
-  const tick = async () => {
-    polls += 1;
-    const s = await getCloudStatus().catch(() => null);
-    if (cancelled) return;
-    if (s?.signed_in) return onDone(s);
-    if (polls >= 90) return onDone(null); // 40×500ms + 50×2s ≈ 2min
-    timer = setTimeout(tick, polls < 40 ? 500 : 2000);
-  };
-  timer = setTimeout(tick, 500);
-  return () => {
-    cancelled = true;
-    if (timer) clearTimeout(timer);
-  };
+  return (await fetch(cloudUrl("login"), { method: "POST" })).json();
 }
 
 export async function cloudLogout(): Promise<{ ok: boolean }> {
-  const res = await fetch(`${httpBase()}/v1/cloud/logout`, { method: "POST" });
-  return res.json();
+  return (await fetch(cloudUrl("logout"), { method: "POST" })).json();
 }
 
-export async function connectManaged(
-  name: string,
-  options?: { access?: "read" | "write" },
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(
-    `${httpBase()}/v1/connectors/${encodeURIComponent(name)}/connect-managed`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      // `access` names a broker-defined consent tier (hubspot read | write).
-      // GitHub needs no flow choice: the broker is authorize-first — one connect
-      // links an existing App installation or redirects on to the install page.
-      body: JSON.stringify({
-        ...(options?.access ? { access: options.access } : {}),
-      }),
-    },
-  );
-  return res.json();
+/** Watch for the browser sign-in to finish, for about two minutes at most.
+ *
+ *  For the first 20 seconds it checks every half second: the moment someone finishes in the
+ *  browser they are looking at the app, waiting for it to change, and a two-second gap feels
+ *  like a slow sign-in (owner, 2026-07-16). After that it checks every two seconds. `onDone`
+ *  gets the signed-in status, or null if time ran out. The returned function cancels it; call
+ *  it on unmount. */
+export function waitForCloudSignIn(onDone: (s: CloudStatus | null) => void): () => void {
+  const QUICK_CHECKS = 40;
+  const MAX_CHECKS = 90; // 40 × 0.5 s, then 50 × 2 s
+  let stopped = false;
+  let pending: ReturnType<typeof setTimeout> | undefined;
+  let checks = 0;
+
+  const later = (ms: number) => {
+    pending = setTimeout(check, ms);
+  };
+  async function check() {
+    checks += 1;
+    let status: CloudStatus | null;
+    try {
+      status = await getCloudStatus();
+    } catch {
+      status = null;
+    }
+    if (stopped) return;
+    if (status?.signed_in) {
+      onDone(status);
+      return;
+    }
+    if (checks >= MAX_CHECKS) {
+      onDone(null);
+      return;
+    }
+    later(checks < QUICK_CHECKS ? 500 : 2000);
+  }
+
+  later(500);
+  return () => {
+    stopped = true;
+    if (pending !== undefined) clearTimeout(pending);
+  };
 }
 
-/** One-click connect for an MCP-backed connector (monday, asana, jira): the sidecar
- * opens the vendor's sign-in in the browser (local OAuth, no cloud account needed);
- * poll getConnectors until the card flips to connected. */
+/** One-click connect through the cloud. `access` picks a consent level the broker defines
+ *  (HubSpot: read or write). GitHub needs no choice: the broker authorizes first, so one
+ *  connect either links an existing App installation or carries on to the install page. */
+export async function connectManaged(name: string, options?: { access?: "read" | "write" }): Promise<{ ok: boolean; error?: string }> {
+  const body = options?.access ? { access: options.access } : {};
+  return (await fetch(connectorUrl(name, "connect-managed"), jsonBody("POST", body))).json();
+}
+
+/** One-click connect for a connector backed by MCP (monday, asana, jira): the sidecar opens
+ *  the vendor's sign-in in the browser, with local OAuth and no cloud account. Poll
+ *  getConnectors until the card shows connected. */
 export async function connectMcpBacked(name: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(
-    `${httpBase()}/v1/connectors/${encodeURIComponent(name)}/mcp-connect`,
-    { method: "POST" },
-  );
-  return res.json();
+  return (await fetch(connectorUrl(name, "mcp-connect"), { method: "POST" })).json();
 }
 
 export interface ConnectorTool {
   name: string;
   label: string;
-  kind: "read" | "write" | string;
   description: string;
+  kind: "read" | "write" | string;
   enabled: boolean;
   requires_approval: boolean;
 }
 
 export async function getConnectors(): Promise<Connector[]> {
-  const res = await fetch(`${httpBase()}/v1/connectors`);
-  return listOf(res, "connectors");
+  return listOf(await fetch(`${httpBase()}/v1/connectors`), "connectors");
 }
 
-export async function connectConnector(
-  name: string,
-  fields: Record<string, string>,
-): Promise<{ ok: boolean; account?: string; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/connectors/${encodeURIComponent(name)}/connect`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fields }),
-  });
-  return res.json();
+export async function connectConnector(name: string, fields: Record<string, string>): Promise<{ ok: boolean; account?: string; error?: string }> {
+  return (await fetch(connectorUrl(name, "connect"), jsonBody("POST", { fields }))).json();
 }
 
 export async function disconnectConnector(name: string): Promise<{ ok: boolean }> {
-  const res = await fetch(`${httpBase()}/v1/connectors/${encodeURIComponent(name)}/disconnect`, {
-    method: "POST",
-  });
-  return res.json();
+  return (await fetch(connectorUrl(name, "disconnect"), { method: "POST" })).json();
 }
 
 /** What started the run an action belongs to. */
 export interface AuditInitiator {
-  /** person · approval · schedule · watch · message · subagent · api · startup */
+  /** "person", "approval", "schedule", "watch", "message", "subagent", "api" or "startup". */
   kind: string;
   id?: string;
 }
 
-/** The facts an action was judged on — never its content. */
+/** The facts an action was judged on; never its content. */
 export interface AuditSubject {
   tool: string;
   intent?: string;
@@ -149,19 +132,19 @@ export interface AuditSubject {
   mcp_server?: string;
   mcp_tool?: string;
   mcp_effect?: string;
-  /** Length of the text the action carried — a message, a typed value. */
+  /** How long the text it carried was (a message, a typed value), in characters. */
   chars?: number;
   tainted?: boolean;
 }
 
-/** What the user's boundaries decided about one action. */
+/** How the user's boundaries ruled on one action. */
 export interface AuditDecision {
   allowed: boolean;
+  carried_out: boolean;
   mode: "enforce" | "record" | string;
-  /** deny · allow · default */
+  /** "deny", "allow" or "default". */
   source: string;
   rule?: string;
   rule_name?: string;
-  carried_out: boolean;
   reason?: string;
 }

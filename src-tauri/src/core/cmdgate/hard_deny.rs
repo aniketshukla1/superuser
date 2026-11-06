@@ -63,8 +63,8 @@ pub fn carries_opaque_construct(command: &str) -> bool {
     OPAQUE_CONSTRUCTS.iter().any(|c| command.contains(c))
 }
 
-/// False when a parsed command can never be vouched for by a prefix rule,
-/// because it runs code the rule never saw.
+/// False when no prefix rule can approve this command: part of what it runs is
+/// not visible in the text the rule matched.
 pub fn prefix_eligible(argv: &[String]) -> bool {
     if argv.is_empty() {
         return false;

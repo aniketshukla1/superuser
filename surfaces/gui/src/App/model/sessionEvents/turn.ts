@@ -1,125 +1,119 @@
-import type { WsEvent } from "../../../types";
-import { TRACE, trace } from "../../../trace";
 import type { MessageSource } from "../../../api";
 import { speak } from "../../../tauri";
+import { TRACE, trace } from "../../../trace";
+import type { Item, WsEvent } from "../../../types";
 import { addTurnUsage } from "../../../usage";
 import type { SocketCtx } from "./handleEvent";
 
-/** The turn itself: connect, start, streamed text and reasoning, the final message. */
-export function onTurnEvent(c: SocketCtx, ev: WsEvent, d: WsEvent["data"]) {
-  const { agent, reasoningRef, setStreaming, setReasoningStream, setItems, setConnected, setModel,
-      setModelShared, setMode, setWorkspaceTrustRequest, setWorkspace, setRunning,
-      setTurnStartedAt, setTurnTokens, setUsage, handsFreeRef, spokenBufRef } = c;
+type Data = WsEvent["data"];
+
+/** The first complete sentence of `text` and how much of `text` it used, if there is one yet. */
+function firstSentence(text: string): { sentence: string; used: number } | null {
+  const match = /^([\s\S]*?[.!?])(\s|$)/.exec(text);
+  return match ? { sentence: match[1].trim(), used: match[0].length } : null;
+}
+
+/** Add `item` unless the transcript already ends with the same message (`same` decides). */
+function appendOnce(c: SocketCtx, item: Item, same: (last: Item) => boolean) {
+  c.setItems((before) => {
+    const last = before[before.length - 1];
+    return last && same(last) ? before : [...before, item];
+  });
+}
+
+function onReady(c: SocketCtx, d: Data) {
+  c.setConnected(true);
+  TRACE && trace("chat", "ready", { session: d.session_id, agent: d.agent, model: d.model, mode: d.mode, shared: d.model_shared });
+  // `model` is one value shared by every conversation, so whatever `ready` leaves alone is
+  // inherited from the chat shown before. `if (d.model)` was therefore a leak: a session with
+  // no explicit choice reported "", kept the previous chat's model, and picking a model in one
+  // chat moved every chat that never chose onto it (2026-09-01: nemotron and gemma both ended
+  // up gemma). The server now sends the model the turn would really run on and never an empty
+  // one, so it is taken as given; a missing field would be a server bug, not a default.
+  if (typeof d.model === "string" && d.model) c.setModel(d.model);
+  // Whether every chat shares one endpoint for this model. The server answers that
+  // (`providers::runs_locally`), since it takes telling an Ollama tag from a provider prefix.
+  c.setModelShared(d.model_shared === true);
+  if (d.mode) c.setMode(d.mode);
+  if (d.command_trust?.required) c.setWorkspaceTrustRequest(d.command_trust);
+  // Cowork: take the scratch folder the server made, unless there is a folder already.
+  if (d.workspace) c.setWorkspace((current) => current || d.workspace);
+}
+
+function onTurnStart(c: SocketCtx, d: Data) {
+  c.setRunning(true);
+  c.setStreaming("");
+  c.setReasoningStream("");
+  // Coming back to a chat that is still working is not a new turn: the server replays
+  // `turn_start` and sends `started_ms` so the clock keeps the turn's real age. Restarting it
+  // here reset the elapsed time on every visit, so with two chats running neither showed its
+  // true age.
+  TRACE && trace("chat", "turn_start", { resumed: !!d.resumed, started_ms: d.started_ms });
+  const resumedAt = d.resumed && typeof d.started_ms === "number" && d.started_ms > 0 ? d.started_ms : null;
+  c.setTurnStartedAt(resumedAt ?? Date.now());
+  // The replayed backlog sends this turn's `usage` frames again, so zero is only a starting
+  // point that the replay corrects.
+  c.setTurnTokens(0);
+  // A turn that arrived in the background (a channel message, a self-wake, a resumed run) had
+  // no local send(), so the message that started it isn't in `items` yet. A connector message
+  // carries a structured `source` (§3.1) and gets the rich card; anything else is a plain user
+  // item. A turn started from the composer already added its message, so a repeat is skipped.
+  if (d.source?.connector) {
+    const source = d.source as MessageSource;
+    appendOnce(c, { kind: "connector", source }, (last) => last.kind === "connector" && last.source.ts === source.ts && last.source.text === source.text);
+    return;
+  }
+  if (typeof d.input !== "string" || !d.input) return;
+  // For a forced skill, `display` is the "/name …" line the user typed and `input` the framed
+  // text for the model. What the user sees is what is shown and compared.
+  const shown = (typeof d.display === "string" && d.display) || (d.input as string);
+  appendOnce(c, { kind: "user", text: shown, ts: Date.now() / 1000 }, (last) => last.kind === "user" && last.text === shown);
+}
+
+function onDelta(c: SocketCtx, d: Data) {
+  const piece = d.text || "";
+  // Hands-free: each finished sentence goes to the voice as it arrives, so the first words are
+  // spoken while the rest is still being written. The Rust side queues them, so they line up
+  // instead of interrupting each other.
+  if (c.handsFreeRef.current) {
+    c.spokenBufRef.current += piece;
+    const next = firstSentence(c.spokenBufRef.current);
+    if (next) {
+      c.spokenBufRef.current = c.spokenBufRef.current.slice(next.used);
+      if (next.sentence) void speak(next.sentence, { persona: c.agent }).catch(() => {});
+    }
+  }
+  c.setStreaming((sofar) => sofar + piece);
+}
+
+function onMessage(c: SocketCtx, d: Data) {
+  if (d.usage) c.setUsage((totals) => addTurnUsage(totals, d.usage));
+  // The event's own reasoning wins (it covers turns delivered in the background); the local
+  // buffer is for servers that don't send it.
+  const reasoning = d.reasoning || c.reasoningRef.current;
+  if (d.text || reasoning) {
+    const said: Extract<Item, { kind: "assistant" }> = { kind: "assistant", text: d.text || "", ts: Date.now() / 1000 };
+    if (reasoning) said.reasoning = reasoning;
+    if (d.persona) said.persona = d.persona;
+    c.setItems((before) => [...before, said]);
+  }
+  // The text is in `items` now, or the turn only used tools.
+  c.setStreaming("");
+  c.setReasoningStream("");
+}
+
+/** The turn itself: connecting, starting, streamed text and reasoning, the final message. */
+export function onTurnEvent(c: SocketCtx, ev: WsEvent, d: Data) {
   switch (ev.type) {
     case "ready":
-      setConnected(true);
-      // `model` is one piece of App state shared by every conversation, so
-      // whatever `ready` does NOT overwrite is inherited from the chat you were
-      // looking at before. That made `if (d.model)` a bleed: a session with no
-      // explicit pick reported "", the model silently stayed on the previous
-      // chat's, and choosing a model in one chat moved every never-configured
-      // chat onto it (reported 2026-09-01 — nemotron and gemma, both ended up
-      // gemma). The server now resolves this to the model the turn would
-      // actually run on and never sends an empty one, so it is taken at face
-      // value; a missing field would be a server bug, not a default.
-      TRACE && trace("chat", "ready", {
-        session: d.session_id,
-        agent: d.agent,
-        model: d.model,
-        mode: d.mode,
-        shared: d.model_shared,
-      });
-      if (typeof d.model === "string" && d.model) setModel(d.model);
-      // Whether every chat shares one endpoint for this model — the server owns
-      // that question (`providers::runs_locally`), because getting it right means
-      // knowing an Ollama tag from a provider prefix.
-      setModelShared(d.model_shared === true);
-      if (d.mode) setMode(d.mode);
-      if (d.command_trust?.required) setWorkspaceTrustRequest(d.command_trust);
-      // Cowork: adopt the server-provisioned scratch dir (only when we don't already have one).
-      if (d.workspace) setWorkspace((cur) => cur || d.workspace);
-      break;
+      return onReady(c, d);
     case "turn_start":
-      setRunning(true);
-      setStreaming("");
-      setReasoningStream("");
-      // A REATTACH is not a new turn. The server replays `turn_start` when you
-      // come back to a chat that is still working, and starting the clock here
-      // meant the elapsed time reset to zero on every visit — with two chats both
-      // running, switching between them showed neither turn's real age. It sends
-      // `started_ms` for exactly this; nothing read it.
-      TRACE && trace("chat", "turn_start", { resumed: !!d.resumed, started_ms: d.started_ms });
-      setTurnStartedAt(
-        d.resumed && typeof d.started_ms === "number" && d.started_ms > 0
-          ? d.started_ms
-          : Date.now(),
-      );
-      // The replayed backlog re-sends this turn's `usage` frames, so zeroing here
-      // is a starting point the replay corrects — not a number the user is left
-      // looking at.
-      setTurnTokens(0);
-      // Background-delivered turns (channel message, self-wake, durable resume) have no local
-      // send(), so the triggering message isn't in `items` yet — surface it. A connector message
-      // carries a structured `source` (§3.1) → render the rich card; otherwise a plain user item.
-      // Foreground turns already appended it in send(); skip the duplicate.
-      if (d.source?.connector) {
-        const src = d.source as MessageSource;
-        setItems((p) => {
-          const last = p[p.length - 1];
-          return last && last.kind === "connector" && last.source.ts === src.ts && last.source.text === src.text
-            ? p
-            : [...p, { kind: "connector", source: src }];
-        });
-      } else if (typeof d.input === "string" && d.input) {
-        // `display` (force-run) is the user's literal "/name …" line; the framed
-        // `input` is model-facing. Surface/dedupe on what the user actually sees.
-        const shown = (typeof d.display === "string" && d.display) || (d.input as string);
-        setItems((p) => {
-          const last = p[p.length - 1];
-          return last && last.kind === "user" && last.text === shown
-            ? p
-            : [...p, { kind: "user", text: shown, ts: Date.now() / 1000 }];
-        });
-      }
-      break;
+      return onTurnStart(c, d);
     case "assistant_delta":
-      // Hands-free: hand each finished sentence to the voice as it arrives, so
-      // the first words are spoken while the rest is still being written. The
-      // Rust side queues them, so these calls accumulate rather than cutting
-      // each other off.
-      if (handsFreeRef.current) {
-        spokenBufRef.current += d.text || "";
-        const ready = /^([\s\S]*?[.!?])(\s|$)/.exec(spokenBufRef.current);
-        if (ready) {
-          const sentence = ready[1].trim();
-          spokenBufRef.current = spokenBufRef.current.slice(ready[0].length);
-          if (sentence) void speak(sentence, { persona: agent }).catch(() => {});
-        }
-      }
-      setStreaming((s) => s + (d.text || ""));
-      break;
+      return onDelta(c, d);
     case "reasoning_delta":
-      setReasoningStream(reasoningRef.current + (d.text || ""));
-      break;
-    case "assistant_message": {
-      if (d.usage) setUsage((u) => addTurnUsage(u, d.usage));
-      // The event's reasoning is authoritative (covers background-delivered turns);
-      // the local buffer is the fallback for older servers.
-      const reasoning = d.reasoning || reasoningRef.current;
-      if (d.text || reasoning)
-        setItems((p) => [
-          ...p,
-          {
-            kind: "assistant",
-            text: d.text || "",
-            ts: Date.now() / 1000,
-            ...(reasoning ? { reasoning } : {}),
-            ...(d.persona ? { persona: d.persona } : {}),
-          },
-        ]);
-      setStreaming(""); // finalized into items (or empty tool-only turn)
-      setReasoningStream("");
-      break;
-    }
+      return c.setReasoningStream(c.reasoningRef.current + (d.text || ""));
+    case "assistant_message":
+      return onMessage(c, d);
   }
 }

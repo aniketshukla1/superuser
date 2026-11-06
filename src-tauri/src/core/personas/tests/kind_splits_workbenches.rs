@@ -97,7 +97,7 @@ use super::*;
     #[test]
     pub(super) fn builtins_parse() {
         let b = builtins();
-        assert_eq!(b.len(), 19);
+        assert_eq!(b.len(), 20);
         let ops = b.iter().find(|m| m.id == "ops").unwrap();
         assert_eq!(ops.family, "knowledge");
         assert!(ops.tools.contains(&"shell".to_string()));

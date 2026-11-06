@@ -28,7 +28,7 @@ mod tests;
 /// server never implemented. Nothing fails loudly when one is missing: `fetch`
 /// gets a 404, the client's `.catch()` swallows it, and the card renders its empty
 /// state — indistinguishable from "you have none of these yet". Four instances
-/// were found by accident before anyone went looking; see `notes/reports/API-CONTRACT-AUDIT.md`.
+/// were found by accident before anyone went looking.
 ///
 /// So this is a ratchet, not a pass/fail: the gaps that exist are listed, and the
 /// test fails when a NEW one appears. Deleting an entry from `KNOWN_GAPS` as it

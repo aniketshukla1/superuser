@@ -88,7 +88,7 @@ export function GithubDetail({ c, cloud, onChanged }: DetailProps) {
       {!c.connected && (
         <div className={GRP}>
           <div className={ROW + " text-sm text-muted"}>
-            One @ocw-agent App, installed per account or org — you pick the repos on
+            One @superuser-agent App, installed per account or org — you pick the repos on
             GitHub; each installation keeps its own allow-list.
             {cloud?.signed_in ? "" : " One-click needs cloud sign-in; a PAT works without it."}
           </div>
@@ -128,8 +128,8 @@ export function GithubDetail({ c, cloud, onChanged }: DetailProps) {
       <ToolsDisclosure c={c} />
       {c.connected && relay && (
         <div className={FOOT + " mt-2"}>
-          Triggers: @ocw-agent mentions and the “ocw-agent” label. The agent replies as
-          ocw-agent[bot].
+          Triggers: @superuser-agent mentions and the “superuser-agent” label. The agent replies as
+          superuser-agent[bot].
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { LocalOnly } from "./sections/LocalOnly";
 import { Memory } from "./sections/Memory";
 import { AppPreview } from "./sections/AppPreview";
 import { Assistants } from "./sections/Assistants";
+import { Jobs } from "./sections/Jobs";
 import { Features } from "./sections/Features";
 import { LocalModels } from "./sections/LocalModels";
 import { GetStarted } from "./sections/GetStarted";
@@ -57,6 +58,7 @@ export function App() {
         <LocalOnly />
         <Memory />
         <AppPreview />
+        <Jobs />
         <Assistants />
         <Features />
         <LocalModels />

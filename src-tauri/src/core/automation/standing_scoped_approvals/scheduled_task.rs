@@ -85,7 +85,7 @@ impl ScheduledTask {
         self.next_run = next_run_after(&self.schedule, after);
     }
 
-    /// Target-bound entries as {tool: [targets]} — the shape the permission engine matches.
+    /// The entries that name a target, as {tool: [targets]}, which is what the permission engine reads.
     pub fn standing_rules(&self) -> HashMap<String, Vec<String>> {
         let mut out: HashMap<String, Vec<String>> = HashMap::new();
         for entry in &self.always_allowed_tools {

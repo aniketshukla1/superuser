@@ -5,7 +5,7 @@ use super::*;
     #[test]
     pub(super) fn an_assistant_a_task_installs_is_one_the_app_can_read() {
         // A manifest that doesn't parse loads as nothing, the grant then names an assistant
-        // that isn't there, and the task fails for a reason that has nothing to do with the
+        // that isn't there, and the task fails for a reason unrelated to the
         // model. Checked here, where it costs nothing.
         for t in TASKS.iter().chain(HELD_OUT.iter()) {
             for (name, text) in t.personas {

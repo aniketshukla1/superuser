@@ -32,7 +32,7 @@ export function useAccountMenu() {
   // Inbox chip sticky unlock (§26): absent until the product first parks an item (or a
   // session first goes Unattended), then permanent. Per-device, like nav collapse.
   const [inboxUnlocked, setInboxUnlocked] = useState(
-    () => localStorage.getItem("ocw:inbox-unlocked") === "1",
+    () => localStorage.getItem("superuser:inbox-unlocked") === "1",
   );
   const refreshCloud = () => getCloudStatus().then(setCloud).catch(() => {});
   useEffect(() => {
@@ -41,7 +41,7 @@ export function useAccountMenu() {
     window.addEventListener("focus", onFocus);
     window.addEventListener(CLOUD_CHANGED, onFocus);
     const unlock = () => {
-      localStorage.setItem("ocw:inbox-unlocked", "1");
+      localStorage.setItem("superuser:inbox-unlocked", "1");
       setInboxUnlocked(true);
     };
     window.addEventListener(INBOX_UNLOCK, unlock);

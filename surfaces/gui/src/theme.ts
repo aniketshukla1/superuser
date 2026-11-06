@@ -1,7 +1,8 @@
-// Appearance: a colour theme, or Auto (follow macOS); Carbon until someone picks. The
-// preference lives in localStorage only — it's per-device (like macOS appearance itself) and must apply before the sidecar
-// is even reachable. index.html applies it inline pre-paint with the same key and the same
-// lists, so the first frame is already the right colour; this module keeps it current.
+// Appearance: a colour theme, or Auto (following macOS); Carbon until someone picks. The
+// choice is kept in localStorage alone: it belongs to this device, as the Mac's own
+// appearance does, and it has to apply before the sidecar can be reached. index.html applies
+// it inline before the first paint, with the same key and the same lists, so the very first
+// frame has the right colours; this module keeps it current.
 //
 // Two attributes on <html>: `data-theme` is the MODE ("dark" | "light") that every
 // mode-specific rule in styles.css keys on, and `data-palette` names the theme, whose
@@ -75,36 +76,47 @@ function apply(pref: ThemePref) {
   applyAccent();
 }
 
-export function setThemePref(pref: ThemePref) {
+const announce = () => window.dispatchEvent(new CustomEvent(PREF_EVENT));
+
+/** Calls `listener` on every change of preference, until the returned function is called. */
+function onPrefChange(listener: () => void): () => void {
+  window.addEventListener(PREF_EVENT, listener);
+  return () => window.removeEventListener(PREF_EVENT, listener);
+}
+
+function store(pref: ThemePref) {
   try {
     localStorage.setItem(KEY, pref);
   } catch {
-    /* private mode etc. — still applies for this session */
+    // Storage refused (private browsing, say): the theme still changes for this session.
   }
+}
+
+export function setThemePref(pref: ThemePref) {
+  store(pref);
   apply(pref);
-  window.dispatchEvent(new CustomEvent(PREF_EVENT));
+  announce();
 }
 
-/** Call once at startup: applies the stored pref and follows macOS appearance while in auto. */
+/** Run once at startup: applies the stored preference, then follows the Mac's appearance for
+ * as long as the preference is Auto. */
 export function initTheme() {
-  apply(getThemePref());
-  media?.addEventListener("change", () => {
-    if (getThemePref() === "auto") {
-      apply("auto");
-      window.dispatchEvent(new CustomEvent(PREF_EVENT));
-    }
-  });
+  const stored = getThemePref();
+  apply(stored);
+  media?.addEventListener("change", followAppearance);
 }
 
-/** The settings control's hook — stays in sync if the pref changes elsewhere. */
-export function useThemePref(): [ThemePref, (p: ThemePref) => void] {
-  const [pref, setPref] = useState<ThemePref>(getThemePref);
-  useEffect(() => {
-    const sync = () => setPref(getThemePref());
-    window.addEventListener(PREF_EVENT, sync);
-    return () => window.removeEventListener(PREF_EVENT, sync);
-  }, []);
-  return [pref, setThemePref];
+function followAppearance() {
+  if (getThemePref() !== "auto") return;
+  apply("auto");
+  announce();
+}
+
+/** For the Settings control: the stored preference, kept in step with changes made elsewhere. */
+export function useThemePref(): [ThemePref, (next: ThemePref) => void] {
+  const [current, setCurrent] = useState<ThemePref>(getThemePref);
+  useEffect(() => onPrefChange(() => setCurrent(getThemePref())), []);
+  return [current, setThemePref];
 }
 
 /** The theme on screen right now, kept current — for code that draws its own colours (the
@@ -115,10 +127,6 @@ export function useTheme(): ThemeId {
     return isThemeId(id) ? id : resolveTheme(getThemePref());
   };
   const [id, setId] = useState<ThemeId>(read);
-  useEffect(() => {
-    const sync = () => setId(read());
-    window.addEventListener(PREF_EVENT, sync);
-    return () => window.removeEventListener(PREF_EVENT, sync);
-  }, []);
+  useEffect(() => onPrefChange(() => setId(read())), []);
   return id;
 }

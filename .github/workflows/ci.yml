@@ -7,7 +7,9 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded runs are cancelled on pull requests only. On main a cancelled run reads as
+  # failing, and the README's status badge would show that until the next run finished.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   interface:

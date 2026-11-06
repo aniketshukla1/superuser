@@ -28,7 +28,7 @@ describe("New-session split button", () => {
   });
 
   it("primary starts the last-used persona; the menu lists enabled personas + Manage personas…", async () => {
-    localStorage.setItem("ocw.flag.personas", "1"); // Manage entry is launch-flagged off
+    localStorage.setItem("superuser.flag.personas", "1"); // Manage entry is launch-flagged off
     stubFetch([
       { match: "/v1/personas", method: "GET", json: PERSONAS },
       { match: "/v1/settings", method: "GET", json: { nav_layout: "flat" } },
@@ -134,7 +134,7 @@ describe("New-session split button", () => {
 
   it("shows Manage personas… by default, and hides it when the flag is explicitly off", async () => {
     // Superuser ships personas ON (they're the organising idea); "0" force-hides.
-    localStorage.setItem("ocw.flag.personas", "0");
+    localStorage.setItem("superuser.flag.personas", "0");
     stubFetch([
       { match: "/v1/personas", method: "GET", json: PERSONAS },
       { match: "/v1/settings", method: "GET", json: { nav_layout: "flat" } },
@@ -145,6 +145,6 @@ describe("New-session split button", () => {
     const menu = (await screen.findByText("Start a session as")).closest(".newsplit-menu") as HTMLElement;
     expect(within(menu).getByText("Ops")).toBeTruthy();
     expect(within(menu).queryByText("Manage personas…")).toBeNull();
-    localStorage.removeItem("ocw.flag.personas");
+    localStorage.removeItem("superuser.flag.personas");
   });
 });

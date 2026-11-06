@@ -10,7 +10,7 @@ export const BACKEND = "http://127.0.0.1:8765";
 
 function sidecarToken(): string {
   const state =
-    process.env.COWORKER_STATE_DIR ||
+    process.env.SUPERUSER_STATE_DIR ||
     (process.platform === "win32"
       ? join(process.env.APPDATA || homedir(), "coworker")
       : join(homedir(), ".config", "coworker"));

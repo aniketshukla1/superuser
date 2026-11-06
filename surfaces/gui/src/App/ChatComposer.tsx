@@ -1,101 +1,103 @@
-import { Composer } from "../components/Composer";
-import { contextFromLabel } from "../modelName";
-import { PlanCard } from "../components/PlanCard";
-import { DirectoryRequestCard } from "../components/DirectoryRequestCard";
+import { resolveHelp, resolveSecret } from "../browserAsks";
 import { ApprovalCard } from "../components/ApprovalCard";
 import { AskCard } from "../components/AskCard";
-import { FormCard } from "../components/FormCard";
+import { Composer } from "../components/Composer";
 import { ComputerHelpCard, SecretCard } from "../components/ComputerCards";
-import { resolveHelp, resolveSecret } from "../browserAsks";
+import { DirectoryRequestCard } from "../components/DirectoryRequestCard";
+import { FormCard } from "../components/FormCard";
 import { InboxItemCard } from "../components/InboxItemCard";
+import { PlanCard } from "../components/PlanCard";
+import { contextFromLabel } from "../modelName";
 import type { AppModel } from "./model/useAppModel";
 
-/** The composer, with the live inline cards above it. */
+/** The card that sits above the composer, if any: the first request still waiting.
+ *
+ *  Plans, folders, approvals, questions and forms appear here only in an ATTENDED session; an
+ *  Unattended one has parked them in the Inbox, and they come back through the
+ *  answer-in-context card at the end. The browser's two requests show either way. */
+function liveCard(m: AppModel) {
+  const { items, nameOf, pendingApproval, pendingDirReq, pendingForm, pendingHelp, pendingPlan, pendingQuestion, pendingSecret, setItems, unattended } = m;
+  if (!unattended) {
+    if (pendingPlan) return <PlanCard item={pendingPlan} onRespond={m.respondPlan} />;
+    if (pendingDirReq) return <DirectoryRequestCard item={pendingDirReq} onRespond={m.respondDirectory} />;
+    if (pendingApproval) return <ApprovalCard item={pendingApproval} onApprove={m.approve} runTask={m.runContext} compact />;
+    if (pendingQuestion) return <AskCard questions={pendingQuestion.questions} onDone={m.answerQuestion} compact />;
+    if (pendingForm) return <FormCard form={pendingForm.form} onDone={m.answerForm} compact />;
+  }
+  if (pendingHelp) {
+    const settle = (how: "taken" | "declined" | "ended") => setItems((before) => resolveHelp(before, how));
+    return (
+      <ComputerHelpCard
+        key={`help-${items.indexOf(pendingHelp)}`}
+        persona={pendingHelp.persona}
+        name={nameOf(pendingHelp.persona)}
+        reason={pendingHelp.reason}
+        url={pendingHelp.url}
+        onTaken={(persona) => {
+          settle("taken");
+          m.setLiveView(persona);
+        }}
+        onDeclined={() => settle("declined")}
+        onEnded={() => settle("ended")}
+        compact
+      />
+    );
+  }
+  if (pendingSecret) {
+    return (
+      <SecretCard
+        key={`secret-${items.indexOf(pendingSecret)}`}
+        persona={pendingSecret.persona}
+        name={nameOf(pendingSecret.persona)}
+        label={pendingSecret.label}
+        onDone={(how) => setItems((before) => resolveSecret(before, how))}
+        onEnded={() => setItems((before) => resolveSecret(before, "ended"))}
+        compact
+      />
+    );
+  }
+  // An Unattended session waiting on an Inbox item: answer it right here.
+  const parked = m.sessionInbox[0];
+  return parked ? <InboxItemCard item={parked} onResolve={m.resolveSessionInbox} compact /> : undefined;
+}
+
+/** The composer, with the live request cards above it. */
 export function ChatComposer({ m }: { m: AppModel }) {
-  const { mode, model, models, modelLabels, running, connected, modelReady, openModelSetup,
-      openSettings, send, handsFree, voiceState, voiceError, toggleHandsFree, interrupt,
-      changeMode, changeModel, setSurface, sessionId, agent, needsWorkspace, workspace,
-      unattended, toggleUnattended, composerPrefill, usage, modelContextWindows, pendingPlan,
-      respondPlan, pendingDirReq, respondDirectory, pendingApproval, approve, runContext,
-      pendingQuestion, answerQuestion, pendingForm, answerForm, pendingHelp, items, nameOf,
-      setItems, setLiveView, pendingSecret, sessionInbox, resolveSessionInbox } = m;
+  const { agent, model, modelLabels, sessionId } = m;
   return (
     <Composer
-              mode={mode}
-              model={model}
-              models={models}
-              modelLabels={modelLabels}
-              running={running}
-              connected={connected}
-              modelReady={modelReady}
-              onConnectModel={openModelSetup}
-              onConfigureVoiceInput={() => openSettings("voice")}
-              onSend={send}
-              handsFree={handsFree}
-              voiceState={voiceState}
-              voiceError={voiceError}
-              onToggleHandsFree={() => void toggleHandsFree().catch(() => {})}
-              onInterrupt={interrupt}
-              onModeChange={changeMode}
-              onModelChange={changeModel}
-              onOpenConnectors={() => setSurface("integrations")}
-              sessionId={sessionId}
-              agent={agent}
-              workspace={needsWorkspace(agent) ? workspace || "" : undefined}
-              unattended={unattended}
-              onUnattendedChange={toggleUnattended}
-              prefill={composerPrefill}
-              resetKey={sessionId}
-              usage={usage}
-              contextWindow={modelContextWindows[model] ?? contextFromLabel(modelLabels[model])}
-              // One line for every persona. The three variants said the same thing three
-              // ways and none of them said the useful part: that "/" opens the command
-              // list. Drag-and-drop needs no instruction — you either try it or you do
-              // not — and it was taking the half of the line that could teach something.
-              placeholder="Type / for commands, @ for my brain or another assistant"
-              approvalSlot={
-                // Live inline cards are for ATTENDED sessions only; when Unattended the prompt is
-                // parked in the Inbox and surfaced via the answer-in-context card below.
-                !unattended && pendingPlan?.kind === "planreq" ? (
-                  <PlanCard item={pendingPlan} onRespond={respondPlan} />
-                ) : !unattended && pendingDirReq?.kind === "dirreq" ? (
-                  <DirectoryRequestCard item={pendingDirReq} onRespond={respondDirectory} />
-                ) : !unattended && pendingApproval?.kind === "approval" ? (
-                  <ApprovalCard item={pendingApproval} onApprove={approve} runTask={runContext} compact />
-                ) : !unattended && pendingQuestion?.kind === "question" ? (
-                  <AskCard questions={pendingQuestion.questions} onDone={answerQuestion} compact />
-                ) : !unattended && pendingForm?.kind === "form" ? (
-                  <FormCard form={pendingForm.form} onDone={answerForm} compact />
-                ) : pendingHelp?.kind === "computer_help" ? (
-                  <ComputerHelpCard
-                    key={`help-${items.indexOf(pendingHelp)}`}
-                    persona={pendingHelp.persona}
-                    name={nameOf(pendingHelp.persona)}
-                    reason={pendingHelp.reason}
-                    url={pendingHelp.url}
-                    onTaken={(p) => {
-                      setItems((prev) => resolveHelp(prev, "taken"));
-                      setLiveView(p);
-                    }}
-                    onDeclined={() => setItems((prev) => resolveHelp(prev, "declined"))}
-                    onEnded={() => setItems((prev) => resolveHelp(prev, "ended"))}
-                    compact
-                  />
-                ) : pendingSecret?.kind === "computer_secret" ? (
-                  <SecretCard
-                    key={`secret-${items.indexOf(pendingSecret)}`}
-                    persona={pendingSecret.persona}
-                    name={nameOf(pendingSecret.persona)}
-                    label={pendingSecret.label}
-                    onDone={(r) => setItems((prev) => resolveSecret(prev, r))}
-                    onEnded={() => setItems((prev) => resolveSecret(prev, "ended"))}
-                    compact
-                  />
-                ) : sessionInbox[0] ? (
-                  // Unattended session blocked on an Inbox item — answer it in context.
-                  <InboxItemCard item={sessionInbox[0]} onResolve={resolveSessionInbox} compact />
-                ) : undefined
-              }
-            />
+      mode={m.mode}
+      model={model}
+      models={m.models}
+      modelLabels={modelLabels}
+      running={m.running}
+      connected={m.connected}
+      modelReady={m.modelReady}
+      onConnectModel={m.openModelSetup}
+      onConfigureVoiceInput={() => m.openSettings("voice")}
+      onSend={m.send}
+      handsFree={m.handsFree}
+      voiceState={m.voiceState}
+      voiceError={m.voiceError}
+      onToggleHandsFree={() => void m.toggleHandsFree().catch(() => {})}
+      onInterrupt={m.interrupt}
+      onModeChange={m.changeMode}
+      onModelChange={m.changeModel}
+      onOpenConnectors={() => m.setSurface("integrations")}
+      sessionId={sessionId}
+      agent={agent}
+      workspace={m.needsWorkspace(agent) ? m.workspace || "" : undefined}
+      unattended={m.unattended}
+      onUnattendedChange={m.toggleUnattended}
+      prefill={m.composerPrefill}
+      resetKey={sessionId}
+      usage={m.usage}
+      contextWindow={m.modelContextWindows[model] ?? contextFromLabel(modelLabels[model])}
+      // One line for every assistant. The three versions said the same thing three ways and
+      // none said the useful part, that "/" opens the command list; drag-and-drop needs no
+      // instructions and was taking the half of the line that could teach something.
+      placeholder="Type / for commands, @ for my brain or another assistant"
+      approvalSlot={liveCard(m)}
+    />
   );
 }

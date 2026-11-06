@@ -42,7 +42,7 @@ export function workRoutes(s: MockState, req: Request, p: string, m: string, jso
   if (p.endsWith("/v1/channels/recent"))
     return json({
       channels: [
-        { channel: "slack:C0AAA111", name: "ocw-test", last_from: "amy", last_text: "standup at 10" },
+        { channel: "slack:C0AAA111", name: "team-test", last_from: "amy", last_text: "standup at 10" },
         { channel: "slack:C0BBB222", last_from: "bob", last_text: "deploy failed" },
       ],
     });

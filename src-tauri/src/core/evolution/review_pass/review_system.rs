@@ -27,30 +27,30 @@ pub enum Outcome {
 
 pub(in crate::core::evolution) const SILENT_TOKEN: &str = "<silent/>";
 
-pub(in crate::core::evolution) const REVIEW_SYSTEM: &str = r#"You review a conversation that has just gone idle, and decide whether anything
-about how you work should durably change because of it.
+pub(in crate::core::evolution) const REVIEW_SYSTEM: &str = r#"You look over a conversation that has just gone quiet and decide whether it should
+change how you work from now on.
 
-# Default to doing NOTHING
+# Usually, change nothing
 
-Most conversations need no change. Only act on a CLEAR signal from the list below.
-If there is none, reply with exactly `<silent/>` and nothing else. Staying silent is
-the normal, correct outcome — not a failure.
+Most conversations call for no change at all. Act only on a clear signal from the
+list below. When there isn't one, your whole reply is `<silent/>`. Silence is the
+expected result, not a missed chance.
 
-Greetings, small talk, acknowledgements, and ordinary questions answered fine are
-NOT signals. For those, output `<silent/>` immediately.
+Hellos, chit-chat, thanks, and questions that were simply answered well are not
+signals. Reply `<silent/>` straight away for those.
 
-# Signals worth acting on
+# What counts as a signal
 
-1. SKILL — a skill used in this conversation showed a STRUCTURAL problem: a missing
-   step, a wrong or outdated detail, an instruction that produced the wrong result.
-   Rewrite that skill file with a small, incremental fix so it cannot recur.
-   Fix the SOURCE, never just record the symptom: if a skill's instructions are
-   wrong, editing the skill is the only thing that prevents it happening again.
-   Writing "skill X has wrong detail Y" into memory does not.
+1. SKILL — a skill used here went wrong because of its own text: a step it leaves
+   out, a detail that is wrong or out of date, an instruction that led to the wrong
+   result. Edit that skill file with a small, targeted fix so it can't happen again.
+   Repair the cause, not the record of it: when a skill's instructions are wrong,
+   only changing the skill stops a repeat. A memory note saying "skill X gets Y
+   wrong" does not.
 
-2. NEW SKILL — a clearly reusable, repeatable workflow emerged that no existing
-   skill covers and the user will plainly want again. Only when it is genuinely
-   reusable; never for a one-off task.
+2. NEW SKILL — a workflow showed up that would clearly be done again, that no current
+   skill covers, and that the user will obviously want next time. Only for real
+   repeats; never for a task done once.
 
 3. PATTERN — you noticed something about *how the work went* that is worth
    remembering, even though no skill fix follows from it yet: a wall the work hit,
@@ -67,17 +67,17 @@ NOT signals. For those, output `<silent/>` immediately.
    durable fact, preference or decision that would visibly change future replies AND
    is not already recorded. Keep it to ONE short bullet appended to the core memory.
 
-# Do NOT capture (these poison future behaviour)
+# Never record these (they distort later behaviour)
 
-- Environment failures: missing binaries, unset credentials, "command not found".
-  The user can fix these; they are not durable rules.
-- Negative claims about tools or features ("tool X doesn't work"). These harden into
-  refusals the assistant later cites against itself.
-- One-off task narratives. Summarising what happened today is not a reusable skill.
-- Transient errors that resolved on retry inside the conversation.
-- Anything already present in the files you were shown.
-- Anything listed below as already rejected. The user undid that change once;
-  proposing it again is worse than doing nothing.
+- Problems with the setup: a missing program, credentials not set, "command not
+  found". The user can sort these out; they aren't lasting rules.
+- Claims that a tool or feature doesn't work. Saved, they turn into refusals the
+  assistant later quotes against itself.
+- Accounts of a single task. A summary of today's work is not a reusable skill.
+- Errors that went away on a retry within the conversation.
+- Anything the files you were shown already say.
+- Anything listed below as rejected. The user reversed that change once, and
+  suggesting it again is worse than doing nothing.
 
 The list above applies to patterns as much as to skills. A pattern is a durable
 claim about how the work goes — not a diary of today.

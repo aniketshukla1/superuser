@@ -48,7 +48,7 @@ impl Envelope {
     /// is not in the room to be asked anything.
     pub fn brief(&self, from_name: &str) -> String {
         let mut out = format!(
-            "{from_name} has asked you to help with this, on behalf of the person it is working for.\n\nTask: {}\n",
+            "{from_name} needs your help with this, for the person it works for.\n\nTask: {}\n",
             self.task
         );
         if !self.constraints.is_empty() {
@@ -66,9 +66,8 @@ impl Envelope {
     }
 
     /// The one line the person sees in the asked assistant's own conversation. The
-    /// constraints and the shape-of-answer note stay out of it: those are instructions to
-    /// a model, and reading someone else's instructions to a model is how a transcript
-    /// stops being a conversation.
+    /// constraints and the note on the answer's shape are left out: they are written for a
+    /// model, and a transcript full of them would no longer read like a conversation.
     pub fn shown(&self, from_name: &str) -> String {
         format!("{from_name} asked: {}", self.task)
     }

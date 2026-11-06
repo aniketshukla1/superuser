@@ -115,7 +115,7 @@ impl SkillStore {
             return String::new();
         }
         format!(
-            "Available skills — call load_skill(name) to load one's full instructions when it's relevant to the task:\n{}",
+            "Skills you can load (call load_skill with the name when one fits the task):\n{}",
             lines.join("\n")
         )
     }
@@ -126,7 +126,7 @@ impl SkillStore {
 pub fn load_skill_tool() -> ToolSpec {
     ToolSpec {
         name: "load_skill".into(),
-        description: "Load a skill's full instructions by name. Call this when a skill from the catalog is relevant to the current task.".into(),
+        description: "Fetch the full instructions of a skill from the catalog, by name, when that skill fits the task at hand.".into(),
         schema: json!({"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}),
         risk: RiskClass::Read,
         capability: "skills".into(),

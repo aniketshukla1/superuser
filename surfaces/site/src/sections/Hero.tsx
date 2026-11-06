@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Mark } from "../Mark";
+import { HeroLight } from "../HeroLight";
 import { charRise, rise, stagger, still } from "../motion";
 
 // Seven words, which is inside the limit the character-stagger preset sets for
@@ -83,6 +84,7 @@ export function Hero() {
 
   return (
     <section className="hero" id="top">
+      <HeroLight />
       <div className="wrap">
         <motion.div
           initial="hidden"
@@ -90,6 +92,11 @@ export function Hero() {
           variants={stagger(0.09, reduced ? 0 : 0.45)}
           style={{ display: "flex", flexDirection: "column", gap: "var(--sp-6)" }}
         >
+          <motion.a className="hero-new" href="#jobs" variants={v}>
+            <span className="hero-new-tag">New</span>
+            Six assistants that each do a whole job <span aria-hidden="true">→</span>
+          </motion.a>
+
           <motion.p className="eyebrow" variants={v}>
             A coworker that lives on your computer
           </motion.p>

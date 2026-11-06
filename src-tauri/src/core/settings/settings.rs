@@ -139,6 +139,12 @@ pub struct Settings {
     /// Product Performance's signals to watch: `Name: PromQL`, one a line (`core::perf::signals`).
     #[serde(default)]
     pub perf_signals: String,
+    /// Talent Scout: where the person's ATS export (a CSV) is, read fresh on every check.
+    #[serde(default)]
+    pub talent_applicants: String,
+    /// Talent Scout: a message the person has sent, so outreach drafts sound like them.
+    #[serde(default)]
+    pub talent_voice: String,
     /// Input-token budget for one assistant turn. Over it, the oldest turns are
     /// summarized away and over-long tool results are truncated. A local model's
     /// real ceiling is `num_ctx`, so the effective budget is the lower of the two.

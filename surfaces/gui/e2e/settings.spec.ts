@@ -39,7 +39,7 @@ test("Settings: the Personas tab opens the persona manager", async ({ page }) =>
 // `showPersonas()` still reads the flag, so an explicit "0" must still hide the tab —
 // that escape hatch is the only thing keeping the flag worth having.
 test("Settings: the Personas tab can still be switched off by the flag", async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem("ocw.flag.personas", "0"));
+  await page.addInitScript(() => localStorage.setItem("superuser.flag.personas", "0"));
   await page.goto("/");
   await page.getByTestId("account-row").click();
   await page.getByTestId("account-menu").getByRole("menuitem", { name: "Settings", exact: true }).click();

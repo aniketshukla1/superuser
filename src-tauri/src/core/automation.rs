@@ -1,5 +1,5 @@
-//! Automation — a scheduled task is its own persistent entity; each fire is a fresh
-//! Run of the task's instructions (its own thread + artifacts). The cron
+//! Automation — a scheduled task is stored on its own, and every time it fires it
+//! starts a new Run of its instructions (with its own thread and artifacts). The cron
 //! next-run computation lives with the scheduler loop (built on top of this).
 #![allow(dead_code)] // model + store consumed by the scheduler loop (later increment)
 

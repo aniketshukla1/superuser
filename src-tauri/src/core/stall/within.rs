@@ -80,7 +80,7 @@ pub fn in_words(d: Duration) -> String {
 /// happened, for how long, and the two things worth trying.
 pub fn sentence(model: &str, silent_for: Duration, local: bool) -> String {
     format!(
-        "{model} stopped responding. Nothing arrived from it for {}, so this turn was ended. Ask again, or {}.",
+        "{model} went quiet: nothing came back for {}, so the turn was stopped. Try again, or {}.",
         in_words(silent_for),
         if local {
             "check that Ollama is still running — a model that is still loading can take this long, and the limit is in Settings ▸ Models"

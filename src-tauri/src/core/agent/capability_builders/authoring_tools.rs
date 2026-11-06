@@ -105,8 +105,8 @@ pub fn ask_coworker_spec() -> ToolSpec {
             json!({
                 "coworker": {"type": "string", "description": "Which assistant, by the id or name in your roster."},
                 "task": {"type": "string", "description": "What you are asking it to do, in a sentence or two."},
-                "constraints": {"type": "string", "description": "Anything that bounds the work: a date range, a system to look in, a rule it must not break."},
-                "expecting": {"type": "string", "description": "What a good answer looks like coming back: a list, a number, a recommendation with reasons."}
+                "constraints": {"type": "string", "description": "Limits the work has to keep to: dates, where to look, rules it can't break."},
+                "expecting": {"type": "string", "description": "The kind of answer you need back: a list, a figure, a recommendation with its reasons."}
             }),
             &["coworker", "task"],
         ),

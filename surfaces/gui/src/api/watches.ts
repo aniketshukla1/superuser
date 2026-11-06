@@ -1,4 +1,4 @@
-import { fetch, httpBase, jsonOf } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody, jsonOf } from "./neverRejectingJson";
 
 // -- Watches: the evaluating background loop ---------------------------------
 // An automation runs on a clock. A watch runs when something *changed*, and only
@@ -41,21 +41,13 @@ export async function getWatches(): Promise<WatchesState> {
 }
 
 export async function createWatch(question: string, sources: string[]): Promise<Watch | null> {
-  const res = await fetch(`${httpBase()}/v1/watches`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ question, sources }),
-  });
+  const res = await fetch(`${httpBase()}/v1/watches`, jsonBody("POST", { question, sources }));
   const j = await jsonOf(res);
   return j.ok ? j.watch : null;
 }
 
 export async function setWatchEnabled(id: string, enabled: boolean): Promise<boolean> {
-  const res = await fetch(`${httpBase()}/v1/watches/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ enabled }),
-  });
+  const res = await fetch(`${httpBase()}/v1/watches/${encodeURIComponent(id)}`, jsonBody("PATCH", { enabled }));
   return res.ok && (await jsonOf(res)).ok === true;
 }
 

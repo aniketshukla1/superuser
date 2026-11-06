@@ -76,6 +76,7 @@ pub mod expenses;
 pub mod chief_of_staff;
 pub mod repro;
 pub mod perf;
+pub mod talent;
 pub mod audit;
 pub mod router;
 pub mod rules;

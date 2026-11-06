@@ -8,7 +8,7 @@ import { Icon, ICON } from "./Icon";
 // artifact viewer in place. Plumbing is a window event (the viewer lives in WorkspacePanel;
 // this component renders deep inside the transcript): WorkspacePanel resolves the path against
 // the session's artifact list, App un-hides the rail.
-export const OPEN_ARTIFACT_EVENT = "ocw-open-artifact";
+export const OPEN_ARTIFACT_EVENT = "superuser-open-artifact";
 
 function ArtifactChip({ path, title }: { path: string; title: string }) {
   const file = path.split("/").pop() || path;

@@ -1,39 +1,56 @@
-import { fetch, httpBase } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody } from "./neverRejectingJson";
 
-// -- model providers (OpenAI, Ollama, …) --------------------------------------
+// Model providers: OpenAI, Ollama and the rest.
+
 export interface ProviderField {
   key: string;
   label: string;
-  secret: boolean;
-  required: boolean;
   help: string;
   placeholder: string;
-  default?: string; // pre-filled editable value (e.g. an OpenAI-compatible vendor's endpoint)
-  // Non-empty → segmented choice, not a text input. tag = tiny badge ("Easiest");
-  // desc = one-liner atop the method panel; command = copyable terminal command.
+  secret: boolean;
+  required: boolean;
+  /** An editable starting value, such as an OpenAI-compatible vendor's endpoint. */
+  default?: string;
+  /** When present the field is a segmented choice, not a text box. `tag` is a small badge
+   *  ("Easiest"), `desc` the line at the top of the method's panel, `command` a terminal
+   *  command to copy. */
   choices?: { value: string; label: string; tag?: string; desc?: string; command?: string }[];
-  show_when?: Record<string, string> | null; // render only while these fields hold these values
+  /** Show the field only while these other fields hold these values. */
+  show_when?: Record<string, string> | null;
 }
 
 export interface ProviderInfo {
   name: string;
   title: string;
-  needs_key: boolean;
+  /** A short note shown below the title, e.g. "Uses X's OpenAI-compatible API…". */
+  blurb?: string;
   fields: ProviderField[];
+  needs_key: boolean;
   configured: boolean;
-  values: Record<string, string>; // non-secret stored values (e.g. base_url), for prefilling
-  suggested_models: string[]; // bare model-name suggestions for the "add model" datalist
-  recommended_model: string | null; // pre-filled default for this provider (e.g. qwen3-coder:30b)
-  blurb?: string; // one-line note under the title ("Uses X's OpenAI-compatible API…")
-  key_set_at?: string | null; // ISO date the key was last (re)saved — absent for env-only config
-  last_used_at?: number | null; // epoch secs the provider last served a completion
+  /** Stored values that aren't secret (base_url, say), to pre-fill the form. */
+  values: Record<string, string>;
+  /** Bare model names offered when adding a model. */
+  suggested_models: string[];
+  /** The model pre-filled for this provider (qwen3-coder:30b, say). */
+  recommended_model: string | null;
+  /** When the key was last saved, as an ISO date; absent when it comes from the environment. */
+  key_set_at?: string | null;
+  /** When the provider last answered a completion, in seconds since the epoch. */
+  last_used_at?: number | null;
 }
 
+const providersUrl = (rest = "") => `${httpBase()}/v1/providers${rest}`;
+
 export async function getProviders(): Promise<ProviderInfo[]> {
-  const res = await fetch(`${httpBase()}/v1/providers`);
-  // Every caller maps or finds over this, and an error body is not a list: a 401 answered
-  // before the launch token reaches the window used to crash the Models tab outright.
-  const body = await res.json().catch(() => null);
+  const res = await fetch(providersUrl());
+  // Callers map and search this, and an error reply is no list: a 401 that arrived before the
+  // launch token reached the window once brought the whole Models tab down.
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    // Not a list.
+  }
   return Array.isArray(body) ? (body as ProviderInfo[]) : [];
 }
 
@@ -41,42 +58,36 @@ export async function setProvider(
   name: string,
   fields: Record<string, string>,
 ): Promise<{ ok: boolean; error?: string; provider?: string; recommended_model?: string | null }> {
-  const res = await fetch(`${httpBase()}/v1/providers`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, fields }),
-  });
+  const res = await fetch(providersUrl(), jsonBody("POST", { name, fields }));
   return res.json();
 }
 
-/** Forget a provider's stored config (Settings ▸ Models "Remove key…"). */
+/** Forget what is stored for a provider (Settings ▸ Models, "Remove key…"). */
 export async function removeProvider(name: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/providers/${encodeURIComponent(name)}`, {
-    method: "DELETE",
-  });
+  const res = await fetch(providersUrl(`/${encodeURIComponent(name)}`), { method: "DELETE" });
   return res.json();
 }
 
-/** Live read-only credential check (does NOT save the key). Triggered by the user's "Test" click. */
-export async function verifyProvider(
-  name: string,
-  fields: Record<string, string>,
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/providers/verify`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, fields }),
-  });
+/** Check the credentials against the provider without saving them, when the user presses Test. */
+export async function verifyProvider(name: string, fields: Record<string, string>): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(providersUrl("/verify"), jsonBody("POST", { name, fields }));
   return res.json();
 }
 
-/** Client-side provider guess from an API key's shape (mirrors the server's detect_provider). */
+/** Prefixes that give away who issued a key, checked in order (the server's detect_provider
+ *  makes the same guess). `sk-` comes last because the two before it start with it too. */
+const KEY_PREFIXES: [string, string][] = [
+  ["sk-ant-", "anthropic"],
+  ["sk-or-", "openrouter"],
+  ["AIza", "gemini"],
+  ["sk-", "openai"],
+  ["sk_", "openai"],
+];
+
+/** A guess at the provider from the shape of an API key, before anything is sent. */
 export function detectProvider(apiKey: string): string | null {
-  const key = (apiKey || "").trim();
-  if (!key) return null;
-  if (key.startsWith("sk-ant-")) return "anthropic";
-  if (key.startsWith("sk-or-")) return "openrouter";
-  if (key.startsWith("AIza")) return "gemini";
-  if (key.startsWith("sk-") || key.startsWith("sk_")) return "openai";
-  return null;
+  const key = (apiKey ?? "").trim();
+  if (key === "") return null;
+  const hit = KEY_PREFIXES.find(([prefix]) => key.startsWith(prefix));
+  return hit ? hit[1] : null;
 }

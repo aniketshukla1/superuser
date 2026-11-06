@@ -1,70 +1,56 @@
-import type { SessionInfo } from "../types";
-import { fetch, httpBase, listOf, type BoardItem, type WorkspaceCommandTrust } from "./neverRejectingJson";
+import type { SessionInfo, TurnUsage } from "../types";
+import { fetch, httpBase, jsonBody, listOf, type BoardItem, type WorkspaceCommandTrust } from "./neverRejectingJson";
+
+// Sessions and their messages and files, the work board, trust and risk rules, and the
+// numbers on the new-chat panel.
+
+const v1 = (path: string) => `${httpBase()}/v1/${path}`;
+const sessionUrl = (sessionId: string, rest = "") => v1(`sessions/${encodeURIComponent(sessionId)}${rest}`);
 
 /** The project's work board. Read-only: assistants change it, people read it. */
 export async function getBoard(workspace: string): Promise<BoardItem[]> {
-  const res = await fetch(`${httpBase()}/v1/board?workspace=${encodeURIComponent(workspace)}`);
-  return listOf(res, "items");
+  return listOf(await fetch(v1(`board?workspace=${encodeURIComponent(workspace)}`)), "items");
 }
 
 export interface RiskRule {
   pattern: string;
   risk: string;
-  /** False when the rule can never take effect — it asks to loosen a built-in tool. */
+  /** False when the rule can never apply because it tries to loosen a built-in tool. */
   effective: boolean;
 }
 
 export async function getRiskOverrides(): Promise<RiskRule[]> {
-  const res = await fetch(`${httpBase()}/v1/risk-overrides`);
-  return listOf(res, "rules");
+  return listOf(await fetch(v1("risk-overrides")), "rules");
 }
 
-/** Replace the whole list — the rules are order-sensitive, so appending isn't enough. */
-export async function setRiskOverrides(
-  rules: { pattern: string; risk: string }[],
-): Promise<{ ok: boolean; rules?: RiskRule[]; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/risk-overrides`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ rules }),
-  });
-  return res.json();
+/** Replace the whole list: order matters to these rules, so adding to the end isn't enough. */
+export async function setRiskOverrides(rules: { pattern: string; risk: string }[]): Promise<{ ok: boolean; rules?: RiskRule[]; error?: string }> {
+  return (await fetch(v1("risk-overrides"), jsonBody("POST", { rules }))).json();
 }
 
 export async function getTrustedWorkspaces(): Promise<WorkspaceCommandTrust[]> {
-  const res = await fetch(`${httpBase()}/v1/workspaces/trusted`);
-  return listOf(res, "workspaces");
+  return listOf(await fetch(v1("workspaces/trusted")), "workspaces");
 }
 
-export async function setWorkspaceTrusted(
-  path: string,
-  trusted: boolean,
-): Promise<{ ok: boolean; error?: string } & WorkspaceCommandTrust> {
-  const res = await fetch(`${httpBase()}/v1/workspaces/trust`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, trusted }),
-  });
-  return res.json();
+export async function setWorkspaceTrusted(path: string, trusted: boolean): Promise<{ ok: boolean; error?: string } & WorkspaceCommandTrust> {
+  return (await fetch(v1("workspaces/trust"), jsonBody("POST", { path, trusted }))).json();
 }
 
 export async function getSessions(workspace?: string): Promise<SessionInfo[]> {
-  const q = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
-  const res = await fetch(`${httpBase()}/v1/sessions${q}`);
-  return listOf(res, "sessions");
+  const filter = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
+  return listOf(await fetch(v1(`sessions${filter}`)), "sessions");
 }
 
-/** What this workspace has done, for the panel a new chat opens on.
- *
- * Tokens are input+output as the provider reported them, summed over messages that carried
- * a figure — see `priced_messages`. */
+/** What this workspace has done, for the panel a new chat opens on. `tokens` is input plus
+ *  output as providers reported them, added up over the messages that carried a figure: see
+ *  `priced_messages`. */
 export interface Stats {
   sessions: number;
   messages: number;
   tokens: number;
-  /** How many messages the token total is actually built from. Providers report usage
-   *  inconsistently and nothing written before usage existed has any, so a bare total
-   *  would present a partial count as a complete one. */
+  /** How many messages the token total comes from. Providers report usage unevenly, and
+   *  nothing from before usage existed has any, so a bare total would pass off a partial count
+   *  as a complete one. */
   priced_messages: number;
   active_days: number;
   current_streak: number;
@@ -72,84 +58,76 @@ export interface Stats {
   peak_hour: number | null;
   favorite_model: string | null;
   favorite_agent: string | null;
-  models: { model: string; sessions: number; messages: number; input: number; output: number; tokens: number }[];
-  agents: { agent: string; sessions: number }[];
   days: { date: string; count: number }[];
+  agents: { agent: string; sessions: number }[];
+  models: { model: string; sessions: number; messages: number; input: number; output: number; tokens: number }[];
 }
 
 export async function getStats(range: "all" | "30d" | "7d" = "all"): Promise<Stats | null> {
   try {
-    const res = await fetch(`${httpBase()}/v1/stats?range=${range}`);
-    if (!res.ok) return null;
-    return (await res.json()) as Stats;
+    const res = await fetch(v1(`stats?range=${range}`));
+    return res.ok ? ((await res.json()) as Stats) : null;
   } catch {
-    // An empty screen is a better failure than an error card where a greeting used to be.
+    // Better an empty panel than an error card where the greeting used to be.
     return null;
   }
 }
 
-// A structured connector-delivered inbound message (§3.1). Attached to the user message it framed,
-// for display only — the model still sees the framed `content`; this drives the ConnectorMessageCard.
+/** A message that came in through a connector (§3.1), attached to the user message it was
+ *  wrapped in. It is only for display, as the ConnectorMessageCard; the model still gets the
+ *  wrapped `content`. */
 export interface MessageSource {
-  connector: string; // platform id, e.g. "slack"
+  /** The platform id, e.g. "slack". */
+  connector: string;
   kind: "channel" | "dm";
-  channel_id: string; // e.g. "C0BD7KZ1AH5"
-  channel_name: string; // resolved; may equal the id (e.g. "#ocw-test")
+  channel_id: string;
+  /** Looked up, though it may still equal the id ("#team-test"). */
+  channel_name: string;
   sender_id: string;
-  sender_name: string; // resolved; may equal the id
-  ts: number; // epoch seconds
-  text: string; // the RAW message (what the card shows)
+  /** Looked up; may equal the id. */
+  sender_name: string;
+  /** Seconds since the epoch. */
+  ts: number;
+  /** The message exactly as sent, which is what the card shows. */
+  text: string;
 }
 
-// A transcript message from GET /v1/sessions/{id}/messages. Kept permissive (open shape) because
-// itemsFromMessages reads several role-specific fields; `source` is the optional connector sidecar.
+/** One message from GET /v1/sessions/{id}/messages. Left open, because itemsFromMessages reads
+ *  several fields that only some roles have. */
 export interface ConversationMessage {
   role: string;
   content?: any;
   tool_calls?: any[];
   tool_call_id?: string;
+  /** Present when the message came in through a connector. */
   source?: MessageSource;
-  // Token counts for the round-trip that produced an assistant message
-  // ({model, input, output, cache_read, cache_write}); absent on older servers.
-  usage?: import("../types").TurnUsage;
+  /** The token counts of the request that produced an assistant message; older servers omit them. */
+  usage?: TurnUsage;
   [key: string]: any;
 }
 
 export async function getSessionMessages(sessionId: string): Promise<ConversationMessage[]> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${sessionId}/messages`);
-  return listOf(res, "messages");
+  return listOf(await fetch(v1(`sessions/${sessionId}/messages`)), "messages");
 }
 
 export async function renameSession(sessionId: string, title: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
-  });
-  return res.json();
+  return (await fetch(sessionUrl(sessionId), jsonBody("PATCH", { title }))).json();
 }
 
-export async function setSessionFlags(
-  sessionId: string,
-  flags: { pinned?: boolean; archived?: boolean },
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(flags),
-  });
-  return res.json();
+export async function setSessionFlags(sessionId: string, flags: { pinned?: boolean; archived?: boolean }): Promise<{ ok: boolean; error?: string }> {
+  return (await fetch(sessionUrl(sessionId), jsonBody("PATCH", flags))).json();
 }
 
 export async function deleteSession(sessionId: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
-  return res.json();
+  return (await fetch(sessionUrl(sessionId), { method: "DELETE" })).json();
 }
 
 export interface ArtifactInfo {
-  path: string; // workspace-relative (the display/API identifier)
-  abs_path?: string; // absolute — what "Copy path" copies
   name: string;
+  /** Relative to the workspace; how the GUI and the API name the file. */
+  path: string;
+  /** The absolute path, which "Copy path" copies. */
+  abs_path?: string;
   kind: "markdown" | "html" | "image" | "code" | "text" | string;
   size: number;
   modified_at: number;
@@ -163,28 +141,23 @@ export interface ArtifactContent {
   content?: string;
   data_url?: string;
   truncated?: boolean;
-  // kind === "folder": a directory listing (models sometimes link a whole package dir).
+  /** For kind "folder": what the folder holds (models sometimes link a whole package folder). */
   entries?: { name: string; dir: boolean; size: number }[];
-  // kind === "doc": a .docx as its paragraphs, editable one at a time.
+  /** For kind "doc": a .docx as its paragraphs, each editable on its own. */
   paragraphs?: string[];
-  // kind === "office": why this one could not be opened for editing.
+  /** For kind "office": why this file couldn't be opened for editing. */
   readonly_reason?: string;
 }
 
 export async function getArtifacts(sessionId: string): Promise<ArtifactInfo[]> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/artifacts`);
-  // A failed request is not an empty folder.
-  //
-  // `listOf` flattens every failure to `[]` — deliberately, so callers take a
-  // failure branch instead of rejecting into whoever forgot a `.catch()`. For a list
-  // that is rendered, that is the right trade. For this one it is not, because every
-  // caller renders `[]` as a *claim*: the Artifacts button decides it has nothing to
-  // show, the Files tab says the conversation produced nothing, and the delete
-  // confirmation tells you no files will be lost. The 404 you get while the sidecar
-  // is still binding then reads as all three.
-  //
-  // Rejecting instead costs nothing here: all five call sites already have a
-  // `.catch`, and the one in App.tsx now retries the way the persona load does.
+  const res = await fetch(sessionUrl(sessionId, "/artifacts"));
+  // A failed request is not an empty folder. `listOf` turns every failure into `[]` on
+  // purpose, so callers take a failure branch instead of throwing, and for most lists that's
+  // right. Not this one: every caller treats `[]` as a statement. The Artifacts button
+  // decides it has nothing to show, the Files tab says the conversation made nothing, and
+  // the delete confirmation promises no files will be lost; the 404 that comes back while
+  // the sidecar is still starting would say all three. Throwing costs nothing here, since
+  // every caller already has a `.catch`, and the one in App retries like the persona load.
   if (!res.ok) throw new Error(`artifacts unavailable (${res.status})`);
   return listOf(res, "artifacts");
 }

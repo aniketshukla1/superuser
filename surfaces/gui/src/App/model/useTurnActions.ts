@@ -1,141 +1,152 @@
-import type { ApprovalDecision, Attachment } from "../../types";
-import { resolveLastApproval, resolveLastPlan, resolveLastDirReq, resolveLastQuestion, newId, GENERAL_ASSISTANT } from "../appHelpers";
+import { useEffect, useState } from "react";
+import { announceAutomationsChanged, connectEvents } from "../../api";
 import { TRACE, trace } from "../../trace";
+import type { ApprovalDecision, Attachment, Item } from "../../types";
 import { emptyUsage } from "../../usage";
-import { useState, useEffect } from "react";
-import { connectEvents, announceAutomationsChanged } from "../../api";
 import { clock } from "../../when";
+import {
+  GENERAL_ASSISTANT, newId, resolveLastApproval, resolveLastDirReq, resolveLastForm, resolveLastPlan, resolveLastQuestion,
+} from "../appHelpers";
 import type { useAppState } from "./useAppState";
-import type { useNavigationState } from "./useNavigationState";
-import type { useLayout } from "./useLayout";
-import type { usePersonas } from "./usePersonas";
 import type { useBoot } from "./useBoot";
-import type { useSplashAndSettings } from "./useSplashAndSettings";
-import type { useSessionSocket } from "./useSessionSocket";
 import type { useFollowScroll } from "./useFollowScroll";
+import type { useLayout } from "./useLayout";
+import type { useNavigationState } from "./useNavigationState";
+import type { usePersonas } from "./usePersonas";
+import type { useSessionSocket } from "./useSessionSocket";
+import type { useSplashAndSettings } from "./useSplashAndSettings";
 import type { useVoiceAndSend } from "./useVoiceAndSend";
 
-/** Answers to the agent's requests, interrupt/retry, mode and model changes, new sessions. */
-export function useTurnActions(prev: ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> & ReturnType<typeof usePersonas> & ReturnType<typeof useBoot> & ReturnType<typeof useSplashAndSettings> & ReturnType<typeof useSessionSocket> & ReturnType<typeof useFollowScroll> & ReturnType<typeof useVoiceAndSend>) {
-  const { setSessionInbox, setItems, sessionRef, setMode, setComposerPrefill, setRunning, running,
-      model, sessionId, setModel, agent, setSurface, setUsage, setStreaming, setTodo, setAgent,
-      gatesWorkspace, setWorkspace, setBranch, openGate, workspace, branch, setShowGate,
-      setSessionId } = prev;
-  // Resolving a LIVE prompt also resolves its parked Inbox mirror server-side, but the polled
-  // `sessionInbox` copy stays "pending" for up to a poll cycle — long enough for the docked
-  // answer-in-context card to flash the SAME request again right after the user answered it
-  // (tester catch 2026-07-12: a Slack send "asked twice"). Drop the mirror optimistically;
-  // the 4s poll restores anything genuinely still pending.
-  const dropSessionInbox = (kind: string) =>
-    setSessionInbox((cur) => cur.filter((it) => it.kind !== kind));
+type Deps = ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> &
+  ReturnType<typeof usePersonas> & ReturnType<typeof useBoot> & ReturnType<typeof useSplashAndSettings> &
+  ReturnType<typeof useSessionSocket> & ReturnType<typeof useFollowScroll> & ReturnType<typeof useVoiceAndSend>;
+
+type RunToastState = { title: string; sessionId: string; workspace: string; agent: string; time: string };
+
+const TOAST_MS = 5000;
+
+/** Answering the agent's requests, stopping and retrying, changing mode or model, and starting
+ *  new sessions. */
+export function useTurnActions(prev: Deps) {
+  const {
+    agent, branch, model, running, sessionId, sessionRef, workspace, gatesWorkspace, openGate, setAgent, setBranch,
+    setComposerPrefill, setItems, setMode, setModel, setRunning, setSessionId, setSessionInbox, setShowGate,
+    setStreaming, setSurface, setTodo, setUsage, setWorkspace,
+  } = prev;
+
+  // Answering a LIVE prompt also settles its Inbox copy on the server, but the polled
+  // `sessionInbox` keeps showing it as pending until the next poll: long enough for the docked
+  // answer card to show the same request again right after it was answered (a tester saw a
+  // Slack send "asked twice", 2026-07-12). So the local copy goes at once; the 4-second poll
+  // brings back anything that really is still pending.
+  const settle = (inboxKind: string | null, resolve: (items: Item[]) => Item[]) => {
+    setItems(resolve);
+    if (inboxKind) setSessionInbox((pending) => pending.filter((it) => it.kind !== inboxKind));
+  };
+
   const approve = (decision: ApprovalDecision) => {
-    setItems((p) => resolveLastApproval(p, decision));
-    dropSessionInbox("approval");
+    settle("approval", (items) => resolveLastApproval(items, decision));
     sessionRef.current?.approve(decision);
   };
   const respondPlan = (approved: boolean, mode?: string, feedback?: string) => {
-    setItems((p) => resolveLastPlan(p, approved ? "approved" : "rejected"));
-    dropSessionInbox("plan");
+    settle("plan", (items) => resolveLastPlan(items, approved ? "approved" : "rejected"));
     sessionRef.current?.respondPlan(approved, mode, feedback);
-    if (approved && mode) setMode(mode); // the server flips the live engine to this mode
+    // The server switches the running engine to this mode as well.
+    if (approved && mode) setMode(mode);
   };
   const respondDirectory = (granted: boolean, path?: string, writable?: boolean) => {
-    setItems((p) => resolveLastDirReq(p, granted ? "granted" : "denied"));
-    dropSessionInbox("directory");
+    settle("directory", (items) => resolveLastDirReq(items, granted ? "granted" : "denied"));
     sessionRef.current?.respondDirectory(granted, path, writable);
   };
   const answerQuestion = (answers: (string | null)[]) => {
-    setItems((p) => resolveLastQuestion(p, JSON.stringify(answers)));
-    dropSessionInbox("question");
+    settle("question", (items) => resolveLastQuestion(items, JSON.stringify(answers)));
     sessionRef.current?.respondQuestion(answers);
   };
   const answerForm = (answers: Record<string, string>) => {
-    setItems((p) => {
-      const out = [...p];
-      for (let i = out.length - 1; i >= 0; i--) {
-        const it = out[i];
-        if (it.kind === "form" && !it.resolved) {
-          out[i] = { ...it, resolved: JSON.stringify(answers) };
-          break;
-        }
-      }
-      return out;
-    });
+    settle(null, (items) => resolveLastForm(items, JSON.stringify(answers)));
     sessionRef.current?.respondForm(answers);
   };
+
   const prefillComposer = (text: string, attachments?: Attachment[]) =>
-    setComposerPrefill((p) => ({ text, attachments, nonce: (p?.nonce ?? 0) + 1 }));
+    setComposerPrefill((before) => ({ text, attachments, nonce: (before?.nonce ?? 0) + 1 }));
+
   const interrupt = () => sessionRef.current?.interrupt();
   const retry = () => {
-    // Optimistic running: turn_start confirms; a rejected retry still ends in turn_done.
+    // Shown as running straight away: turn_start confirms it, and a refused retry still ends in turn_done.
     setRunning(true);
     sessionRef.current?.retry();
   };
-  const changeMode = (m: string) => {
-    setMode(m);
-    sessionRef.current?.setMode(m);
+  const changeMode = (next: string) => {
+    setMode(next);
+    sessionRef.current?.setMode(next);
   };
-  const changeModel = (m: string) => {
-    if (running) return; // the server refuses mid-turn rebinds — don't let the header lie
-    TRACE && trace("chat", "model picked", { from: model, to: m, session: sessionId });
-    setModel(m);
-    sessionRef.current?.setModel(m);
+  const changeModel = (next: string) => {
+    // The server won't switch models mid-turn, so the header mustn't pretend it did.
+    if (running) return;
+    TRACE && trace("chat", "model picked", { from: model, to: next, session: sessionId });
+    setModel(next);
+    sessionRef.current?.setModel(next);
   };
 
   const startNewSession = (forAgent?: string) => {
     const target = forAgent || agent;
-    setSurface("session"); // return to the conversation view if we were on a sub-view
+    // Back to the conversation view from wherever we were.
+    setSurface("session");
     setItems([]);
     setUsage(emptyUsage());
     setStreaming("");
     setTodo([]);
     setRunning(false);
-    // "New session" under a browsed persona switches to it (expand≠switch: the header alone
-    // doesn't switch; this explicit action does).
+    // "New session" under an assistant you were only browsing switches to it: expanding in
+    // the header doesn't switch, this explicit action does.
     if (target !== agent) {
       setAgent(target);
-      if (gatesWorkspace(target)) {
-        // Never inherit the previous persona's folder — it may be a scratch dir. Clearing it
-        // also blocks the connection effect, so nothing can chat behind the open gate.
-        // `agent`/`workspace`/`sessionId` still hold the PREVIOUS values here, which is
-        // exactly what cancelling has to return to.
+      if (!gatesWorkspace(target)) setShowGate(false);
+      else {
+        // Never carry the previous assistant's folder over; it may be a scratch folder.
+        // Clearing it also holds back the connection effect, so nothing can chat behind the
+        // open gate. `agent`, `workspace` and `sessionId` still hold the PREVIOUS values here,
+        // which is exactly where cancelling must return to.
         setWorkspace(null);
         setBranch(null);
         openGate({ agent, workspace, sessionId, branch });
-      } else setShowGate(false);
+      }
     }
-    // Knowledge family: a new conversation starts fresh (orphan) — clear the workspace so the
-    // server provisions a NEW scratch dir for the new session id. Code keeps its repo.
+    // Knowledge assistants start each conversation fresh: without a folder, the server makes a
+    // NEW scratch folder for the new session id. Code keeps its repository.
     if (!gatesWorkspace(target)) setWorkspace(null);
     setSessionId(newId());
   };
-  // Inbox → session: the item carries its session's workspace/agent, so open it directly.
-  // UX-026: 5s top-right toast when a SCHEDULED automation run starts (never for
-  // manual Run-now — the user is already watching). Rides the app-wide /ws/events
-  // stream; View run opens the run's live session.
-  const [runToast, setRunToast] = useState<{
-    title: string; sessionId: string; workspace: string; agent: string; time: string;
-  } | null>(null);
-  useEffect(() => {
-    const stop = connectEvents((msg) => {
-      if (msg.type !== "automation_run_started") return;
-      const d = (msg.data ?? {}) as Record<string, string>;
-      setRunToast({
-        title: d.task_title || "Automation",
-        sessionId: d.session_id || "",
-        workspace: d.workspace || "",
-        agent: d.agent || GENERAL_ASSISTANT,
-        time: clock(new Date()),
-      });
-      announceAutomationsChanged(); // the Scheduled band's badge is now stale
-    });
-    return stop;
-  }, []);
+
+  // UX-026: a five-second toast at the top right when a SCHEDULED run starts (never for Run
+  // now, where the user is already watching). It comes over the app-wide /ws/events stream;
+  // "View run" opens the run's live session.
+  const [runToast, setRunToast] = useState<RunToastState | null>(null);
+  useEffect(
+    () =>
+      connectEvents((event) => {
+        if (event.type !== "automation_run_started") return;
+        const run = (event.data ?? {}) as Record<string, string>;
+        setRunToast({
+          title: run.task_title || "Automation",
+          sessionId: run.session_id || "",
+          workspace: run.workspace || "",
+          agent: run.agent || GENERAL_ASSISTANT,
+          time: clock(new Date()),
+        });
+        // The Scheduled band's badge is out of date now.
+        announceAutomationsChanged();
+      }),
+    [],
+  );
   useEffect(() => {
     if (!runToast) return;
-    const t = window.setTimeout(() => setRunToast(null), 5000);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setRunToast(null), TOAST_MS);
+    return () => window.clearTimeout(timer);
   }, [runToast]);
 
-  return { approve, respondPlan, respondDirectory, answerQuestion, answerForm, prefillComposer, interrupt, retry, changeMode, changeModel, startNewSession, runToast, setRunToast };
+  return {
+    approve, respondPlan, respondDirectory, answerQuestion, answerForm, prefillComposer, interrupt, retry, changeMode,
+    changeModel, startNewSession, runToast, setRunToast,
+  };
 }

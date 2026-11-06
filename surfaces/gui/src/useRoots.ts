@@ -1,62 +1,71 @@
-import { useCallback, useEffect, useState } from "react";
 import { addRoot, getRoots, removeRoot, type RootInfo } from "./api";
+import { useCallback, useEffect, useState } from "react";
 
-// Shared roots state for a session — used by the Session settings drawer's Working-directories
-// section, the settings row's folder glance, and the session start panel. Reads are live;
-// mutations go through the manager, which applies them to the running engine and persists them.
-// `reloadKey` bumps force a refetch (e.g. when the drawer reopens).
+type RootsReply = { ok: boolean; error?: string; roots?: RootInfo[] };
+const CHANGED = "assistant:roots-changed";
+
+/** A session's working directories, shared by the session drawer's directories section, the
+ *  settings row's folder summary and the start panel. Reads are live. Changes go to the
+ *  manager, which puts them into effect on the running engine and saves them. Bumping `reloadKey`
+ *  (when the drawer reopens, say) fetches them again. */
 export function useRoots(sessionId: string, reloadKey?: number) {
-  const [roots, setRoots] = useState<RootInfo[]>([]);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [roots, setRoots] = useState<RootInfo[]>([]);
 
-  const reload = useCallback(
-    () => getRoots(sessionId).then(setRoots).catch(() => setRoots([])),
-    [sessionId],
-  );
+  const reload = useCallback(async () => {
+    try {
+      setRoots(await getRoots(sessionId));
+    } catch {
+      setRoots([]);
+    }
+  }, [sessionId]);
+
   useEffect(() => {
-    reload();
+    void reload();
   }, [reload, reloadKey]);
 
-  // Several components hold their own instance of this hook (composer chip, start panel) — a
-  // mutation in one broadcasts so the others refetch and stay in sync.
+  // Every component that shows roots (the composer chip, the start panel) holds its own copy
+  // of this hook, so a change made through one is announced and the others fetch again.
   useEffect(() => {
-    const onChanged = (e: Event) => {
-      if ((e as CustomEvent).detail === sessionId) reload();
+    const onChanged = (event: Event) => {
+      if ((event as CustomEvent).detail === sessionId) void reload();
     };
-    window.addEventListener("assistant:roots-changed", onChanged);
-    return () => window.removeEventListener("assistant:roots-changed", onChanged);
+    window.addEventListener(CHANGED, onChanged);
+    return () => window.removeEventListener(CHANGED, onChanged);
   }, [sessionId, reload]);
 
-  const apply = (res: { ok: boolean; error?: string; roots?: RootInfo[] }): boolean => {
-    if (res.ok && res.roots) {
-      setRoots(res.roots);
-      setError("");
-      window.dispatchEvent(new CustomEvent("assistant:roots-changed", { detail: sessionId }));
-      return true;
+  // Takes the manager's reply; true when the change went through.
+  const settle = (reply: RootsReply): boolean => {
+    if (!reply.ok || !reply.roots) {
+      setError(reply.error || "could not update directories");
+      void reload();
+      return false;
     }
-    setError(res.error || "could not update directories");
-    reload();
-    return false;
+    setRoots(reply.roots);
+    setError("");
+    window.dispatchEvent(new CustomEvent(CHANGED, { detail: sessionId }));
+    return true;
+  };
+
+  // One change, with `busy` raised while it runs.
+  const run = async (change: () => Promise<RootsReply>): Promise<boolean> => {
+    setBusy(true);
+    const took = settle(await change());
+    setBusy(false);
+    return took;
   };
 
   const add = useCallback(
-    async (path: string, writable: boolean): Promise<boolean> => {
-      setBusy(true);
-      const ok = apply(await addRoot(sessionId, path, writable));
-      setBusy(false);
-      return ok;
-    },
+    (path: string, writable: boolean) => run(() => addRoot(sessionId, path, writable)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sessionId],
   );
 
+  // Adding a root again with the other access level changes it in place.
   const toggleAccess = useCallback(
-    async (r: RootInfo) => {
-      if (r.primary) return;
-      setBusy(true);
-      apply(await addRoot(sessionId, r.path, !r.writable)); // re-add updates access in place
-      setBusy(false);
+    async (root: RootInfo) => {
+      if (!root.primary) await run(() => addRoot(sessionId, root.path, !root.writable));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sessionId],
@@ -64,13 +73,11 @@ export function useRoots(sessionId: string, reloadKey?: number) {
 
   const remove = useCallback(
     async (path: string) => {
-      setBusy(true);
-      apply(await removeRoot(sessionId, path));
-      setBusy(false);
+      await run(() => removeRoot(sessionId, path));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sessionId],
   );
 
-  return { roots, busy, error, reload, addRoot: add, toggleAccess, removeRoot: remove };
+  return { addRoot: add, removeRoot: remove, toggleAccess, reload, roots, busy, error };
 }

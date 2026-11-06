@@ -6,7 +6,7 @@ afterEach(() => {
 });
 
 it("authenticates REST and session WebSocket calls with the launch token", async () => {
-  vi.stubGlobal("__COWORKER_API_TOKEN__", "launch-token");
+  vi.stubGlobal("__SUPERUSER_API_TOKEN__", "launch-token");
   const request = vi.fn(async (_url: string, init?: RequestInit) => {
     expect(new Headers(init?.headers).get("X-Superuser-Token")).toBe("launch-token");
     // The authenticated shape: `/v1/health` only returns `model` and

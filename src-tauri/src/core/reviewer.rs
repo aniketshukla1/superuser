@@ -1,33 +1,33 @@
-//! The auto-approve reviewer — a second model call that judges ONE proposed
-//! action against what the user actually asked for, so routine work runs without
-//! a card and only the questionable actions interrupt.
+//! The auto-approve reviewer: a second model call that checks ONE proposed action
+//! against what the user actually asked for, so routine steps go ahead without a card
+//! and only doubtful ones stop to ask.
 //!
-//! Four invariants. Each is enforced here or at the one call site, and each exists
-//! because the obvious implementation gets it wrong:
+//! Four rules hold it together. Each is enforced here or at its single call site, and
+//! each guards against a mistake the straightforward version would make:
 //!
-//! 1. **It can only turn "ask the human" into "go ahead" — never "blocked" into
-//!    "go ahead".** It is consulted exclusively on [`Decision::Ask`], after the
-//!    floor ([`cmdgate::hard_deny`]) and after the mode
-//!    ([`inbox::decide`]) have had their say. A `Deny` never reaches it. A model
-//!    that can talk its way past a refusal is not a reviewer, it is a bypass.
+//! 1. **It can upgrade "ask the person" to "proceed", and nothing else; a block stays a
+//!    block.** It only ever sees a [`Decision::Ask`], after the floor
+//!    ([`cmdgate::hard_deny`]) and the mode ([`inbox::decide`]) have ruled. A `Deny`
+//!    never reaches it: a model that could argue its way past a refusal would be a
+//!    bypass, not a reviewer.
 //!
-//! 2. **One action per request.** A turn proposing several calls makes several
-//!    reviewer calls, each carrying exactly one action, so a verdict physically
-//!    cannot land on the wrong action. Batch a list and you have created a
-//!    re-pairing problem whose failure mode is approving the wrong thing.
+//! 2. **One action per request.** A turn that proposes several calls gets several
+//!    reviews, each about a single action, so no verdict can be applied to the wrong
+//!    one. Reviewing a batch would mean matching verdicts back to actions, and getting
+//!    that wrong means approving the wrong thing.
 //!
-//! 3. **Fail closed.** Malformed JSON, an unknown verdict, an empty reply, a
-//!    timeout, no model configured, a provider error — all become [`Verdict::Unsure`],
-//!    and the human decides. There is no parse path in this file that results in
-//!    execution. A reviewer that fails open converts every outage into blanket
-//!    auto-approval, silently, at exactly the moment nobody is watching.
+//! 3. **Failures close.** Bad JSON, an unknown verdict, an empty reply, a timeout, no
+//!    model set up, a provider error: each becomes [`Verdict::Unsure`] and the person
+//!    decides. Nothing in this file parses its way to running an action. A reviewer that
+//!    failed open would turn any outage into silent approval of everything, just when
+//!    nobody is looking.
 //!
-//! 4. **It never reads untrusted content.** Its input is the instructions, the
-//!    user's own words, and the proposed action. Page text, file contents, mail
-//!    bodies, connector results and scanner output never appear. The attacker can
-//!    address the agent; they must never be able to address the judge. This is
-//!    why [`Request`] has no field for tool output and why the call site passes
-//!    `ctx.prompt` rather than the transcript.
+//! 4. **It sees no untrusted content.** Its input is the instructions, the user's own
+//!    words and the proposed action; page text, file contents, email bodies, connector
+//!    results and scanner output are never included. An attacker may be able to talk to
+//!    the agent, but must never be able to talk to the judge. That is why [`Request`]
+//!    has no field for tool output, and why the call site passes `ctx.prompt` instead of
+//!    the transcript.
 
 use std::time::Duration;
 

@@ -1,22 +1,21 @@
 use super::{program_of, tokenize};
 
-    /// Commands that read and have no writing mode to police.
+    /// Programs that only read: no flag turns any of them into a writer. Alphabetical.
     const SAFE: &[&str] = &[
-        "ls", "cat", "head", "tail", "wc", "nl", "sort", "uniq", "cut", "tr", "rev",
-        "grep", "egrep", "fgrep", "rg", "ag", "file", "stat", "du", "df", "pwd",
-        "echo", "printf", "which", "type", "whoami", "id", "date", "uname", "hostname",
-        "basename", "dirname", "realpath", "readlink", "dirs", "tree", "column",
-        "jq", "yq", "diff", "cmp", "md5sum", "shasum", "sha256sum", "cksum",
-        "true", "false", "seq", "expr", "env",
+        "ag", "basename", "cat", "cksum", "cmp", "column", "cut", "date", "df", "diff",
+        "dirname", "dirs", "du", "echo", "egrep", "env", "expr", "false", "fgrep", "file",
+        "grep", "head", "hostname", "id", "jq", "ls", "md5sum", "nl", "printf", "pwd",
+        "readlink", "realpath", "rev", "rg", "seq", "sha256sum", "shasum", "sort", "stat",
+        "tail", "tr", "tree", "true", "type", "uname", "uniq", "wc", "which", "whoami", "yq",
     ];
 
-    /// `git` subcommands that only read. Deliberately short: anything that moves a
-    /// ref, writes an object, or talks to a remote is absent, and `git config`
-    /// stays off because its writing form is a flag away.
+    /// Read-only `git` subcommands, kept short on purpose: nothing that moves a ref,
+    /// writes an object or contacts a remote, and no `git config`, whose writing form
+    /// is one flag away. Alphabetical.
     const GIT_READ: &[&str] = &[
-        "status", "log", "diff", "show", "blame", "shortlog", "describe",
-        "rev-parse", "rev-list", "ls-files", "ls-tree", "cat-file", "grep",
-        "reflog", "whatchanged", "count-objects", "verify-pack", "check-ignore",
+        "blame", "cat-file", "check-ignore", "count-objects", "describe", "diff", "grep",
+        "log", "ls-files", "ls-tree", "reflog", "rev-list", "rev-parse", "shortlog", "show",
+        "status", "verify-pack", "whatchanged",
     ];
 
     /// `find` reads directories — until one of these turns it into something else.

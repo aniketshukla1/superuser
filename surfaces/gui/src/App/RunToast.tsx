@@ -1,45 +1,35 @@
 import type { AppModel } from "./model/useAppModel";
 
-/** The toast for a finished background run. */
+/** The toast when a scheduled automation starts, with a way into the run. */
 export function RunToast({ m }: { m: AppModel }) {
-  const { runToast, selectSession, setRunToast } = m;
+  const toast = m.runToast;
+  if (!toast) return null;
+  const close = () => m.setRunToast(null);
+  const viewRun = () => {
+    m.selectSession(toast.sessionId, toast.workspace, toast.agent);
+    close();
+  };
   return (
-    <>{runToast && (
-        <div
-          className="fixed top-3 right-3 z-[45] w-[290px] bg-panel border border-line rounded-xl shadow-lg px-3.5 pt-3 pb-2.5"
-          data-testid="automation-toast"
-        >
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <span className="w-[7px] h-[7px] rounded-full bg-faint toast-pulse" />
-            Automation started
-          </div>
-          <div className="text-sm text-muted mt-0.5 ml-[15px] truncate">
-            {runToast.title} · {runToast.time} run
-          </div>
-          <div className="flex items-center justify-between ml-[15px] mt-1.5">
-            <button
-              className="text-sm text-accent font-medium"
-              data-testid="toast-view-run"
-              onClick={() => {
-                selectSession(runToast.sessionId, runToast.workspace, runToast.agent);
-                setRunToast(null);
-              }}
-            >
-              View run ›
-            </button>
-            <button
-              className="text-sm text-faint px-0.5"
-              data-testid="toast-dismiss"
-              title="Dismiss"
-              onClick={() => setRunToast(null)}
-            >
-              ✕
-            </button>
-          </div>
-          <div className="absolute left-3 right-3 bottom-1 h-[2px] rounded bg-line overflow-hidden">
-            <span className="block h-full bg-faint toast-drain" />
-          </div>
-        </div>
-      )}</>
+    <div className="bg-panel border border-line fixed pb-2.5 pt-3 px-3.5 right-3 rounded-xl shadow-lg top-3 w-[290px] z-[45]" data-testid="automation-toast">
+      <div className="flex font-semibold gap-2 items-center text-sm">
+        <span className="bg-faint h-[7px] rounded-full toast-pulse w-[7px]" />
+        Automation started
+      </div>
+      <div className="ml-[15px] mt-0.5 text-muted text-sm truncate">
+        {toast.title} · {toast.time} run
+      </div>
+      <div className="flex items-center justify-between ml-[15px] mt-1.5">
+        <button className="font-medium text-accent text-sm" data-testid="toast-view-run" onClick={viewRun}>
+          View run ›
+        </button>
+        <button className="px-0.5 text-faint text-sm" data-testid="toast-dismiss" title="Dismiss" onClick={close}>
+          ✕
+        </button>
+      </div>
+      {/* The bar that drains while the toast counts down. */}
+      <div className="absolute bg-line bottom-1 h-[2px] left-3 overflow-hidden right-3 rounded">
+        <span className="bg-faint block h-full toast-drain" />
+      </div>
+    </div>
   );
 }

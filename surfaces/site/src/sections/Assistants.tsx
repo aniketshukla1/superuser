@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { APPS, ASSISTANTS } from "../data";
 import { onScroll, rise, stagger, still } from "../motion";
 
-// Who does the work, and where. A roster rather than a grid of cards: nineteen boxed
+// Who does the work, and where. A roster rather than a grid of cards: twenty boxed
 // tiles would be a wall, while a list with hairlines between entries reads like what
 // it is, a team. The mono id over each name is real: it is how the local API names
 // that assistant (`"model": "chief"`), which is the kind of detail only this product has.
@@ -15,7 +15,7 @@ export function Assistants() {
       <div className="wrap">
         <motion.div {...onScroll} variants={v} className="section-head">
           <p className="eyebrow">Who does the work</p>
-          <h2>Nineteen assistants, each one different.</h2>
+          <h2>Twenty assistants, each one different.</h2>
           <p className="lead">
             Each has its own instructions, tools, skills and model. Pick one per conversation,
             or describe a new one and create it in the app.

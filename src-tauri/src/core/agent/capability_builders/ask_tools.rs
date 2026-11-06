@@ -88,7 +88,7 @@ pub(in crate::core::agent) fn refusal_tool() -> ToolSpec {
         RiskClass::Read,
         params(
             json!({
-                "request": {"type": "string", "description": "What you were asked to do, in a few words."},
+                "request": {"type": "string", "description": "The request you are turning down, briefly."},
                 "reason": {"type": "string", "description": "Why you are declining, in one line."}
             }),
             &["request", "reason"],

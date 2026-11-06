@@ -1,22 +1,27 @@
-// A persona is "project-scoped" only when it's code-family: an explicit directory the user
-// picks, sessions grouped by project in the sidebar. Everything else (knowledge, chat) runs on
-// a transparent per-conversation scratch dir, with real folders added as roots when needed —
-// no folder gate, ever. (The old workspace enum — git/project/deliverable/none — collapsed
-// into family; owner decision 2026-07-03, UX-DECISIONS §16.)
+// Only code-family assistants are tied to a project: the user picks a folder, and the
+// sidebar groups their sessions by project. Every other assistant (knowledge, chat) works in
+// a scratch folder per conversation that nobody has to think about, and real folders join as
+// roots when they are needed; nothing ever waits on choosing a folder. (The old workspace
+// setting, git/project/deliverable/none, became the family; owner decision 2026-07-03,
+// UX-DECISIONS §16.)
 export function isProjectScoped(p?: { workspace?: string; family?: string }): boolean {
   return p?.family === "code";
 }
 
-// Persona naming: the product is "Superuser"; the personas are an "Assistant" family — Assistant
-// (general), Code Assistant, Ops Assistant. In lists/chrome we use the SHORT label (Assistant / Code /
-// Ops); the persona detail page uses the FULL family name. Backend names are left untouched (the
-// API + tests keep "Superuser" / "Ops Assistant"); this is purely the display layer.
+// Naming. The product is "Superuser" and the assistants are a family: Assistant (the general
+// one), Code Assistant, Ops Assistant and so on. Lists and window chrome use the short form
+// (Assistant / Code / Ops); an assistant's own page uses the full name. Only the display
+// changes: the API and the tests keep names such as "Ops Assistant".
 
-// Short label for the sidebar + top bar: "Assistant" / "Code" / "Ops" / "Chat".
+// `cowork` is the id the general assistant had before the rename; stored state still has it.
+const isLegacyDefault = (id?: string) => id === "cowork";
+
+/** The short form, for the sidebar and the top bar: "Assistant", "Code", "Ops", "Chat". */
 export function shortPersonaName(name?: string, id?: string): string {
-  if (id === "cowork") return "Assistant";
-  const n = (name || id || "").trim();
-  return n.replace(/\s*assistant$/i, "").trim() || n;
+  if (isLegacyDefault(id)) return "Assistant";
+  const full = (name || id || "").trim();
+  const short = full.replace(/\s*assistant$/i, "").trim();
+  return short || full;
 }
 
 // Full name for the persona detail page. This USED to append " Assistant" to
@@ -32,8 +37,7 @@ export function shortPersonaName(name?: string, id?: string): string {
 // So the manifest name is the name. The only mapping left is the legacy `cowork` id,
 // which predates the rename and still reaches this from stored state.
 export function fullPersonaName(name?: string, id?: string): string {
-  if (id === "cowork") return "Assistant";
-  return (name || id || "").trim();
+  return isLegacyDefault(id) ? "Assistant" : (name || id || "").trim();
 }
 
 // Which of the topbar's tool buttons a persona should get.

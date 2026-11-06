@@ -3,185 +3,186 @@ import { getProviders, removeProvider, setProvider, verifyProvider, type Provide
 import { providerRank } from "../logos";
 import { relTime, type ProviderSetupState, type Verify } from "./ProviderSetupState";
 
+type Fields = Record<string, string>;
+
+const IDLE: Verify = { state: "idle" };
+const RETURN_AFTER_SAVE_MS = 900;
+const SAVED_FLASH_MS = 1400;
+
+/** Configured providers first, then the house order. Nine providers never set up used to sit
+ *  above the two in use; Connectors, the next surface along, lists connected ones first, and
+ *  this is the same kind of list. */
+function orderProviders(list: ProviderInfo[]): ProviderInfo[] {
+  return [...list].sort((a, b) => Number(Boolean(b.configured)) - Number(Boolean(a.configured)) || providerRank(a.name) - providerRank(b.name));
+}
+
+/** The status line on a provider's card. */
+function providerStatus(p: ProviderInfo, running: boolean, lastUsed: boolean) {
+  if (p.configured && p.needs_key) {
+    const used = lastUsed ? relTime(p.last_used_at) : null;
+    return (
+      <span className="block font-medium text-ok text-xs truncate">
+        ✓ Connected{used ? <span className="font-normal text-muted"> · used {used}</span> : ""}
+      </span>
+    );
+  }
+  if (p.needs_key) return <span className="block text-faint text-xs truncate">Not set up</span>;
+  return <span className="block text-faint text-xs truncate">{running ? <span className="font-medium text-ok">✓ Running</span> : "No key needed"}</span>;
+}
+
+/** The gallery ⇄ key form state machine shared by onboarding and Settings ▸ Models. */
 export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetupState {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
-  // null = the gallery; a provider name = that provider's key form.
+  /** null shows the gallery; a provider's name shows its key form. */
   const [sel, setSel] = useState<string | null>(null);
-  const [fields, setFields] = useState<Record<string, string>>({});
+  const [fields, setFields] = useState<Fields>({});
   const [dirty, setDirty] = useState(false);
   const [showEndpoint, setShowEndpoint] = useState(false);
-  const [verify, setVerify] = useState<Verify>({ state: "idle" });
-  // Keyless providers (Ollama) report configured without proving anything runs —
-  // a passing Detect this session is what marks them live.
+  const [verify, setVerify] = useState<Verify>(IDLE);
+  /** Keyless providers (Ollama) say they're configured without proving anything runs; passing
+   *  Detect in this session is what marks them running. */
   const [keylessOk, setKeylessOk] = useState<Set<string>>(new Set());
-  // Unsaved per-provider input survives switching cards (owner complaint 2026-07-16).
-  const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({});
-  const backTimer = useRef<number | null>(null);
-  // Which non-secret field just blur-saved (flashes "✓ Saved" in the input).
+  /** Unsaved input per provider, kept while moving between cards (owner, 2026-07-16). */
+  const [drafts, setDrafts] = useState<Record<string, Fields>>({});
+  /** The non-secret field that just saved on blur, which shows "✓ Saved". */
   const [fieldSaved, setFieldSaved] = useState<string | null>(null);
-  const fieldSavedTimer = useRef<number | null>(null);
+  const backTimer = useRef<number | null>(null);
+  const savedTimer = useRef<number | null>(null);
 
-  const refreshProviders = () =>
-    getProviders()
-      .then(setProviders)
-      .catch(() => {});
+  const refreshProviders = () => getProviders().then(setProviders).catch(() => {});
+  const cancelBackTimer = () => {
+    if (backTimer.current) window.clearTimeout(backTimer.current);
+  };
+  const keepDraft = (name: string, draft: Fields) => setDrafts((all) => ({ ...all, [name]: draft }));
+  const afterSave = async () => {
+    await refreshProviders();
+    opts?.onSaved?.();
+  };
+
   useEffect(() => {
     refreshProviders();
-    return () => {
-      if (backTimer.current) window.clearTimeout(backTimer.current);
-    };
+    return cancelBackTimer;
   }, []);
 
   const info = providers.find((p) => p.name === sel);
-  const credentialed = !!info?.configured && !!info?.needs_key;
+  const credentialed = Boolean(info?.configured) && Boolean(info?.needs_key);
 
   const openProvider = (name: string) => {
-    const p = providers.find((x) => x.name === name);
-    if (sel) setDrafts((d) => ({ ...d, [sel]: fields }));
+    if (sel) keepDraft(sel, fields);
+    const provider = providers.find((p) => p.name === name);
     const draft = drafts[name];
-    const next: Record<string, string> = {};
-    for (const f of p?.fields || []) next[f.key] = draft?.[f.key] || p?.values?.[f.key] || f.default || "";
+    const start: Fields = {};
+    for (const field of provider?.fields ?? []) start[field.key] = draft?.[field.key] || provider?.values?.[field.key] || field.default || "";
     setSel(name);
-    setFields(next);
-    setDirty(!!draft && Object.values(draft).some(Boolean));
-    setVerify({ state: "idle" });
+    setFields(start);
+    setDirty(Boolean(draft) && Object.values(draft).some(Boolean));
+    setVerify(IDLE);
     setShowEndpoint(false);
   };
 
   const backToGallery = () => {
-    // Stash only UNSAVED input. The unconditional stash used to capture the just-saved
-    // key on the post-Test auto-return, so revisiting a connected provider restored the
-    // plaintext key into the field instead of the masked placeholder + saved pill
-    // (state-restore bug, owner catch 2026-07-19). A clean form clears any stale draft.
-    if (sel) setDrafts((d) => ({ ...d, [sel]: dirty ? fields : {} }));
+    // Keep only UNSAVED input. Keeping it every time once caught the key just saved on the way
+    // back after Test, so reopening a connected provider put the key back into the field in
+    // plain text instead of the masked placeholder and saved pill (owner, 2026-07-19). A clean
+    // form clears any old draft.
+    if (sel) keepDraft(sel, dirty ? fields : {});
     setSel(null);
-    setVerify({ state: "idle" });
+    setVerify(IDLE);
   };
 
-  // Test = verify AND save AND return (§39: a passing Test auto-saves and takes
-  // you back to the gallery, where the card now wears its ✓ — no extra clicks).
+  // Test checks, saves and goes back (§39): a passing Test saves and returns to the gallery,
+  // where the card now shows its ✓, with no more clicks.
   const runTestAndSave = async (): Promise<boolean> => {
     if (!sel) return false;
     setVerify({ state: "testing" });
-    const res = await verifyProvider(sel, fields).catch(() => ({ ok: false, error: "unreachable" }));
-    if (!res.ok) {
-      setVerify({ state: "error", msg: res.error || "couldn't verify" });
+    const checked = await verifyProvider(sel, fields).catch(() => ({ ok: false, error: "unreachable" }));
+    if (!checked.ok) {
+      setVerify({ state: "error", msg: checked.error || "couldn't verify" });
       return false;
     }
     if (dirty || !info?.configured) await setProvider(sel, fields).catch(() => {});
-    if (!info?.needs_key) setKeylessOk((s) => new Set(s).add(sel));
+    if (!info?.needs_key) setKeylessOk((ok) => new Set(ok).add(sel));
     setVerify({ state: "ok" });
     setDirty(false);
-    setDrafts((d) => ({ ...d, [sel]: {} }));
-    await refreshProviders();
-    opts?.onSaved?.();
-    // Let the in-field "✓ Tested & saved" register, then slide home. NOT backToGallery:
-    // the timeout would fire its stale closure (dirty/fields from before the save) and
-    // re-stash the just-saved key as a draft — the state-restore bug (owner catch
-    // 2026-07-19). This return path clears the draft unconditionally.
+    keepDraft(sel, {});
+    await afterSave();
+    // A moment for "✓ Tested & saved" to register, then back. Not via backToGallery: the timer
+    // would run its old closure (dirty and fields from before the save) and keep the saved key
+    // as a draft, the bug above. This way back always clears the draft.
     backTimer.current = window.setTimeout(() => {
-      setDrafts((d) => ({ ...d, [sel]: {} }));
+      keepDraft(sel, {});
       setSel(null);
-      setVerify({ state: "idle" });
-    }, 900);
+      setVerify(IDLE);
+    }, RETURN_AFTER_SAVE_MS);
     return true;
   };
 
-  // Blur-save for non-secret fields when the provider is already configured: extras like
-  // anthropic's thinking_budget must persist without a key re-test (owner-hit 2026-07-23 —
-  // typed, left Settings, silently never saved). Secrets keep the explicit Test-to-save
-  // contract; unconfigured providers save everything on their first Test.
+  // On a provider already set up, a non-secret field saves when it loses focus: extras like
+  // Anthropic's thinking_budget must stick without testing the key again (owner, 2026-07-23:
+  // typed, left Settings, never saved). Secrets still save only through Test, and a provider
+  // not yet set up saves everything with its first Test.
   const saveField = async (key: string) => {
     if (!sel || !info?.configured) return;
-    const spec = info.fields.find((f) => f.key === key);
+    const spec = info.fields.find((field) => field.key === key);
     if (!spec || spec.secret) return;
-    const current = (fields[key] || "").trim();
-    const stored = (info.values?.[key] || "").trim();
-    if (current === stored) return;
-    const res = await setProvider(sel, { [key]: current }).catch(() => ({ ok: false }));
-    if (!res.ok) return;
-    await refreshProviders();
-    opts?.onSaved?.();
+    const typed = (fields[key] || "").trim();
+    if (typed === (info.values?.[key] || "").trim()) return;
+    const saved = await setProvider(sel, { [key]: typed }).catch(() => ({ ok: false }));
+    if (!saved.ok) return;
+    await afterSave();
     setFieldSaved(key);
-    if (fieldSavedTimer.current) window.clearTimeout(fieldSavedTimer.current);
-    fieldSavedTimer.current = window.setTimeout(() => setFieldSaved(null), 1400);
+    if (savedTimer.current) window.clearTimeout(savedTimer.current);
+    savedTimer.current = window.setTimeout(() => setFieldSaved(null), SAVED_FLASH_MS);
   };
 
-  // Settings-only: forget the stored key; the card reverts to "Not set up".
+  // Settings only: forget the stored key, and the card goes back to "Not set up".
   const removeKey = async () => {
     if (!sel) return;
     await removeProvider(sel).catch(() => {});
-    setDrafts((d) => ({ ...d, [sel]: {} }));
-    setKeylessOk((s) => {
-      const next = new Set(s);
-      next.delete(sel);
-      return next;
+    keepDraft(sel, {});
+    setKeylessOk((ok) => {
+      const left = new Set(ok);
+      left.delete(sel);
+      return left;
     });
-    await refreshProviders();
-    opts?.onSaved?.();
+    await afterSave();
     setSel(null);
-    setVerify({ state: "idle" });
+    setVerify(IDLE);
   };
 
-  const statusFor = (p: ProviderInfo, o?: { lastUsed?: boolean }) => {
-    if (p.configured && p.needs_key) {
-      const used = o?.lastUsed ? relTime(p.last_used_at) : null;
-      return (
-        <span className="block text-xs text-ok font-medium truncate">
-          ✓ Connected{used ? <span className="text-muted font-normal"> · used {used}</span> : ""}
-        </span>
-      );
-    }
-    if (!p.needs_key)
-      return (
-        <span className="block text-xs text-faint truncate">
-          {keylessOk.has(p.name) ? <span className="text-ok font-medium">✓ Running</span> : "No key needed"}
-        </span>
-      );
-    return <span className="block text-xs text-faint truncate">Not set up</span>;
+  const setFieldValue = (key: string, value: string) => {
+    setFields((current) => ({ ...current, [key]: value }));
+    setDirty(true);
+    setVerify(IDLE);
   };
 
   return {
     providers,
-    // Configured first, then the house order. Nine providers you have never set up sat above
-        // the two you use — Connectors on the next surface along puts connected ones first, and
-        // this is the same list of the same kind of thing.
-        ordered: [...providers].sort(
-          (a, b) =>
-            Number(!!b.configured) - Number(!!a.configured) || providerRank(a.name) - providerRank(b.name),
-        ),
+    ordered: orderProviders(providers),
     refreshProviders,
     sel,
     info,
-    fields,
-    setFieldValue: (key, value) => {
-      setFields((cur) => ({ ...cur, [key]: value }));
-      setDirty(true);
-      setVerify({ state: "idle" });
-    },
-    dirty,
-    verify,
-    showEndpoint,
-    setShowEndpoint,
-    keylessOk,
-    credentialed,
-    // The in-field saved state (§39): green border + pill INSIDE the key box — shown
-    // for stored credentials and fresh test-passes alike; typing clears it.
-    savedState: (credentialed && !dirty) || verify.state === "ok",
-    // Only REQUIRED secrets gate the Test button — cloud providers (Bedrock, Vertex)
-    // have optional key fields whose credentials may live in ~/.aws or ADC instead.
-    secretFilled: (info?.fields || []).every(
-      (f) => !f.secret || !f.required || (fields[f.key] || "").trim(),
-    ),
     openProvider,
     backToGallery,
+    cancelBackTimer,
+    fields,
+    setFieldValue,
+    dirty,
+    credentialed,
+    // The saved look inside the key box (§39), a green border and pill, for a stored key or a
+    // fresh pass alike; typing clears it.
+    savedState: (credentialed && !dirty) || verify.state === "ok",
+    // Only REQUIRED secrets hold back Test: cloud providers (Bedrock, Vertex) have optional key
+    // fields, with the credentials perhaps in ~/.aws or ADC instead.
+    secretFilled: (info?.fields ?? []).every((field) => !field.secret || !field.required || (fields[field.key] || "").trim() !== ""),
+    keylessOk,
+    showEndpoint,
+    setShowEndpoint,
+    verify,
     runTestAndSave,
     removeKey,
+    statusFor: (p, o) => providerStatus(p, keylessOk.has(p.name), Boolean(o?.lastUsed)),
     saveField,
     fieldSaved,
-    cancelBackTimer: () => {
-      if (backTimer.current) window.clearTimeout(backTimer.current);
-    },
-    statusFor,
   };
 }

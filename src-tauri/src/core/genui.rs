@@ -95,8 +95,8 @@ fn asks_for_a_credential(html: &str) -> bool {
 pub fn document(html: &str) -> String {
     format!(
         "<!doctype html><html><head><meta charset=\"utf-8\">\
-         <meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; \
-         script-src 'unsafe-inline'; img-src data:; font-src data:; form-action 'none'; base-uri 'none'\">\
+         <meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; font-src data:; \
+         style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'\">\
          <style>:root{{color-scheme:light dark}}html,body{{margin:0;padding:0;background:transparent;\
          color:var(--ink,#1a1a1a);font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}\
          *{{box-sizing:border-box;max-width:100%}}</style></head><body>{html}{HEIGHT_REPORTER}</body></html>"

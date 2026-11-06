@@ -1,7 +1,7 @@
 //! The gateway — the one door every tool call passes through.
 //!
-//! This module exists to make one sentence true: an action that was not recorded did
-//! not happen, because there is no path that acts without writing the row first.
+//! Its job is to guarantee that nothing acts without a row: the decision is written
+//! down before the action runs, on every path, so an action with no row never happened.
 //!
 //! Before this, the decision about an action was spread through the tools: the
 //! command gate inside `run_shell`, the send check inside `send_message`, the MCP

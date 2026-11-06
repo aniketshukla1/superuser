@@ -13,12 +13,12 @@ pub(super) fn csv_field(value: &str) -> String {
     }
 }
 
-pub(super) fn csv_line(fields: &[&str]) -> String {
+pub(crate) fn csv_line(fields: &[&str]) -> String {
     fields.iter().map(|f| csv_field(f)).collect::<Vec<_>>().join(",")
 }
 
 /// Rows of fields: quotes, doubled quotes and line breaks inside quotes handled.
-pub(super) fn csv_rows(text: &str) -> Vec<Vec<String>> {
+pub(crate) fn csv_rows(text: &str) -> Vec<Vec<String>> {
     let mut rows = Vec::new();
     let mut row = Vec::new();
     let mut field = String::new();

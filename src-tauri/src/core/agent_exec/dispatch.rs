@@ -5,12 +5,14 @@ mod memory_knowledge_tools;
 mod automation_tools;
 mod skill_web_tools;
 mod connector_message_tools;
+mod talent_tools;
 
 use process_metrics_tools::*;
 use memory_knowledge_tools::*;
 use automation_tools::*;
 use skill_web_tools::*;
 use connector_message_tools::*;
+use talent_tools::*;
 
 /// Execute any catalog tool (local first, then the async ones: recall/web).
 pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, args: &Value) -> String {
@@ -42,6 +44,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, args: &Value) -> String {
         "list_skills" | "read_skill" | "list_skill_tools" | "list_personas" | "read_persona" |
         "list_persona_skills" | "save_skill" | "save_persona" | "web_search" | "browser_open" |
         "web_fetch" | "list_connectors" | "connector_search" => skill_web_tools(ctx, name, args).await,
+        "candidates_check" | "candidates_shortlist" => talent_tools(ctx, name, args),
         "connector_changes" | "connector_sync" | "send_message" | "computer_use" |
         "spawn_subagent" | "load_skill" => connector_message_tools(ctx, name, args).await,
         other => format!("unknown tool: {other}"),

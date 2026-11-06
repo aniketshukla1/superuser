@@ -1,9 +1,10 @@
-import { fetch, httpBase, jsonOf, listOf } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody, jsonOf, listOf } from "./neverRejectingJson";
 import { announcePersonasChanged, type Persona, type PersonaConsent } from "./personas";
 
-// ---- Knowledge base (the topic axis) -------------------------------------------
-// Notes record what arrived and the journal records when; a page is a subject the
-// agent chose to write up and keeps editing.
+// The knowledge base, memory corrections, and installing and managing assistants.
+//
+// Knowledge is the topic axis of memory: notes keep what came in and the journal keeps when,
+// while a page is a subject the agent decided to write up and goes on editing.
 
 export interface KnowledgePage {
   slug: string;
@@ -33,92 +34,80 @@ export async function undoEvolution(): Promise<{ ok: boolean; restored?: number;
   return res.json();
 }
 
-/** Correct the core memory by hand — it's a markdown file the user owns. */
+/** Fix the core memory by hand; it is a markdown file that belongs to the user. */
 export async function setCoreMemory(body: string): Promise<boolean> {
-  const res = await fetch(`${httpBase()}/v1/journal/core`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ body }),
-  });
+  const res = await fetch(`${httpBase()}/v1/journal/core`, jsonBody("PUT", { body }));
   return res.ok && (await jsonOf(res)).ok === true;
 }
 
+const personaUrl = (id = "", rest = "") => `${httpBase()}/v1/personas${id ? `/${encodeURIComponent(id)}` : ""}${rest}`;
+type PersonasReply = { ok: boolean; personas?: Persona[]; error?: string };
+
+/** The server's reply with `ok` made strict, announcing the change when `changed` says so. */
+async function settled(res: Response, changed: (reply: Record<string, any>) => boolean): Promise<any> {
+  const reply = await jsonOf(res);
+  if (changed(reply)) announcePersonasChanged();
+  return { ...reply, ok: reply.ok === true };
+}
+
 export async function getPersonas(): Promise<Persona[]> {
-  const res = await fetch(`${httpBase()}/v1/personas`);
-  return listOf<Persona>(res, "personas");
+  return listOf<Persona>(await fetch(personaUrl()), "personas");
 }
 
-export async function updatePersona(
-  id: string,
-  body: {
-    enabled?: boolean;
-    surfaced?: boolean;
-    default?: boolean;
-    /** How far this assistant may act without asking. */
-    default_permission_mode?: string;
-    /** Worker types it staffs when it delegates. Empty = whatever is installed. */
-    subagents?: string[];
-    /** Which other assistants it may hand work to. Empty = none. */
-    asks?: string[];
-    /** Whether it has a browser of its own (Settings ▸ Browser). */
-    browser?: boolean;
-    /** The AG-UI address of a remote agent that does its turns. Empty = runs here. */
-    remote?: string;
-    /** The token that remote agent issued. Empty clears it. Never read back. */
-    remote_token?: string;
-  },
-): Promise<{ ok: boolean; personas?: Persona[]; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/personas/${encodeURIComponent(id)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const out = await jsonOf(res);
-  if (out.ok !== false) announcePersonasChanged();
-  return { ...out, ok: out.ok === true };
+export type PersonaUpdate = {
+  enabled?: boolean;
+  surfaced?: boolean;
+  default?: boolean;
+  /** How far the assistant may go without asking. */
+  default_permission_mode?: string;
+  /** Worker types it staffs when it delegates; empty means whatever is installed. */
+  subagents?: string[];
+  /** Other assistants it may hand work to; empty means none. */
+  asks?: string[];
+  /** Whether it gets a browser of its own (Settings ▸ Browser). */
+  browser?: boolean;
+  /** The AG-UI address of a remote agent that takes its turns; empty means it runs here. */
+  remote?: string;
+  /** The token that remote agent issued. Empty clears it; it is never sent back. */
+  remote_token?: string;
+};
+
+export async function updatePersona(id: string, body: PersonaUpdate): Promise<PersonasReply> {
+  // Anything but an explicit failure may have changed the list, so listeners refresh.
+  return settled(await fetch(personaUrl(id), jsonBody("POST", body)), (reply) => reply.ok !== false);
 }
 
-/** Uninstall a non-builtin persona (its snapshot + state). Local; works signed out. */
-export async function deletePersona(
-  id: string,
-): Promise<{ ok: boolean; personas?: Persona[]; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/personas/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
-  const out = await jsonOf(res);
-  if (out.ok) announcePersonasChanged();
-  return { ...out, ok: out.ok === true };
+/** Remove an assistant that didn't ship with the app (its snapshot and its state). Works on
+ *  this machine alone, signed in or not. */
+export async function deletePersona(id: string): Promise<PersonasReply> {
+  return settled(await fetch(personaUrl(id), { method: "DELETE" }), (reply) => Boolean(reply.ok));
 }
 
-// A curated persona card from the cloud gallery (metadata only — the manifest
-// is fetched server-side at install and runs through the normal consent flow).
+/** A card from the cloud gallery: metadata only. The manifest itself is fetched by the server
+ *  at install time and goes through the usual consent step. */
 export interface GalleryPersona {
   slug: string;
   version: number;
+  publisher: string;
   name: string;
-  icon: string;
   tagline: string;
   description: string;
+  icon: string;
   family: string;
   workspace: string;
-  publisher: string;
-  recommended_connectors: string[];
   risk_summary: string;
-  featured?: boolean; // publisher-flagged for the gallery's featured carousel
+  recommended_connectors: string[];
+  /** Marked by the publisher for the gallery's featured row. */
+  featured?: boolean;
 }
 
-export async function getCloudGallery(): Promise<{
-  ok: boolean;
-  personas: GalleryPersona[];
-  error?: string;
-}> {
-  const res = await fetch(`${httpBase()}/v1/cloud/gallery`);
-  return res.json();
+export async function getCloudGallery(): Promise<{ ok: boolean; personas: GalleryPersona[]; error?: string }> {
+  return (await fetch(`${httpBase()}/v1/cloud/gallery`)).json();
 }
 
-// Solo page for one gallery assistant. `capabilities` is the desktop's own
-// consent summary derived from the manifest (same parser as install), so the
-// page shows exactly what installing would ask the user to approve.
+/** One gallery assistant's own page. `capabilities` is this app's consent summary, worked out
+ *  from the manifest with the same parser as installing, so the page lists precisely what an
+ *  install would ask the user to agree to. */
 export interface GalleryDetail {
   ok: boolean;
   error?: string;
@@ -126,8 +115,8 @@ export interface GalleryDetail {
   capabilities?: {
     tools: string[];
     risk: string[];
-    connectors: boolean;
     mcp: string[];
+    connectors: boolean;
     messaging: boolean;
     recommended_mode: string;
     recommended_models: string[];
@@ -136,19 +125,9 @@ export interface GalleryDetail {
 }
 
 export async function getCloudGalleryDetail(slug: string): Promise<GalleryDetail> {
-  const res = await fetch(`${httpBase()}/v1/cloud/gallery/${encodeURIComponent(slug)}`);
-  return res.json();
+  return (await fetch(`${httpBase()}/v1/cloud/gallery/${encodeURIComponent(slug)}`)).json();
 }
 
-export async function installPersona(
-  body: { dir?: string; git_url?: string; gallery_slug?: string },
-): Promise<{ ok: boolean; consent?: PersonaConsent[]; personas?: Persona[]; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/personas/install`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const out = await jsonOf(res);
-  if (out.ok) announcePersonasChanged();
-  return { ...out, ok: out.ok === true };
+export async function installPersona(body: { dir?: string; git_url?: string; gallery_slug?: string }): Promise<PersonasReply & { consent?: PersonaConsent[] }> {
+  return settled(await fetch(personaUrl("", "/install"), jsonBody("POST", body)), (reply) => Boolean(reply.ok));
 }

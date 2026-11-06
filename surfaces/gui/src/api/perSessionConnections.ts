@@ -1,83 +1,72 @@
-import { fetch, httpBase } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody } from "./neverRejectingJson";
 
-// -- Per-session connections (Sources bar + drawer, §6) -----------------------
-// An effective-enabled connector for a session, with a short human detail (e.g. "#ocw-test · DMs").
-// `enabled` reflects the session override/persona default so the drawer toggle shows correct state.
-/** How far a session may go through a source. "read" consults it; "write" may also
- *  send, post or modify through it. The folder half of this model is `Root.writable`. */
+// A session's connections: the Sources bar and its drawer (§6).
+
+/** How far a session may go through a source: "read" looks things up, "write" may also send,
+ *  post or change things through it. Folders have the same split in `Root.writable`. */
 export type ConnectionScope = "read" | "write";
 
+/** A connector the session can use, with a short human detail ("#team-test · DMs"). `enabled`
+ *  already includes the session's override or the assistant's default, so the drawer's
+ *  switch shows the real state. */
 export interface SessionConnectedConnector {
   connector: string;
-  enabled: boolean;
   detail: string;
-  /** Absent from a server older than session scopes — treated as "write" there, which
-   *  is what every connected source could do before the gate existed. */
+  enabled: boolean;
+  /** Missing from servers that predate scopes, and read there as "write", which is what any
+   *  connected source could do before the gate existed. */
   scope?: ConnectionScope;
-  /** Whether a message can actually leave through this source. Comes from the send
-   *  path itself, not the catalogue's `two_way` flag — the two disagree. */
+  /** Whether a message can really leave through this source. It comes from the sending code
+   *  itself, not from the catalogue's `two_way` flag; the two don't always agree. */
   sendable?: boolean;
 }
 
-// A persona-recommended connector not yet connected (drives the `⚠ N` attention count).
+/** A connector the assistant recommends that isn't connected yet; these make the `⚠ N` count. */
 export interface SessionRecommendedConnector {
   connector: string;
+  connected: boolean;
   reason: string;
   tier: string;
-  connected: boolean;
 }
 
 export interface SessionConnections {
   connected: SessionConnectedConnector[];
   recommended: SessionRecommendedConnector[];
-  attention: number; // ⚠ count = recommended connectors not yet connected
+  /** The ⚠ count: recommended connectors still unconnected. */
+  attention: number;
 }
 
-/** `persona` = the active persona hint — required for brand-new sessions (no server-side
- * record yet), otherwise the view resolves to the default persona's defaults/recommends. */
-export async function getSessionConnections(
-  sessionId: string,
-  persona?: string,
-): Promise<SessionConnections> {
-  const q = persona ? `?persona=${encodeURIComponent(persona)}` : "";
-  const res = await fetch(
-    `${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/connections${q}`,
-  );
+const connectionsUrl = (sessionId: string) => `${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/connections`;
+
+/** `persona` hints at the active assistant. A brand-new session has no record on the server
+ *  yet, and without the hint the view would fall back to the default assistant's settings. */
+export async function getSessionConnections(sessionId: string, persona?: string): Promise<SessionConnections> {
+  const hint = persona ? `?persona=${encodeURIComponent(persona)}` : "";
+  const res = await fetch(connectionsUrl(sessionId) + hint);
   return res.json();
 }
 
-/**
- * Set a per-session connection override (mute/unmute a connector for THIS session). Pass
- * `clear: true` to drop the override and inherit the persona default again.
- */
+/** Turn a connector off or on for THIS session only. `clear: true` drops the override, so the
+ *  assistant's default applies again. */
 export async function setSessionConnection(
   sessionId: string,
   connector: string,
   enabled: boolean,
   clear = false,
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/connections`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ connector, enabled, ...(clear ? { clear: true } : {}) }),
-  });
+  const body = clear ? { connector, enabled, clear: true } : { connector, enabled };
+  const res = await fetch(connectionsUrl(sessionId), jsonBody("POST", body));
   return res.json();
 }
 
-/**
- * Narrow or widen what this session may do through one source, independently of the
- * on/off toggle — muting a source must not silently reset the scope chosen for it.
- * The gate is enforced server-side at the send site, not just drawn here.
- */
+/** Narrow or widen what this session may do through one source. Separate from the on/off
+ *  switch, so muting a source never quietly resets the scope chosen for it. The server
+ *  enforces it where the message is sent; this only shows it. */
 export async function setSessionConnectionScope(
   sessionId: string,
   connector: string,
   scope: ConnectionScope,
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/connections`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ connector, scope }),
-  });
+  const res = await fetch(connectionsUrl(sessionId), jsonBody("POST", { connector, scope }));
   return res.json();
 }

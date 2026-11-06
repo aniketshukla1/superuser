@@ -1,7 +1,7 @@
-import { fetch, httpBase, listOf } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody, listOf } from "./neverRejectingJson";
 import { jsonPost, skillUrl, type SessionSkillRow, type SkillRow } from "./skills";
 
-// -- composer controls ---------------------------------------------------------
+// What the composer's controls read and change: effort, the microphone, usage, and skills.
 
 /** How hard the model is asked to think. The names come from the server, not from here:
  *  a scale baked into the client goes stale the moment the server's changes. */
@@ -11,11 +11,7 @@ export interface EffortState {
 }
 
 export async function setEffort(effort: string): Promise<{ ok: boolean; effort?: string; thinking_budget?: number | null; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/settings/effort`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ effort }),
-  });
+  const res = await fetch(`${httpBase()}/v1/settings/effort`, jsonBody("POST", { effort }));
   return res.json();
 }
 
@@ -49,11 +45,7 @@ export async function getVoiceDevices(): Promise<VoiceDevices> {
 export async function setVoiceDevice(
   patch: { device?: string; hold_to_record?: boolean },
 ): Promise<{ ok: boolean }> {
-  const res = await fetch(`${httpBase()}/v1/voice/device`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(patch),
-  });
+  const res = await fetch(`${httpBase()}/v1/voice/device`, jsonBody("POST", patch));
   return res.json();
 }
 
@@ -86,63 +78,43 @@ export async function getUsageRollup(): Promise<UsageRollup> {
   return { today: v.today ?? emptyWindow(), week: v.week ?? emptyWindow(), now: v.now ?? 0 };
 }
 
+const workspaceQuery = (workspace?: string) => (workspace ? `?workspace=${encodeURIComponent(workspace)}` : "");
+const sessionSkillsUrl = (sessionId: string) => `${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/skills`;
+
 export async function listSkills(workspace?: string): Promise<SkillRow[]> {
-  const qs = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
-  const res = await fetch(skillUrl(qs));
-  return listOf(res, "skills");
+  return listOf(await fetch(skillUrl(workspaceQuery(workspace))), "skills");
 }
 
-/** The Skills page's switch: on or off everywhere. The server changes nothing else about a
- *  skill here — creating, editing, uploading and revealing one were never served. */
-export async function updateSkill(
-  name: string,
-  patch: { enabled: boolean },
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(skillUrl(`/${encodeURIComponent(name)}`), jsonPost(patch, "PATCH"));
-  return res.json();
+/** The Skills page's switch: on or off everywhere. Nothing else about a skill changes here;
+ *  creating, editing, uploading and revealing one were never served. */
+export async function updateSkill(name: string, patch: { enabled: boolean }): Promise<{ ok: boolean; error?: string }> {
+  return (await fetch(skillUrl(`/${encodeURIComponent(name)}`), jsonPost(patch, "PATCH"))).json();
 }
 
-export async function deleteSkill(
-  name: string,
-  workspace?: string,
-): Promise<{ ok: boolean; error?: string }> {
-  const qs = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
-  const res = await fetch(skillUrl(`/${encodeURIComponent(name)}${qs}`), { method: "DELETE" });
-  return res.json();
+export async function deleteSkill(name: string, workspace?: string): Promise<{ ok: boolean; error?: string }> {
+  return (await fetch(skillUrl(`/${encodeURIComponent(name)}${workspaceQuery(workspace)}`), { method: "DELETE" })).json();
 }
 
-export async function sessionSkills(
-  sessionId: string,
-  workspace?: string,
-  /** Which assistant this conversation is for. A session reaches the server only on
-   *  its first turn, so without this the menu for a brand-new conversation could not
-   *  be narrowed to the assistant's own procedures and offered all of them. */
-  agent?: string,
-): Promise<SessionSkillRow[]> {
-  const p = new URLSearchParams();
-  if (workspace) p.set("workspace", workspace);
-  if (agent) p.set("agent", agent);
-  const qs = p.toString() ? `?${p}` : "";
-  const res = await fetch(
-    `${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/skills${qs}`,
-  );
-  return listOf(res, "skills");
+/** The skills on offer in one conversation. `agent` names the assistant it is for: a session
+ *  only reaches the server with its first turn, and without this a brand-new conversation's
+ *  menu couldn't be narrowed to that assistant's own procedures, so it would offer them all. */
+export async function sessionSkills(sessionId: string, workspace?: string, agent?: string): Promise<SessionSkillRow[]> {
+  const filters = new URLSearchParams();
+  if (workspace) filters.set("workspace", workspace);
+  if (agent) filters.set("agent", agent);
+  const query = filters.toString();
+  return listOf(await fetch(sessionSkillsUrl(sessionId) + (query ? `?${query}` : "")), "skills");
 }
 
+/** Mute or unmute a skill for one conversation; `clear` drops the override altogether. */
 export async function setSessionSkill(
   sessionId: string,
   skill: string,
   enabled: boolean,
   opts: { clear?: boolean; workspace?: string } = {},
 ): Promise<{ skills?: SessionSkillRow[]; ok?: boolean; error?: string }> {
-  const res = await fetch(
-    `${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/skills`,
-    jsonPost({
-      skill,
-      enabled,
-      ...(opts.clear ? { clear: true } : {}),
-      ...(opts.workspace ? { workspace: opts.workspace } : {}),
-    }),
-  );
-  return res.json();
+  const body: Record<string, unknown> = { skill, enabled };
+  if (opts.clear) body.clear = true;
+  if (opts.workspace) body.workspace = opts.workspace;
+  return (await fetch(sessionSkillsUrl(sessionId), jsonPost(body))).json();
 }

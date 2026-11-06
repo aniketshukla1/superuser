@@ -8,12 +8,14 @@ use super::super::*;
 #[tauri::command]
 pub async fn pick_folder(app: tauri::AppHandle) -> Option<String> {
     use tauri_plugin_dialog::DialogExt;
-    let (tx, rx) = std::sync::mpsc::channel();
-    app.dialog().file().pick_folder(move |f| {
-        let _ = tx.send(f.and_then(|p| p.into_path().ok()).map(|p| p.to_string_lossy().into_owned()));
+    // The dialog answers through a callback on its own thread; a oneshot carries the
+    // choice back without parking an async worker.
+    let (done, chosen) = tokio::sync::oneshot::channel();
+    app.dialog().file().pick_folder(move |picked| {
+        let path = picked.and_then(|f| f.into_path().ok()).map(|p| p.to_string_lossy().into_owned());
+        let _ = done.send(path);
     });
-    // The dialog callback lands on another thread; don't block an async worker.
-    tokio::task::spawn_blocking(move || rx.recv().ok().flatten()).await.ok().flatten()
+    chosen.await.ok().flatten()
 }
 
 #[tauri::command]

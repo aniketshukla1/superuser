@@ -183,6 +183,6 @@ impl Computer {
             .iter()
             .find(|e| e.r#ref == r#ref)
             .cloned()
-            .ok_or_else(|| format!("Nothing on this page has the ref {ref}. Take a new snapshot and use the refs it returns.", ref = r#ref))
+            .ok_or_else(|| format!("No element here carries the ref {ref}. Take a new snapshot and pick a ref from it.", ref = r#ref))
     }
 }

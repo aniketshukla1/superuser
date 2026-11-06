@@ -9,7 +9,7 @@ test("an @ mention offers the other assistants and labels the reply with who ans
   await box.fill("@op");
   const row = page.getByRole("option", { name: /^@ops/ });
   await expect(row).toBeVisible();
-  await expect(row).toHaveAttribute("title", /Ops Assistant — Operate and investigate/);
+  await expect(row).toHaveAttribute("title", /Ops Assistant — Incidents and runbooks/);
   await row.click();
   await expect(box).toHaveValue("@ops ");
 

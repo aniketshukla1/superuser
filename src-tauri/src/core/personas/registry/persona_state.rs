@@ -37,6 +37,7 @@ pub(in crate::core::personas) const BUILTIN_CHIEF: &str = include_str!("../../pe
 pub(in crate::core::personas) const BUILTIN_REPRO: &str = include_str!("../../personas_builtin/repro.md");
 
 pub(in crate::core::personas) const BUILTIN_PERF: &str = include_str!("../../personas_builtin/perf.md");
+pub(in crate::core::personas) const BUILTIN_TALENT: &str = include_str!("../../personas_builtin/talent.md");
 
 pub(in crate::core::personas) fn builtins() -> Vec<PersonaManifest> {
     [
@@ -59,6 +60,7 @@ pub(in crate::core::personas) fn builtins() -> Vec<PersonaManifest> {
         ("chief", BUILTIN_CHIEF),
         ("repro", BUILTIN_REPRO),
         ("perf", BUILTIN_PERF),
+        ("talent", BUILTIN_TALENT),
     ]
         .into_iter()
         .map(|(id, txt)| {

@@ -121,9 +121,9 @@ pub fn intent_of(name: &str, args: &Value, mcp: Option<&McpCall>) -> &'static st
         // Pulls another system's content onto this machine: a call to that system.
         "connector_sync" => "read_tool",
         "board_add" | "board_assign" | "board_move" | "board_note" | "board_review" | "record_coverage" | "coverage_note"
-        | "check_tool" => "track",
+        | "check_tool" | "candidates_shortlist" => "track",
         "recall_memory" | "knowledge_search" | "knowledge_read" | "connector_search" | "connector_changes" | "list_connectors"
-        | "board_list" | "process_read" | "expense_summary" | "activity_since" => "read",
+        | "board_list" | "process_read" | "expense_summary" | "activity_since" | "candidates_check" => "read",
         _ => "",
     }
 }

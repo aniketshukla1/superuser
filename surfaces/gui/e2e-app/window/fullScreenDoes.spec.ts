@@ -63,12 +63,12 @@ test("Tauri IPC round-trips from the real webview", async ({ app }) => {
   const ok = await app.eval<boolean>("typeof window.__TAURI__?.core?.invoke === 'function'");
   expect(ok, "the Tauri IPC global is missing — withGlobalTauri off, or the shell failed to inject").toBe(true);
 
-  // The platform hook. `tauri.ts` documents `__OCW_PLATFORM__` as "injected by the shell
+  // The platform hook. `tauri.ts` documents `__SUPERUSER_PLATFORM__` as "injected by the shell
   // before the SPA loads", and it is NOT — nothing in the Rust source or index.html sets
   // it, so `platformOS()` has always been running on its userAgent fallback. That
   // fallback is right on macOS and Windows, so nothing is visibly broken; the value that
   // reaches the DOM is what matters, and that is what is asserted here.
-  const injected = await app.eval<string | null>("window.__OCW_PLATFORM__ ?? null");
+  const injected = await app.eval<string | null>("window.__SUPERUSER_PLATFORM__ ?? null");
   const effective = await app.eval<string>("document.documentElement.dataset.platform");
   expect(
     effective,

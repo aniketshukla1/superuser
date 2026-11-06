@@ -1,13 +1,9 @@
 import { CONNECTORS, FALLBACK, type ConnectorRegistryEntry } from "./CONNECTORS";
 
-/**
- * Resolve a logo id to its registry entry plus the matched key. Unknown / empty ids return the
- * FALLBACK entry with key `"fallback"` (so callers and tests can distinguish a hit from a miss).
- */
+/** The registry entry for a logo id, with the key it matched. An unknown or empty id gives
+ *  FALLBACK under the key "fallback", so callers and tests can tell a miss from a hit. */
 export function resolveConnector(logo?: string): { key: string; entry: ConnectorRegistryEntry } {
-  const id = (logo ?? "").trim();
-  if (id && Object.prototype.hasOwnProperty.call(CONNECTORS, id)) {
-    return { key: id, entry: CONNECTORS[id] };
-  }
-  return { key: "fallback", entry: FALLBACK };
+  const id = logo?.trim() ?? "";
+  const known = id !== "" && Object.prototype.hasOwnProperty.call(CONNECTORS, id);
+  return known ? { key: id, entry: CONNECTORS[id] } : { key: "fallback", entry: FALLBACK };
 }

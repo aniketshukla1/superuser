@@ -96,12 +96,12 @@ impl Computer {
         let object = match cdp.call(Some(&session), "DOM.resolveNode", node, ACTION_TIMEOUT).await {
             Ok(r) => r["object"]["objectId"].as_str().unwrap_or_default().to_string(),
             Err(_) => {
-                // The field is gone, which no retry fixes: closed, so the assistant can see
-                // nothing is pending and ask again against a fresh snapshot.
+                // The field is gone and no retry brings it back. Close the request so the
+                // assistant sees nothing is pending and can ask again from a fresh snapshot.
                 if let Ok(mut c) = self.shared.control.lock() {
                     c.secret_abandoned();
                 }
-                return Err("That value couldn't be entered: the field is no longer on the page. Ask the assistant to request it again.".into());
+                return Err("Nothing was entered: that field has gone from the page. The assistant will need to ask for the value again.".into());
             }
         };
         cdp.call(

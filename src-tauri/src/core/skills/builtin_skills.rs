@@ -46,10 +46,10 @@ impl StrOrVec {
 pub(super) fn split_frontmatter(text: &str) -> Result<(&str, String), String> {
     let t = text.strip_prefix('\u{feff}').unwrap_or(text);
     if !t.starts_with("---") {
-        return Err("SKILL.md must start with a YAML frontmatter block (---)".into());
+        return Err("SKILL.md has to open with a `---` YAML frontmatter block".into());
     }
     let after = &t[3..];
-    let end = after.find("\n---").ok_or("unterminated frontmatter (missing closing ---)")?;
+    let end = after.find("\n---").ok_or("frontmatter never closes (no second `---`)")?;
     Ok((&after[..end], after[end + 4..].trim_start_matches('\n').to_string()))
 }
 
@@ -118,6 +118,8 @@ pub(super) const BUILTIN_SKILLS: &[(&str, &str)] = &[
     ("staging-repro", include_str!("../skills_builtin/staging-repro.md")),
     // Performance.
     ("perf-investigation", include_str!("../skills_builtin/perf-investigation.md")),
+    // Recruiting.
+    ("talent-sourcing", include_str!("../skills_builtin/talent-sourcing.md")),
     // Documentation.
     ("how-to-guide", include_str!("../skills_builtin/how-to-guide.md")),
     ("api-reference", include_str!("../skills_builtin/api-reference.md")),

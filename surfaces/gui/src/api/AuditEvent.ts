@@ -1,85 +1,84 @@
-import { fetch, httpBase, jsonOf, listOf } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody, jsonOf, listOf } from "./neverRejectingJson";
 import type { AuditDecision, AuditInitiator, AuditSubject } from "./waitForCloudSignIn";
 
+/** One row of the activity trail. */
 export interface AuditEvent {
   id: number;
   timestamp: string;
+  tool: string;
+  connector: string;
+  stage: string;
+  /** "ok", "error" or "refused". */
+  status: string;
+  approval: string;
   session_id: string;
   agent: string;
   workspace: string;
-  connector: string;
-  tool: string;
-  stage: string;
-  /** ok · error · refused */
-  status: string;
-  approval: string;
   args: Record<string, any>;
   result_preview: string;
   reason?: string;
   resource?: string;
-  // Version 2 of the trail. Absent from an older server.
+  // The trail's second version; an older server leaves these out.
   at?: number;
-  /** action.allowed · action.refused · action.failed · action.stopped · action.parked ·
-   *  action.declined · assistant.declined · turn.stalled · policy.loaded · policy.changed ·
-   *  audit.wiped · audit.retention — or a first-version kind like "sync". */
+  /** action.allowed, action.refused, action.failed, action.stopped, action.parked,
+   *  action.declined, assistant.declined, turn.stalled, policy.loaded, policy.changed,
+   *  audit.wiped, audit.retention, or a first-version kind such as "sync". */
   event?: string;
+  ok?: boolean;
   actor?: string;
+  persona?: string;
   target?: string;
   detail?: string;
-  ok?: boolean;
-  persona?: string;
   initiator?: AuditInitiator | null;
-  /** Nobody was watching the run happen: a schedule, a watch, a message, the API. */
+  /** The run happened with nobody watching: a schedule, a watch, a message, the API. */
   unwatched?: boolean;
   subject?: AuditSubject | null;
   decision?: AuditDecision | null;
 }
 
-export async function getAudit(params: {
+export type AuditQuery = {
   limit?: number;
   session_id?: string;
   connector?: string;
   tool?: string;
-  /** An event name or family, e.g. "action". */
+  /** An event name or a family of them, e.g. "action". */
   event?: string;
   nobody_watching?: boolean;
   refused?: boolean;
-  /** Epoch seconds. */
+  /** Seconds since the epoch. */
   since?: number;
-} = {}): Promise<AuditEvent[]> {
-  const q = new URLSearchParams();
-  if (params.limit) q.set("limit", String(params.limit));
-  if (params.session_id) q.set("session_id", params.session_id);
-  if (params.connector) q.set("connector", params.connector);
-  if (params.tool) q.set("tool", params.tool);
-  if (params.event) q.set("event", params.event);
-  if (params.nobody_watching) q.set("nobody_watching", "1");
-  if (params.refused) q.set("refused", "1");
-  if (params.since) q.set("since", String(params.since));
-  const res = await fetch(`${httpBase()}/v1/audit${q.toString() ? "?" + q.toString() : ""}`);
-  return listOf(res, "events");
+};
+
+// The order the server has always received them in.
+const QUERY_ORDER = ["limit", "session_id", "connector", "tool", "event", "nobody_watching", "refused", "since"] as const;
+
+export async function getAudit(params: AuditQuery = {}): Promise<AuditEvent[]> {
+  const query = new URLSearchParams();
+  for (const key of QUERY_ORDER) {
+    const value = params[key];
+    if (value) query.set(key, value === true ? "1" : String(value));
+  }
+  const qs = query.toString();
+  return listOf(await fetch(`${httpBase()}/v1/audit${qs ? `?${qs}` : ""}`), "events");
 }
 
-/** Whether the trail's chain still adds up. */
+/** Whether the trail's hash chain still holds together. */
 export interface AuditIntegrity {
+  intact: boolean;
   rows: number;
   linked: number;
   legacy: number;
-  intact: boolean;
   problem?: string | null;
 }
 
 export async function verifyAudit(): Promise<AuditIntegrity | null> {
-  const res = await fetch(`${httpBase()}/v1/audit/verify`);
-  const body = await jsonOf(res);
+  const body = await jsonOf(await fetch(`${httpBase()}/v1/audit/verify`));
   return typeof body.intact === "boolean" ? (body as AuditIntegrity) : null;
 }
 
-export async function setAuditRetention(days: number): Promise<{ ok: boolean; audit_retention_days?: number; removed?: number; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/settings/audit-retention`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ days }),
-  });
-  return jsonOf(res) as Promise<{ ok: boolean; audit_retention_days?: number; removed?: number; error?: string }>;
+type RetentionReply = { ok: boolean; audit_retention_days?: number; removed?: number; error?: string };
+
+export async function setAuditRetention(days: number): Promise<RetentionReply> {
+  const res = await fetch(`${httpBase()}/v1/settings/audit-retention`, jsonBody("POST", { days }));
+  return (await jsonOf(res)) as RetentionReply;
 }

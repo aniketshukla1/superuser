@@ -6,7 +6,7 @@ use super::*;
 pub const KNOWN_TOOLS: &[&str] = &[
     "files", "search", "shell", "git", "todo", "plan", "ask", "subagent", "web",
     "recall_memory", "computer", "connectors", "messaging", "schedule", "knowledge",
-    "toolchain", "board", "browser", "authoring", "expenses", "activity", "metrics",
+    "toolchain", "board", "browser", "authoring", "expenses", "activity", "metrics", "talent",
     // Always on, like `plan` and `ask`, so it is knowable but not grantable — a
     // persona cannot be created without it and there is nothing to pick.
     "recall",
@@ -26,7 +26,7 @@ pub const KNOWN_TOOLS: &[&str] = &[
 pub const GRANTABLE_TOOLS: &[&str] = &[
     "files", "search", "shell", "git", "todo", "web", "recall_memory",
     "connectors", "messaging", "subagent", "schedule", "knowledge", "computer",
-    "toolchain", "board", "browser", "authoring", "expenses", "activity", "metrics",
+    "toolchain", "board", "browser", "authoring", "expenses", "activity", "metrics", "talent",
 ];
 
 pub(super) const VALID_FAMILIES: &[&str] = &["code", "knowledge"];

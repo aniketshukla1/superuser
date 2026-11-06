@@ -5,8 +5,8 @@
 //! it contributes, plus the session context each needs and the risk classes it can
 //! produce. `expand(ids, ctx)` turns a persona's tool list into the concrete tool
 //! specs offered to the model for a given session — skipping capabilities whose
-//! context prerequisites aren't met (no shell without an executor, no files without
-//! a workspace). MCP tools are NOT in the catalog; they attach separately.
+//! context prerequisites aren't met (a shell needs an executor, file tools need a
+//! workspace). MCP tools are NOT in the catalog; they attach separately.
 //!
 //! This module defines the *contract* (tool schemas, risk, context gating). The
 //! model-calling loop that dispatches these tool calls to handlers and produces

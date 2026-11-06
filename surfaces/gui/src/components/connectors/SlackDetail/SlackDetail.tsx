@@ -89,7 +89,7 @@ export function SlackDetail({ c, cloud, slack, onChanged }: DetailProps) {
       {!c.connected && (
         <div className={GRP}>
           <div className={ROW + " text-sm text-muted"}>
-            One @ocw app, installed per workspace — each keeps its own allow-list.
+            One @superuser app, installed per workspace — each keeps its own allow-list.
             {cloud?.signed_in ? "" : " One-click needs cloud sign-in; Manual works without it."}
           </div>
         </div>

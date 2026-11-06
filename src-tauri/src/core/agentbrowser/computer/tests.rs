@@ -96,7 +96,7 @@ use super::*;
         }
         assert_eq!(c.resolve("e1", 5).unwrap().name, "Submit order");
         assert!(c.resolve("e1", 3).unwrap_err().contains("snapshot 3 and the page is now at 5"));
-        assert!(c.resolve("e9", 5).unwrap_err().contains("Nothing on this page has the ref e9"));
+        assert!(c.resolve("e9", 5).unwrap_err().contains("No element here carries the ref e9"));
         // The gateway's view of the same element.
         let (el, url) = element_for("refs-test", "e1").unwrap();
         assert_eq!((el.name.as_str(), url.as_str()), ("Submit order", "https://shop.example.com/cart"));

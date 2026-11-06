@@ -61,7 +61,7 @@ use super::*;
         }
         fail(&mut store);
         let last = store.fatigue(&task.id, "the API was down").expect("the tenth switches it off");
-        assert!(last.contains("switched it off") && last.contains("turn it back on"));
+        assert!(last.contains("switched this automation off") && last.contains("turn it back on"));
         assert!(!store.get(&task.id).unwrap().enabled);
         assert!(store.get(&task.id).unwrap().next_run.is_none());
         let _ = fs::remove_dir_all(&d);

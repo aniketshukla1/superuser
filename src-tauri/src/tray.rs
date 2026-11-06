@@ -73,10 +73,11 @@ mod tests {
     #[test]
     fn settings_opens_through_the_event_the_gui_listens_for() {
         let Ok(src) = crate::test_support::gui_source("App.tsx") else { return };
-        assert!(
-            src.contains("addEventListener(\"assistant:open-settings\""),
-            "the tray's Settings item dispatches an event nothing listens for"
-        );
+        // Either a plain listener or the app's `useWindowEvent` hook, which wraps one.
+        let listens = ["addEventListener(", "useWindowEvent("]
+            .iter()
+            .any(|call| src.contains(&format!("{call}\"assistant:open-settings\"")));
+        assert!(listens, "the tray's Settings item dispatches an event nothing listens for");
         assert!(super::OPEN_SETTINGS_JS.contains("assistant:open-settings"));
     }
 }

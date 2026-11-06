@@ -9,11 +9,11 @@ type Secret = Extract<Item, { kind: "computer_secret" }>;
 
 // `findLastIndex` is ES2023, past what the app targets.
 function newestOpen(items: Item[], kind: "computer_help" | "computer_secret"): number {
-  for (let i = items.length - 1; i >= 0; i--) {
-    const it = items[i];
-    if (it.kind === kind && !it.resolved) return i;
-  }
-  return -1;
+  let at = -1;
+  items.forEach((it, i) => {
+    if (it.kind === kind && !it.resolved) at = i;
+  });
+  return at;
 }
 
 /** Settle the newest open request for the user's hands. */

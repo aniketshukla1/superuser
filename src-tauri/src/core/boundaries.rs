@@ -10,18 +10,17 @@
 //!
 //! # The semantics
 //!
-//! * **Deny is checked first, and a deny wins.** A rule that removes permission must
-//!   never be defeated by a broader rule that grants it, or nobody can reason about
-//!   what they have forbidden.
-//! * **A broken deny rule denies.** One typo refuses the action rather than admitting
-//!   it: the failure is loud, immediate and safe, and the alternative is a user who
-//!   believes they have forbidden something they have not. The Boundaries page checks
-//!   every rule before it is saved, so this is the backstop, not the experience.
+//! * **Deny rules run first, and any deny wins.** If a broader allow could override a
+//!   rule that takes permission away, nobody could be sure what they had forbidden.
+//! * **A deny rule that fails to evaluate refuses.** A typo blocks the action instead of
+//!   letting it pass, so the mistake shows at once and costs nothing; the other way round,
+//!   the person would think something was forbidden when it wasn't. The Boundaries page
+//!   checks each rule before saving it, so this is the safety net, not the usual path.
 //! * **A broken allow rule permits nothing, and an empty allow list permits nothing.**
 //!   The default allow list is `true` — anything not refused above — and it says so.
-//! * **`record` mode decides and writes it down, then lets the action through.** "A
-//!   governance feature nobody dares switch on is not a governance feature": a rule
-//!   can be watched against real work before it refuses any.
+//! * **`record` mode decides and writes it down, then lets the action through.** People
+//!   only switch on a control they can try safely, so a rule can be watched against real
+//!   work before it refuses anything.
 //!
 //! # What this adds to, and what it does not replace
 //!

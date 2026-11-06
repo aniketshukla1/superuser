@@ -1,31 +1,52 @@
 import type { Attachment } from "./types";
 
-const MAX_BYTES = 10 * 1024 * 1024; // skip files larger than ~10MB
-const TEXT_RE =
-  /\.(txt|md|markdown|csv|tsv|json|ya?ml|log|ini|toml|py|js|ts|tsx|jsx|rs|go|java|c|h|cpp|sh|html?|css|sql|xml)$/i;
+// A dropped or picked File as an Attachment, for the composer and the start panel. Images and
+// PDFs travel as data URLs and text files inline; anything else, or anything over 10 MB, is
+// left out (null).
+const LIMIT = 10 * 1024 * 1024;
+const TEXT_EXTENSIONS = new Set([
+  "c", "cpp", "css", "csv", "go", "h", "htm", "html", "ini", "java", "js", "json", "jsx", "log",
+  "markdown", "md", "py", "rs", "sh", "sql", "toml", "ts", "tsv", "tsx", "txt", "xml", "yaml", "yml",
+]);
 
-// Read a File into an Attachment (image/PDF → data URL, text → inline text). Returns null for
-// unsupported types or oversized files. Shared by the composer and the session start panel.
-export const isPdfFile = (file: File) =>
-  file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+function extension(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot < 0 ? "" : name.slice(dot + 1).toLowerCase();
+}
 
-export function readFile(file: File): Promise<Attachment | null> {
-  const isImage = file.type.startsWith("image/");
-  const isPdf = isPdfFile(file);
-  const isText = !isPdf && (file.type.startsWith("text/") || TEXT_RE.test(file.name));
-  if ((!isImage && !isPdf && !isText) || file.size > MAX_BYTES) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onerror = () => resolve(null);
-    reader.onload = () =>
-      resolve(
-        isImage
-          ? { kind: "image", name: file.name || "image", mime: file.type, data_url: String(reader.result) }
-          : isPdf
-            ? { kind: "pdf", name: file.name || "file.pdf", mime: "application/pdf", data_url: String(reader.result) }
-            : { kind: "text", name: file.name || "file.txt", mime: file.type, text: String(reader.result) },
-      );
-    if (isImage || isPdf) reader.readAsDataURL(file);
-    else reader.readAsText(file);
+export const isPdfFile = (file: File) => file.type === "application/pdf" || extension(file.name) === "pdf";
+
+type Kind = Attachment["kind"];
+
+function kindOf(file: File): Kind | null {
+  if (file.type.startsWith("image/")) return "image";
+  if (isPdfFile(file)) return "pdf";
+  if (file.type.startsWith("text/") || TEXT_EXTENSIONS.has(extension(file.name))) return "text";
+  return null;
+}
+
+/** The file's contents as text or as a data URL; null when the read fails. */
+function load(file: File, as: "text" | "dataUrl"): Promise<string | null> {
+  return new Promise((done) => {
+    const fr = new FileReader();
+    fr.onload = () => done(String(fr.result));
+    fr.onerror = () => done(null);
+    if (as === "text") fr.readAsText(file);
+    else fr.readAsDataURL(file);
   });
+}
+
+export async function readFile(file: File): Promise<Attachment | null> {
+  const kind = kindOf(file);
+  if (!kind || file.size > LIMIT) return null;
+  const body = await load(file, kind === "text" ? "text" : "dataUrl");
+  if (body === null) return null;
+  switch (kind) {
+    case "text":
+      return { kind, text: body, mime: file.type, name: file.name || "file.txt" };
+    case "pdf":
+      return { kind, data_url: body, mime: "application/pdf", name: file.name || "file.pdf" };
+    default:
+      return { kind: "image", data_url: body, mime: file.type, name: file.name || "image" };
+  }
 }

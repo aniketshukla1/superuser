@@ -6,8 +6,8 @@
 //! * an editing key without `windowsVirtualKeyCode` reaches the page's listener and does
 //!   nothing — Backspace deletes nothing, Enter submits nothing;
 //! * Enter sent as `rawKeyDown` with no text is heard and not acted on. It needs
-//!   `keyDown` carrying `"\r"`, which is what a keyboard's Enter carries — measured there
-//!   as the sign-in at the end of almost every takeover not going through.
+//!   `keyDown` carrying `"\r"`, which is what a keyboard's Enter carries — without it, the
+//!   sign-in that ends most takeovers never submits.
 
 /// One key press, ready for `Input.dispatchKeyEvent`.
 #[derive(Debug, Clone, PartialEq)]

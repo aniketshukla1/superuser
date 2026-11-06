@@ -14,7 +14,7 @@ use super::*;
         let e = Envelope::parse(&json!({"task": " Check the Q3 numbers ", "expecting": "a number"})).unwrap();
         assert_eq!((e.task.as_str(), e.constraints.as_str(), e.expecting.as_str()), ("Check the Q3 numbers", "", "a number"));
         let brief = e.brief("Assistant");
-        assert!(brief.starts_with("Assistant has asked you to help"));
+        assert!(brief.starts_with("Assistant needs your help with this"));
         assert!(brief.contains("Task: Check the Q3 numbers") && brief.contains("What a good answer looks like: a number"));
         assert!(!brief.contains("Constraints:"), "an empty field is left out, not sent empty");
         assert!(brief.contains("can't put a question to the person"));

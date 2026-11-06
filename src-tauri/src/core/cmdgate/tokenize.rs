@@ -1,36 +1,35 @@
 
-/// Separators that chain several commands into one string, longest first so `&&`
-/// is never read as two `&`. Each part is then judged on its own: the older
-/// behaviour of rejecting any compound command outright both refused a harmless
-/// `git status && git diff` and — because `-exec` needs no separator — still let
-/// `find . -exec rm {} +` through.
+/// What joins several commands into one string, longest first so `&&` is never read
+/// as two `&`. Every part is then judged by itself. Refusing any compound command, as
+/// this once did, blocked a harmless `git status && git diff` and still let
+/// `find . -exec rm {} +` through, since `-exec` needs no separator.
 pub(super) const SEPARATORS: &[&str] = &["&&", "||", ";", "|&", "|", "&", "\n", "\r"];
 
-/// Constructs whose *contents* cannot be evaluated from the text, so a command
-/// carrying one is never eligible for prefix auto-run.
+/// Constructs whose *contents* the text alone can't settle; a command containing one
+/// is never run automatically on a prefix match.
 pub(super) const OPAQUE_CONSTRUCTS: &[&str] = &["`", "$(", "$", ">", "<", "("];
 
-/// Programs that run *another* program named in their arguments.
+/// Programs whose arguments name *another* program to run. Alphabetical.
 pub(super) const ARG_EXECUTORS: &[&str] = &[
-    "xargs", "env", "nohup", "nice", "stdbuf", "timeout", "watch", "sudo", "doas",
-    "ssh", "docker", "podman", "kubectl", "npx", "pnpx", "bunx", "uvx",
+    "bunx", "docker", "doas", "env", "kubectl", "nice", "nohup", "npx", "pnpx", "podman",
+    "ssh", "stdbuf", "sudo", "timeout", "uvx", "watch", "xargs",
 ];
 
-/// Interpreters, which are only a problem when carrying inline source.
+/// Interpreters: harmless unless the source comes inline. Alphabetical.
 pub(super) const INTERPRETERS: &[&str] = &[
-    "sh", "bash", "zsh", "dash", "ksh", "fish", "powershell", "pwsh", "cmd",
-    "python", "python3", "node", "deno", "bun", "ruby", "perl", "php",
+    "bash", "bun", "cmd", "dash", "deno", "fish", "ksh", "node", "perl", "php", "powershell",
+    "pwsh", "python", "python3", "ruby", "sh", "zsh",
 ];
 
-/// Flags that hand an interpreter its program on the command line.
+/// Flags that pass an interpreter its program as an argument.
 pub(super) const INLINE_CODE_FLAGS: &[&str] = &["-c", "-e", "--eval", "--command", "-Command", "-EncodedCommand"];
 
-/// Flags that turn a search or list tool into an execution or deletion tool.
+/// Flags that make a search or listing tool run or delete things.
 pub(super) const DANGEROUS_FLAGS: &[&str] = &["-exec", "-execdir", "-delete", "-ok", "-okdir", "-fprintf"];
 
-/// Split a compound command on its separators. Purely textual — a separator
-/// inside quotes splits too. That is deliberate: over-splitting only ever
-/// produces more parts to justify, never fewer.
+/// Split a compound command at its separators, purely by text, so a separator inside
+/// quotes splits as well. That is on purpose: splitting too much only leaves more parts
+/// to approve, never fewer.
 pub fn split_commands(command: &str) -> Vec<String> {
     let mut parts: Vec<String> = vec![command.to_string()];
     for sep in SEPARATORS {

@@ -1,126 +1,129 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getArtifacts, getInbox, getUnattended } from "../../api";
 import { stillOpen } from "../../sessionInbox";
 import type { useAppState } from "./useAppState";
-import type { useNavigationState } from "./useNavigationState";
-import type { useLayout } from "./useLayout";
-import type { usePersonas } from "./usePersonas";
 import type { useBoot } from "./useBoot";
-import type { useSplashAndSettings } from "./useSplashAndSettings";
+import type { useLayout } from "./useLayout";
+import type { useNavigationState } from "./useNavigationState";
+import type { usePersonas } from "./usePersonas";
 import type { useSessionSocket } from "./useSessionSocket";
+import type { useSplashAndSettings } from "./useSplashAndSettings";
 
-/** Stream-following: keep the transcript at the bottom while the user is there. */
-export function useFollowScroll(prev: ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> & ReturnType<typeof usePersonas> & ReturnType<typeof useBoot> & ReturnType<typeof useSplashAndSettings> & ReturnType<typeof useSessionSocket>) {
-  const { scrollRef, sessionId, items, streaming, surface, setArtifactCount, agent,
-      browserRefreshKey, setSessionInbox, markUnattended } = prev;
-  // Stream-following (FB-004): auto-scroll only while the user is AT the bottom, so scrolling
-  // up to read during a streaming turn sticks. `atBottomRef` is the live truth (per scroll
-  // event, no re-render); `following` mirrors it into state for the jump-to-latest pill.
-  // Programmatic smooth-scrolls fire scroll events of their own — while one is in flight
-  // (`autoScrollingRef`) they must not read as "the user scrolled up", or every stream tick
-  // would disengage its OWN follow. The animation only moves down, so a decreasing scrollTop
-  // mid-flight can only be the user taking over.
-  const atBottomRef = useRef(true);
-  const autoScrollingRef = useRef(false);
-  const lastScrollTopRef = useRef(0);
+type Deps = ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> &
+  ReturnType<typeof usePersonas> & ReturnType<typeof useBoot> & ReturnType<typeof useSplashAndSettings> &
+  ReturnType<typeof useSessionSocket>;
+
+/** How close to the end still counts as "at the bottom", in pixels. */
+const BOTTOM_SLACK = 48;
+const INBOX_POLL_MS = 4000;
+const ARTIFACT_RETRIES = 5;
+
+/** Following the stream: the transcript stays pinned to the end only while the reader is
+ *  there, plus two per-session reads that ride along (the file count and the Inbox). */
+export function useFollowScroll(prev: Deps) {
+  const { agent, browserRefreshKey, items, markUnattended, scrollRef, sessionId, setArtifactCount, setSessionInbox, streaming, surface } = prev;
+
+  // FB-004: scroll along only while the reader is AT the end, so scrolling up mid-stream to
+  // read holds. `pinned` is the live answer, updated on every scroll without a render;
+  // `following` copies it into state for the jump-to-latest pill. A smooth scroll started
+  // here fires scroll events of its own, and while one is moving (`gliding`) those must not
+  // count as the reader leaving, or each new chunk would unpin itself. The glide only goes
+  // down, so a smaller scrollTop during it means the reader took over.
+  const pinned = useRef(true);
+  const gliding = useRef(false);
+  const lastTop = useRef(0);
   const [following, setFollowing] = useState(true);
-  const scrollToBottom = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    autoScrollingRef.current = true;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+
+  const glideToEnd = () => {
+    const box = scrollRef.current;
+    if (!box) return;
+    gliding.current = true;
+    box.scrollTo({ top: box.scrollHeight, behavior: "smooth" });
   };
+
   const followLatest = () => {
-    atBottomRef.current = true;
+    pinned.current = true;
     setFollowing(true);
-    scrollToBottom();
+    glideToEnd();
   };
+
   const handleScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const top = el.scrollTop;
-    const atBottom = el.scrollHeight - top - el.clientHeight < 48;
-    if (autoScrollingRef.current) {
-      if (atBottom) autoScrollingRef.current = false; // landed
-      else if (top >= lastScrollTopRef.current) {
-        lastScrollTopRef.current = top; // still animating down — not the user
+    const box = scrollRef.current;
+    if (!box) return;
+    const top = box.scrollTop;
+    const atEnd = box.scrollHeight - top - box.clientHeight < BOTTOM_SLACK;
+    if (gliding.current) {
+      const stillGoingDown = !atEnd && top >= lastTop.current;
+      if (stillGoingDown) {
+        lastTop.current = top;
         return;
-      } else autoScrollingRef.current = false; // moved UP mid-flight — user takeover
+      }
+      // Either it arrived, or it moved up mid-glide: the reader has taken over.
+      gliding.current = false;
     }
-    lastScrollTopRef.current = top;
-    atBottomRef.current = atBottom;
-    setFollowing(atBottom);
+    lastTop.current = top;
+    pinned.current = atEnd;
+    setFollowing(atEnd);
   };
-  // A different session is a fresh viewport — never inherit a scrolled-up state. Declared
-  // BEFORE the auto-scroll effect: when a session switch and its hydrated items land in one
-  // commit, the reset must run first or the stale ref would skip the initial bottom-scroll.
+
+  // Each session opens pinned. This effect must come BEFORE the one below: when a switch and
+  // its loaded items land in the same commit, resetting first is what lets the first scroll to
+  // the end happen.
   useEffect(() => {
-    atBottomRef.current = true;
+    pinned.current = true;
     setFollowing(true);
   }, [sessionId]);
+
   useEffect(() => {
-    if (atBottomRef.current) scrollToBottom();
+    if (pinned.current) glideToEnd();
   }, [items, streaming]);
 
-  // Track produced-file count for the topbar "Artifacts" affordance (works even when the rail is
-  // hidden, where the rail itself doesn't fetch). Refreshes on file writes/turn end.
-  //
-  // No persona test. It was `agent === "cowork"` — one assistant, by an id the roster
-  // dropped — and I first replaced that with "any assistant that isn't repo-bound",
-  // which was wrong in the other direction: `session_artifacts` lists the SESSION's
-  // own folder, not the workspace, so "files this conversation produced" means the
-  // same thing for a Coder as for anyone else. On this machine the session with the
-  // most artifacts is a Coder one, and my rule was hiding exactly that.
-  //
-  // `artifactCount > 0` was always the real gate. A persona test on top of it could
-  // only ever take the affordance away from someone who had files to show.
-  //
-  // The fetch retries, for the same reason the persona load above does. This is read
-  // once per session and its failure was swallowed, so a request that lost the race
-  // with the sidecar left the count at 0 with nothing to correct it: the Artifacts
-  // button never appeared for the whole life of that session, on a conversation that
-  // demonstrably had files. Owner-hit 2026-09-01, on a reload that happened to land
-  // while the backend was restarting — the count came back the moment anything else
-  // moved the deps.
-  //
-  // A failure and an empty folder are NOT the same answer, which is why `catch` no
-  // longer stands in for "none". Zero is only written when the server actually said
-  // zero.
+  // How many files this conversation has made, for the topbar's "Artifacts" button; read here
+  // so it works with the panel hidden, when the panel itself fetches nothing. It lists the
+  // SESSION's own folder, so it means the same for every assistant, and `> 0` is the whole
+  // test (an assistant check here once hid the button from the very sessions with the most
+  // files). It retries because it is read once per session: a request that lost the race
+  // with the sidecar used to leave the count at 0 for the life of the session (owner,
+  // 2026-09-01). A failed read is not an empty folder, so 0 is only written when the server
+  // says 0.
   useEffect(() => {
     if (surface !== "session") {
       setArtifactCount(0);
       return;
     }
     let stopped = false;
-    const load = (attempt = 0) => {
+    const read = (attempt: number) => {
       getArtifacts(sessionId)
-        .then((a) => !stopped && setArtifactCount(a.length))
+        .then((files) => !stopped && setArtifactCount(files.length))
         .catch(() => {
-          if (!stopped && attempt < 5) setTimeout(() => load(attempt + 1), 250 * (attempt + 1));
+          if (stopped || attempt >= ARTIFACT_RETRIES) return;
+          setTimeout(() => read(attempt + 1), 250 * (attempt + 1));
         });
     };
-    load();
+    read(0);
     return () => {
       stopped = true;
     };
   }, [agent, surface, sessionId, browserRefreshKey]);
 
-  // Keep the active session's pending Inbox items fresh (answer-in-context card). Loads on session
-  // change + after each turn, plus a slow poll so an unattended agent's new question surfaces.
+  // The open session's pending Inbox items, for the answer-in-context card: read on a session
+  // change and after each turn, and polled slowly so a question from an unattended agent shows.
   useEffect(() => {
     if (surface !== "session") return;
-    const load = () => {
-      // `stillOpen` on top of the server's own filter: a card for an item that
-      // cannot be answered can only mislead, and this closes the window between a
-      // stale fetch and the next poll. See `sessionInbox`.
+    const refresh = () => {
+      // `stillOpen` on top of the server's own filter: a card for something that can no longer
+      // be answered only misleads, and this closes the gap between a stale read and the next
+      // poll (see `sessionInbox`).
       getInbox(sessionId, "pending")
-        .then((items) => setSessionInbox(stillOpen(items)))
+        .then((pending) => setSessionInbox(stillOpen(pending)))
         .catch(() => setSessionInbox([]));
-      getUnattended(sessionId).then(markUnattended).catch(() => markUnattended(false));
+      getUnattended(sessionId)
+        .then(markUnattended)
+        .catch(() => markUnattended(false));
     };
-    load();
-    const t = setInterval(load, 4000);
-    return () => clearInterval(t);
+    refresh();
+    const poll = setInterval(refresh, INBOX_POLL_MS);
+    return () => clearInterval(poll);
   }, [surface, sessionId, browserRefreshKey, markUnattended]);
 
   return { following, followLatest, handleScroll };

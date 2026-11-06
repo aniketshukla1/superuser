@@ -1,40 +1,30 @@
-import { fetch, httpBase, listOf } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody, listOf } from "./neverRejectingJson";
 
-// -- session roots (orphan Cowork: scratch + added folders) -------------------
+// A session's folders: its scratch folder plus any the user added.
+
 export interface RootInfo {
-  path: string;
-  writable: boolean;
   label: string;
+  path: string;
   primary: boolean;
+  writable: boolean;
   exists: boolean;
 }
 
+type RootsChange = { ok: boolean; error?: string; roots?: RootInfo[] };
+
+const rootsUrl = (sessionId: string) => `${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/roots`;
+
 export async function getRoots(sessionId: string): Promise<RootInfo[]> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/roots`);
-  return listOf(res, "roots");
+  return listOf(await fetch(rootsUrl(sessionId)), "roots");
 }
 
-export async function addRoot(
-  sessionId: string,
-  path: string,
-  writable: boolean,
-): Promise<{ ok: boolean; error?: string; roots?: RootInfo[] }> {
-  const res = await fetch(`${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/roots`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, writable }),
-  });
+export async function addRoot(sessionId: string, path: string, writable: boolean): Promise<RootsChange> {
+  const res = await fetch(rootsUrl(sessionId), jsonBody("POST", { path, writable }));
   return res.json();
 }
 
-export async function removeRoot(
-  sessionId: string,
-  path: string,
-): Promise<{ ok: boolean; error?: string; roots?: RootInfo[] }> {
-  const q = new URLSearchParams({ path });
-  const res = await fetch(
-    `${httpBase()}/v1/sessions/${encodeURIComponent(sessionId)}/roots?${q.toString()}`,
-    { method: "DELETE" },
-  );
+export async function removeRoot(sessionId: string, path: string): Promise<RootsChange> {
+  const query = new URLSearchParams({ path }).toString();
+  const res = await fetch(`${rootsUrl(sessionId)}?${query}`, { method: "DELETE" });
   return res.json();
 }

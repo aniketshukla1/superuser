@@ -19,7 +19,12 @@ export const OUT = process.env.DEMO_OUT || path.resolve(process.cwd(), "..", "..
 export const FRAMES = path.join(OUT, "video");
 export const LIVE = "perf-live";
 
-export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Slow motion for filming: every wait and transition here runs this many times slower, and the
+ *  edit speeds it back up. A full-resolution capture manages ~15 frames a second; at 3× that is
+ *  ~45 a second of real motion. 1 (the default) is real time. */
+export const SLOW = Number(process.env.DEMO_SLOW || 1);
+
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms * SLOW));
 
 // ---- the turn, in the engine's event protocol ----
 
@@ -105,12 +110,13 @@ export async function overlays(page: Page) {
 }
 
 export async function caption(page: Page, text: string | null) {
-  await page.evaluate((t) => {
+  await page.evaluate(([t, slow]) => {
     const cap = document.getElementById("demo-caption")!;
+    cap.style.transition = `opacity ${0.35 * slow}s ease,transform ${0.35 * slow}s ease`;
     if (t) cap.textContent = t;
     cap.style.opacity = t ? "1" : "0";
     cap.style.transform = t ? "translate(-50%,0)" : "translate(-50%,8px)";
-  }, text);
+  }, [text, SLOW] as const);
 }
 
 export async function pointAt(page: Page, target: Locator, ms = 700) {
@@ -124,7 +130,7 @@ export async function pointAt(page: Page, target: Locator, ms = 700) {
       c.style.transition = `transform ${ms}ms cubic-bezier(.22,.61,.36,1)`;
       c.style.transform = `translate(${x - 5}px,${y - 3}px)`;
     },
-    [x, y, ms] as const,
+    [x, y, ms * SLOW] as const,
   );
   await sleep(ms + 60);
   return { x, y };
@@ -133,20 +139,20 @@ export async function pointAt(page: Page, target: Locator, ms = 700) {
 export async function clickOn(page: Page, target: Locator, ms = 700) {
   const { x, y } = await pointAt(page, target, ms);
   await page.evaluate(
-    ([x, y]) => {
+    ([x, y, slow]) => {
       const r = document.createElement("div");
       r.style.cssText =
         `position:fixed;left:${x - 16}px;top:${y - 16}px;width:32px;height:32px;border-radius:50%;` +
         "border:2px solid #8a8cf0;z-index:2147483645;pointer-events:none;opacity:.9;" +
-        "transition:transform .45s ease-out,opacity .45s ease-out";
+        `transition:transform ${0.45 * slow}s ease-out,opacity ${0.45 * slow}s ease-out`;
       document.body.appendChild(r);
       requestAnimationFrame(() => {
         r.style.transform = "scale(1.8)";
         r.style.opacity = "0";
       });
-      setTimeout(() => r.remove(), 500);
+      setTimeout(() => r.remove(), 500 * slow);
     },
-    [x, y] as const,
+    [x, y, SLOW] as const,
   );
   await target.click();
   await sleep(250);

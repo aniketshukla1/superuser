@@ -18,7 +18,7 @@ pub(super) fn tool_ctx<'a>(
     mcp: &McpBundle,
 ) -> crate::core::agent_exec::ToolCtx<'a> {
     // An automation-run session (`__run__…`) is unattended: nobody is watching, so
-    // consequential actions park in the inbox instead of prompting.
+    // anything with consequences waits in the inbox rather than asking for a click.
     let unattended = unattended_run;
     let task = if unattended {
         crate::core::automation::AutomationStore::load(&state.data_dir)

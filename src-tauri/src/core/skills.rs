@@ -1,9 +1,8 @@
-//! Skills — Anthropic SKILL.md format with progressive disclosure. A skill is a
-//! folder containing `SKILL.md` (YAML frontmatter: name, description, optional
-//! allowed-tools) + a markdown body of instructions. At session start only the
-//! catalog (name + description) is injected into the agent's context; the full body
-//! is loaded on demand via the `load_skill` tool. Same frontmatter↔markdown shape
-//! as a persona (persona ⊇ skill).
+//! Skills — a skill is a folder with a `SKILL.md`: YAML frontmatter (name, description,
+//! optional allowed-tools) and a markdown body of instructions, the format Anthropic
+//! defined. Only the catalog (each skill's name and description) goes into the agent's
+//! context when a session starts; a body is fetched when the model calls `load_skill`.
+//! Personas use the same frontmatter-plus-markdown shape (persona ⊇ skill).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;

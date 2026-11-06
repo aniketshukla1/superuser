@@ -9,4 +9,5 @@ mod stats_counts_days;
 mod setup_form_gets;
 mod closed_feed_tells;
 mod unpriced_model_leaves;
+mod talent_route;
 

@@ -1,11 +1,9 @@
 import { invoke, invokeStrict } from "./DictationStatus";
 import { onTauriEvent } from "./desktopPetMascot";
 
-// --- Dev servers: the hidden terminal behind the browser -------------------------
-//
-// Their own pty rooted at the folder the start page read, NOT the shared shell —
-// that one is rooted at the session's workspace, so a relative command like
-// `npm --prefix frontend …` ran against the wrong project entirely.
+// Dev servers: the hidden terminal behind the browser. Each has its own pty in the folder the
+// start page read, NOT the shared shell, which sits in the session's workspace; there a
+// relative command such as `npm --prefix frontend …` ran against the wrong project.
 
 export const devserverStart = (name: string, cwd: string, command: string) =>
   invokeStrict<void>("devserver_start", { name, cwd, command });
@@ -21,14 +19,12 @@ export const onDevserverExit = (handler: (e: { name: string; code: number }) => 
  *  included, which is why the address bar follows the page rather than the typing. */
 export const onBrowserNav = (handler: (url: string) => void) => onTauriEvent<string>("browser-nav", handler);
 
-/** Best-effort open a URL in the user's browser. Uses the Tauri opener plugin if present, else
- * `window.open`. The caller should also render the raw URL so it stays copyable if both no-op
- * (the desktop webview has no opener plugin wired yet). */
+/** Open a URL in the user's browser as well as possible: through the shell's opener plugin
+ *  when it is there, otherwise `window.open`. Callers should show the URL too, so it can be
+ *  copied if neither works (the desktop webview has no opener plugin wired up yet). */
 export function openExternal(url: string): void {
+  const inNewTab = () => window.open(url, "_blank", "noopener,noreferrer");
   const opener = (globalThis as any).__TAURI__?.opener;
-  if (opener?.openUrl) {
-    opener.openUrl(url).catch(() => window.open(url, "_blank", "noopener,noreferrer"));
-    return;
-  }
-  window.open(url, "_blank", "noopener,noreferrer");
+  if (opener?.openUrl) opener.openUrl(url).catch(inNewTab);
+  else inNewTab();
 }

@@ -66,7 +66,7 @@ use super::*;
 
     #[test]
     pub(super) fn a_dead_ref_used_twice_without_looking_is_the_loop() {
-        let dead = |n: &str| call("browser_click", &format!(r#"{{"ref":"{n}","snapshot_id":1}}"#), "That element is no longer on the page. Take a new snapshot and use the refs it returns.");
+        let dead = |n: &str| call("browser_click", &format!(r#"{{"ref":"{n}","snapshot_id":1}}"#), "That element is no longer on the page. Take a new snapshot and pick a ref from it.");
         let look = || call("browser_snapshot", "{}", "e1 button \"Blue\"");
         assert!(no_stale_loop(&browsed("", vec![dead("e1"), look(), dead("e2")])).is_ok(), "one miss, then a look, is recovering");
         assert!(no_stale_loop(&browsed("", vec![dead("e1"), dead("e2")])).is_err());

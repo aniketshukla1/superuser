@@ -20,7 +20,7 @@ export function workbookToSnapshot(XLSX: XLSXModule, wb: import("xlsx").WorkBook
         cellData[row] ??= {};
         // A formula is carried as a formula, not as its stale cached value —
         // Univer recomputes it, which is also how the blank-formula problem
-        // in notes/plans/WORKSPACE-PLAN.md stops being visible to the user.
+        // stops being visible to the user.
         cellData[row][col] = cell.f ? { f: "=" + cell.f } : { v: cell.v as string | number | boolean };
       }
     }

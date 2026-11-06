@@ -65,8 +65,8 @@ export function useNavigationState(prev: ReturnType<typeof useAppState>) {
     // changing, and including it would make the effect chase its own writes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.surface, route.id]);
-  // Where the persona page returns on "back": the active session, or Settings ▸ Personas when it
-  // was opened from there (persona config now lives in Settings).
+  // Where "back" goes from an assistant's page: the open session, or Settings ▸ Personas when
+  // the page was opened from there (assistants are configured in Settings now).
   const [personaViewReturn, setPersonaViewReturn] = useState<"session" | "settings">("session");
   const openPersona = (id: string, from: "session" | "settings" = "session") => {
     setPersonaViewReturn(from);

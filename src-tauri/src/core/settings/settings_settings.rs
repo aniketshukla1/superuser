@@ -112,6 +112,8 @@ impl Default for Settings {
             cos_priorities: String::new(),
             repro_staging: String::new(),
             perf_signals: String::new(),
+            talent_applicants: String::new(),
+            talent_voice: String::new(),
             agent_max_context_tokens: default_agent_max_context_tokens(),
             agent_max_context_turns: default_agent_max_context_turns(),
             agent_max_steps: default_agent_max_steps(),

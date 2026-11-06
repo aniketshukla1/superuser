@@ -114,8 +114,8 @@ pub(super) fn element(node: &Value) -> Option<Element> {
     let name = cap(node["name"]["value"].as_str().unwrap_or(""), 200);
     let value = text_of(&node["value"]["value"]).map(|v| cap(&v, 200)).filter(|v| !v.is_empty());
     let disabled = property(node, "disabled").and_then(|v| v.as_bool()).unwrap_or(false);
-    // `mixed` is the box above a partly ticked list. It is not ticked, and an assistant told it was
-    // left the rows underneath unselected and reported the job done — so "neither" is said
+    // `mixed` is the box above a partly ticked list. It is not ticked; an assistant that read it as
+    // ticked would skip the rows below and call the job finished — so "neither" is said
     // as false, which is also the answer that leads to the right click.
     let checked = match property(node, "checked").and_then(text_of).as_deref() {
         Some("true") => Some(true),

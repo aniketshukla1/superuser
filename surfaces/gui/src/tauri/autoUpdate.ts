@@ -1,12 +1,11 @@
 import { invoke, invokeStrict } from "./DictationStatus";
 
-// --- Auto-update (desktop only; browser builds see null / throw) -----------------
+// Updating the desktop app. In a browser the checks return null and the rest throw.
 
 export type UpdateInfo = { version: string; notes: string };
 
-/** What a check found. `available` is the only thing that should raise a banner;
- *  `reason` says why there is nothing when there is nothing — "you are up to date"
- *  and "this build cannot check" used to be the same null. */
+/** What a check found. Only `available` should bring up a banner; `reason` explains an empty
+ *  answer, because "you're up to date" and "this build can't check" used to be the same null. */
 export type UpdateStatus = {
   available: boolean;
   version: string | null;
@@ -14,20 +13,19 @@ export type UpdateStatus = {
   reason: string | null;
 };
 
-/** Ask the shell whether a newer release exists (verified manifest; see lib.rs). */
+/** Ask the shell whether a newer release exists (from a verified manifest; see lib.rs). */
 export const checkForUpdate = () => invoke<UpdateStatus | null>("check_for_update");
 
-/** Pre-fetch + verify the update bytes in the background so the install is instant.
- * The shell caches them keyed by version; calling again for the same version is a no-op.
- * Rejects when there is no update or the download fails — callers fall back to the
- * download-on-install path. */
+/** Fetch and verify the update in the background so installing is instant. The shell keeps it
+ *  by version, so asking again for the same one does nothing. It fails when there is no update
+ *  or the download fails, and callers then download at install time instead. */
 export const downloadUpdate = () => invokeStrict<void>("download_update");
 
-/** Drop the pre-fetched update bundle (freed on "Later" so a dismissed release
- * doesn't pin tens of MB for a weeks-long app run). */
+/** Drop the fetched update (on "Later"), so a release the user put off doesn't hold tens of MB
+ *  for weeks of uptime. */
 export const clearPendingUpdate = () => invokeStrict<void>("clear_pending_update");
 
-/** Install the update (pre-fetched bytes when available, else download + verify now),
- * then relaunch. Resolves only on failure paths (success restarts the process on macOS;
- * Windows hands off to the installer). */
+/** Install the update, from the fetched copy if there is one or else downloading and verifying
+ *  it now, then relaunch. It only resolves when something failed: on success macOS restarts the
+ *  process and Windows hands over to the installer. */
 export const installUpdate = () => invokeStrict<void>("install_update");

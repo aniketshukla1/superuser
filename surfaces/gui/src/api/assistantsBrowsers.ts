@@ -1,4 +1,4 @@
-import { fetch, httpBase, jsonOf, openWebSocket, wsBase } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody, jsonOf, openWebSocket, wsBase } from "./neverRejectingJson";
 
 // -- The assistants' browsers ----------------------------------------------------------
 //
@@ -46,11 +46,7 @@ export interface ComputersState {
 export type Ok<T = {}> = { ok: boolean; error?: string } & Partial<T>;
 
 export const postJSON = (path: string, body: unknown = {}) =>
-  fetch(`${httpBase()}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  fetch(`${httpBase()}${path}`, jsonBody("POST", body));
 
 export const computerPath = (persona: string) => `/v1/computers/${encodeURIComponent(persona)}`;
 
@@ -128,30 +124,30 @@ export function openComputerSocket(persona: string): WebSocket {
   return openWebSocket(`${wsBase()}/ws/computer/${encodeURIComponent(persona)}`);
 }
 
+/** The browser in the side panel, which belongs to the user. */
 export interface BrowserState {
   open: boolean;
+  status: string;
   url: string;
   title: string;
-  status: string;
+  screenshot_data_url: string;
   last_action: string;
   last_result: string;
   last_error: string;
-  screenshot_data_url: string;
   updated_at: string | null;
   controls: any[];
 }
 
+const panelBrowser = (action: string) => `${httpBase()}/v1/browser/${action}`;
+
 export async function getBrowserState(): Promise<BrowserState> {
-  const res = await fetch(`${httpBase()}/v1/browser/state`);
-  return res.json();
+  return (await fetch(panelBrowser("state"))).json();
 }
 
 export async function takeBrowserScreenshot(): Promise<BrowserState & { ok?: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/browser/screenshot`, { method: "POST" });
-  return res.json();
+  return (await fetch(panelBrowser("screenshot"), { method: "POST" })).json();
 }
 
 export async function closeBrowser(): Promise<{ ok?: boolean; error?: string }> {
-  const res = await fetch(`${httpBase()}/v1/browser/close`, { method: "POST" });
-  return res.json();
+  return (await fetch(panelBrowser("close"), { method: "POST" })).json();
 }

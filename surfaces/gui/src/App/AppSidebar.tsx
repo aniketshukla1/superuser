@@ -1,56 +1,55 @@
 import { Sidebar } from "../components/Sidebar";
+import type { RouteSurface } from "../route";
 import type { AppModel } from "./model/useAppModel";
 
-/** The sidebar, wired to the app's sessions and navigation. */
+/** The sidebar, connected to the app's sessions and navigation. */
 export function AppSidebar({ m }: { m: AppModel }) {
-  const { agent, workspace, surfaces, sessions, projects, sessionId, switchAgent, startNewSession,
-      selectSession, newProject, newSessionInProject, renameConversation, deleteConversation,
-      toggleArchived, togglePinned, openSettings, openPersona, setSurface, setScheduledOpenId,
-      setScheduledNew, surface, navCollapsed, toggleNav, setNavPeek } = m;
+  const { setScheduledOpenId, setSurface, surface } = m;
+  const go = (to: RouteSurface) => () => setSurface(to);
+  const openAutomation = (id: string) => {
+    setScheduledOpenId(id);
+    setSurface("scheduled");
+  };
+  const newAutomation = () => {
+    setScheduledOpenId(null);
+    m.setScheduledNew((count) => count + 1);
+    setSurface("scheduled");
+  };
   return (
     <Sidebar
-        agent={agent}
-        workspace={workspace || ""}
-        surfaces={surfaces}
-        sessions={sessions}
-        projects={projects}
-        activeSession={sessionId}
-        onSwitchAgent={switchAgent}
-        onNewSession={startNewSession}
-        onSelectSession={selectSession}
-        onNewProject={newProject}
-        onNewInProject={newSessionInProject}
-        onRenameSession={renameConversation}
-        onDeleteSession={deleteConversation}
-        onArchiveSession={toggleArchived}
-        onTogglePin={togglePinned}
-        onManage={() => openSettings("appearance")}
-        onOpenPersona={(id) => {
-          openPersona(id, "session");
-        }}
-        onManagePersonas={() => openSettings("personas")}
-        onOpenScheduled={() => setSurface("scheduled")}
-        onOpenAutomation={(id) => {
-          setScheduledOpenId(id);
-          setSurface("scheduled");
-        }}
-        onNewAutomation={() => {
-          setScheduledOpenId(null);
-          setScheduledNew((n) => n + 1);
-          setSurface("scheduled");
-        }}
-        onOpenIntegrations={() => setSurface("integrations")}
-        onOpenAudit={() => setSurface("audit")}
-        onOpenInbox={() => setSurface("inbox")}
-        onOpenBrain={() => setSurface("brain")}
-        scheduledActive={surface === "scheduled"}
-        integrationsActive={surface === "integrations"}
-        auditActive={surface === "audit"}
-        inboxActive={surface === "inbox"}
-        brainActive={surface === "brain"}
-        collapsed={navCollapsed}
-        onCollapse={toggleNav}
-        onPeekLeave={() => setNavPeek(false)}
-      />
+      agent={m.agent}
+      workspace={m.workspace || ""}
+      surfaces={m.surfaces}
+      sessions={m.sessions}
+      projects={m.projects}
+      activeSession={m.sessionId}
+      collapsed={m.navCollapsed}
+      onCollapse={m.toggleNav}
+      onPeekLeave={() => m.setNavPeek(false)}
+      onSwitchAgent={m.switchAgent}
+      onSelectSession={m.selectSession}
+      onNewSession={m.startNewSession}
+      onNewProject={m.newProject}
+      onNewInProject={m.newSessionInProject}
+      onRenameSession={m.renameConversation}
+      onDeleteSession={m.deleteConversation}
+      onArchiveSession={m.toggleArchived}
+      onTogglePin={m.togglePinned}
+      onManage={() => m.openSettings("appearance")}
+      onManagePersonas={() => m.openSettings("personas")}
+      onOpenPersona={(id) => m.openPersona(id, "session")}
+      onOpenAutomation={openAutomation}
+      onNewAutomation={newAutomation}
+      onOpenScheduled={go("scheduled")}
+      onOpenIntegrations={go("integrations")}
+      onOpenAudit={go("audit")}
+      onOpenInbox={go("inbox")}
+      onOpenBrain={go("brain")}
+      scheduledActive={surface === "scheduled"}
+      integrationsActive={surface === "integrations"}
+      auditActive={surface === "audit"}
+      inboxActive={surface === "inbox"}
+      brainActive={surface === "brain"}
+    />
   );
 }

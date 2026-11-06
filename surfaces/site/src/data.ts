@@ -10,13 +10,14 @@ export const ASSISTANTS = [
   { id: "email", name: "Email Assistant", tagline: "Reads your email and drafts the replies you approve" },
   { id: "perf", name: "Product Performance", tagline: "Investigates a slowdown in your metrics — the hotspot, the evidence, and links" },
   { id: "repro", name: "Bug Reproduction", tagline: "Reproduces a bug report on staging, with exact steps and a test case" },
+  { id: "talent", name: "Talent Scout", tagline: "Finds candidates who meet the must-haves — none already in your ATS — with outreach drafts" },
   { id: "coder", name: "Coder", tagline: "Work in a codebase — edit, run, and ship" },
   { id: "analyst", name: "Data Analyst", tagline: "Answer the question that was asked, and show the numbers that complicate it" },
   { id: "finance", name: "Finance Analyst", tagline: "Say where the money actually went, and when it runs out" },
   { id: "expenses", name: "Expense Manager", tagline: "Logs receipts from your email and builds summaries that add up" },
-  { id: "ops", name: "Ops Assistant", tagline: "Operate and investigate — runbooks, logs, infrastructure" },
-  { id: "security", name: "Security Assistant", tagline: "Find and fix security issues — scan, triage, PR" },
-  { id: "dep-audit", name: "Dependency Audit Assistant", tagline: "Vulnerable dependencies — audit, minimal upgrades, PRs" },
+  { id: "ops", name: "Ops Assistant", tagline: "Incidents and runbooks — logs, metrics, infrastructure" },
+  { id: "security", name: "Security Assistant", tagline: "Security problems found and fixed — scan, triage, PR" },
+  { id: "dep-audit", name: "Dependency Audit Assistant", tagline: "Risky dependencies — audit, smallest upgrades, PRs" },
   { id: "cloud-posture", name: "Cloud Posture Assistant", tagline: "Review Terraform and cloud config — read-only, evidence first" },
   { id: "qa", name: "QA Analyst", tagline: "Find what breaks before someone else does, and say what you didn't check" },
   { id: "pm", name: "Product Manager", tagline: "Specify it so it can be built and tested without a meeting" },
@@ -24,6 +25,16 @@ export const ASSISTANTS = [
   { id: "writer", name: "Technical Writer", tagline: "Documentation written from the code, and followed before it ships" },
   { id: "support", name: "Customer Support", tagline: "Solve the problem behind the ticket, and answer even when the answer is no" },
   { id: "hr", name: "HR Partner", tagline: "Describe the job, run the same process for everyone, and write it down" },
+] as const;
+
+/** The six assistants that each own a whole job, and what in the code holds each one to it. */
+export const JOBS = [
+  { id: "email", name: "Email Assistant", job: "Answers mail from senders you allow.", line: "Every reply is a draft in your Inbox. Nothing is sent without your yes." },
+  { id: "expenses", name: "Expense Manager", job: "Logs receipts from email and summarises the week.", line: "The totals are computed, and each one lists the receipts it adds up." },
+  { id: "chief", name: "Chief of Staff", job: "What came in since yesterday, mapped to your priorities.", line: "It can't send a message or move a meeting. It has nothing that could." },
+  { id: "repro", name: "Bug Reproduction", job: "Reproduces a bug report with steps, screenshots and a test case.", line: "Its browser opens your staging site and nothing else, so production data never reaches it." },
+  { id: "perf", name: "Product Performance", job: "Finds where a slowdown is, from your Prometheus.", line: "Every series is compared before and after the change in code. Only a clear shift is called a hotspot." },
+  { id: "talent", name: "Talent Scout", job: "Finds candidates who meet the must-haves, and drafts outreach.", line: "Your ATS export is checked in code, so nobody already in it makes the list. Nobody is contacted." },
 ] as const;
 
 /** The 37 connectors that ship, by area. Plus any MCP server. */

@@ -32,7 +32,7 @@ pub(super) fn start_evolution_scheduler(handle: tauri::AppHandle) {
             //
             // Measured 2026-08-21 against 41 real sessions, the whole scan costs
             // **1.57ms** — so if you are here chasing the multi-second sidecar
-            // stalls in notes/plans/WORKSPACE-PLAN.md §0.3, it is not this. That was tested by
+            // stalls, it is not this. That was tested by
             // reverting to the pre-`spawn_blocking` version, and the stalls did not
             // come back. The cost does grow with session count and transcript
             // length, which is the only reason this is worth keeping.

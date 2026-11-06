@@ -32,8 +32,8 @@ test("parked sender files under ITS workspace; Allow & deliver adds to that allo
   // pk1 belongs to T1DL — its Waiting row renders in that workspace's group only.
   const t1 = page.getByTestId("slack-workspace-T1DL");
   await expect(t1.getByTestId("waiting-pk1")).toContainText("Maya");
-  await expect(t1.getByTestId("waiting-pk1")).toContainText("in #ocw-test");
-  await expect(t1.getByTestId("waiting-pk1")).toContainText("hey ocw, can you summarize this thread?");
+  await expect(t1.getByTestId("waiting-pk1")).toContainText("in #team-test");
+  await expect(t1.getByTestId("waiting-pk1")).toContainText("hey superuser, can you summarize this thread?");
   await expect(page.getByTestId("slack-workspace-T2AC").getByTestId("waiting-pk1")).toHaveCount(0);
 
   await page.getByTestId("parked-allow-deliver-pk1").click();
@@ -55,7 +55,7 @@ test("sessions listening in a workspace: listed with unsubscribe", async ({ page
 
   const t1 = page.getByTestId("slack-workspace-T1DL");
   await expect(t1.getByTestId("listening-slack")).toContainText("Weekly plan 1");
-  await expect(t1.getByTestId("listening-slack")).toContainText("#ocw-test");
+  await expect(t1.getByTestId("listening-slack")).toContainText("#team-test");
 
   await t1.getByTitle("Unsubscribe this session").click();
   await expect(t1.getByTestId("listening-slack")).toHaveCount(0); // row hides when empty

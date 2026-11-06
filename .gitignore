@@ -51,3 +51,6 @@ HARNESS-HISTORY.json
 
 # README captures before sizing; regenerate with scripts/readme-assets.py
 docs/assets/raw/
+
+# /brag launch-video work (deliverables are copied into docs/assets and the site)
+brag-output/

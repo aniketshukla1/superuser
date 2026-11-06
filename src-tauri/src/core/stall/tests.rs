@@ -12,7 +12,7 @@ use super::*;
     #[test]
     fn the_sentence_says_what_happened_and_what_to_try() {
         let s = sentence("gemma4:12b", Duration::from_secs(300), true);
-        assert!(s.starts_with("gemma4:12b stopped responding."), "{s}");
+        assert!(s.starts_with("gemma4:12b went quiet:"), "{s}");
         assert!(s.contains("5 minutes") && s.contains("Ollama"), "{s}");
         assert!(sentence("claude-opus-5", Duration::from_secs(60), false).contains("provider is reachable"));
     }
@@ -60,7 +60,7 @@ use super::*;
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let said = end_turn(&dir, "__run__run-7", "assistant", "gemma4:12b", Duration::from_secs(300), true);
-        assert!(said.starts_with("gemma4:12b stopped responding."), "{said}");
+        assert!(said.starts_with("gemma4:12b went quiet:"), "{said}");
         let rows = crate::core::audit::recent(&dir, 10);
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].event_name(), "turn.stalled");

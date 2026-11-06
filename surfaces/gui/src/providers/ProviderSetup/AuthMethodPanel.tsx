@@ -2,93 +2,97 @@ import type { ReactNode } from "react";
 import type { ProviderField } from "../../api";
 import type { ProviderSetupState } from "./ProviderSetupState";
 
-const label = "block text-sm text-muted mt-3 mb-1";
+type Choice = NonNullable<ProviderField["choices"]>[number];
 
-/** Auth-method segmented control + the selected method's panel (owner call 2026-07-26):
- * one joined track, then a soft inset card holding only that method's description,
- * fields, and its own Test & save footer. */
-export function AuthMethodPanel({
-  ps,
-  tp,
-  choice,
-  method,
-  methodFields,
-  fieldRow,
-}: {
+const SEGMENT = "flex gap-1.5 items-center px-3 py-1.5 rounded-lg text-sm transition-colors whitespace-nowrap";
+const SEGMENT_ON = "bg-panel font-medium ring-1 ring-line shadow-sm text-ink";
+const SEGMENT_OFF = "hover:text-ink text-muted";
+
+/** The joined track of sign-in methods. */
+function MethodTrack({ ps, tp, choice, method }: { ps: ProviderSetupState; tp: string; choice: ProviderField; method: string }) {
+  return (
+    <div className="bg-line/40 border border-line gap-0.5 inline-flex p-0.5 rounded-xl2" role="radiogroup" aria-label={choice.label}>
+      {(choice.choices ?? []).map((option) => {
+        const on = option.value === method;
+        return (
+          <button
+            key={option.value}
+            role="radio"
+            aria-checked={on}
+            className={`${SEGMENT} ${on ? SEGMENT_ON : SEGMENT_OFF}`}
+            data-testid={`${tp}-choice-${choice.key}-${option.value}`}
+            onClick={() => ps.setFieldValue(choice.key, option.value)}
+          >
+            {option.label}
+            {option.tag && <span className="bg-accentSoft font-semibold px-1.5 py-px rounded-full text-accent text-xs">{option.tag}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A terminal command shown as a button that copies it. */
+function CopyCommand({ tp, command }: { tp: string; command: string }) {
+  return (
+    <button
+      className="bg-panel border border-line font-mono gap-2 hover:border-lineStrong inline-flex items-center mt-2.5 px-2.5 py-1.5 rounded-lg text-ink text-sm"
+      onClick={() => void navigator.clipboard?.writeText(command)}
+      title="Copy command"
+      data-testid={`${tp}-cmd-copy`}
+    >
+      {command}
+      <span className="font-sans text-faint text-xs">⧉</span>
+    </button>
+  );
+}
+
+/** The card's footer: whether it is saved, and Test & save. */
+function TestFooter({ ps, tp }: { ps: ProviderSetupState; tp: string }) {
+  const testing = ps.verify.state === "testing";
+  return (
+    <div className="border-line border-t flex gap-3 items-center justify-between mt-3.5 pt-3">
+      {ps.savedState ? (
+        <span className="font-medium text-ok text-xs" data-testid={`${tp}-saved-pill`}>
+          ✓ Tested &amp; saved
+        </span>
+      ) : (
+        <span className="text-faint text-xs">Runs one read-only check, then saves.</span>
+      )}
+      <button
+        className="bg-accent border border-accent disabled:opacity-40 font-medium hover:brightness-105 px-4 py-1.5 rounded-lg shrink-0 text-md text-white"
+        onClick={() => ps.runTestAndSave()}
+        disabled={testing}
+        data-testid={`${tp}-test`}
+      >
+        {testing ? "…" : <>Test &amp; save</>}
+      </button>
+    </div>
+  );
+}
+
+type Props = {
   ps: ProviderSetupState;
   tp: string;
   choice: ProviderField;
   method: string;
   methodFields: ProviderField[];
   fieldRow: (f: ProviderField, testable: boolean) => ReactNode;
-}) {
-  const selected = choice.choices?.find((c) => c.value === method);
+};
+
+/** How to sign in to a provider (owner, 2026-07-26): one joined track of methods, then a soft
+ *  inset card with only the chosen method's description, fields and its own Test & save. */
+export function AuthMethodPanel({ ps, tp, choice, method, methodFields, fieldRow }: Props) {
+  const picked: Choice | undefined = choice.choices?.find((option) => option.value === method);
   return (
     <div>
-      <label className={label}>{choice.label}</label>
-      <div
-        className="inline-flex gap-0.5 rounded-xl2 border border-line bg-line/40 p-0.5"
-        role="radiogroup"
-        aria-label={choice.label}
-      >
-        {(choice.choices || []).map((c) => {
-          const active = method === c.value;
-          return (
-            <button
-              key={c.value}
-              role="radio"
-              aria-checked={active}
-              className={
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors " +
-                (active
-                  ? "bg-panel text-ink font-medium shadow-sm ring-1 ring-line"
-                  : "text-muted hover:text-ink")
-              }
-              data-testid={`${tp}-choice-${choice.key}-${c.value}`}
-              onClick={() => ps.setFieldValue(choice.key, c.value)}
-            >
-              {c.label}
-              {c.tag && (
-                <span className="text-xs font-semibold text-accent bg-accentSoft rounded-full px-1.5 py-px">
-                  {c.tag}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-2.5 rounded-xl border border-line bg-paper/60 px-4 pb-3.5 pt-3">
-        {selected?.desc && <p className="text-sm text-muted">{selected.desc}</p>}
-        {selected?.command && (
-          <button
-            className="mt-2.5 inline-flex items-center gap-2 rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm font-mono text-ink hover:border-lineStrong"
-            onClick={() => void navigator.clipboard?.writeText(selected.command || "")}
-            title="Copy command"
-            data-testid={`${tp}-cmd-copy`}
-          >
-            {selected.command}
-            <span className="font-sans text-xs text-faint">⧉</span>
-          </button>
-        )}
-        {methodFields.map((f) => fieldRow(f, false))}
-        <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-line pt-3">
-          {ps.savedState ? (
-            <span className="text-xs font-medium text-ok" data-testid={`${tp}-saved-pill`}>
-              ✓ Tested &amp; saved
-            </span>
-          ) : (
-            <span className="text-xs text-faint">Runs one read-only check, then saves.</span>
-          )}
-          <button
-            className="shrink-0 rounded-lg border border-accent bg-accent px-4 py-1.5 text-md font-medium text-white hover:brightness-105 disabled:opacity-40"
-            onClick={() => ps.runTestAndSave()}
-            disabled={ps.verify.state === "testing"}
-            data-testid={`${tp}-test`}
-          >
-            {ps.verify.state === "testing" ? "…" : <>Test &amp; save</>}
-          </button>
-        </div>
+      <label className="block mb-1 mt-3 text-muted text-sm">{choice.label}</label>
+      <MethodTrack ps={ps} tp={tp} choice={choice} method={method} />
+      <div className="bg-paper/60 border border-line mt-2.5 pb-3.5 pt-3 px-4 rounded-xl">
+        {picked?.desc && <p className="text-muted text-sm">{picked.desc}</p>}
+        {picked?.command && <CopyCommand tp={tp} command={picked.command} />}
+        {methodFields.map((field) => fieldRow(field, false))}
+        <TestFooter ps={ps} tp={tp} />
       </div>
     </div>
   );

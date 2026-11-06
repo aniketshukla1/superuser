@@ -1,24 +1,29 @@
 import { invoke, invokeStrict, type DictationDownloadProgress, type DictationStatus } from "./DictationStatus";
 
-// --- Desktop pet / mascot window (see src/pet/) ---------------------------------
+// The pet window (src/pet/), events from the shell, dictation and the voice.
+
 export const showMainWindow = () => invoke<boolean>("show_main_window");
 export const setMascotVisible = (visible: boolean) => invoke<boolean>("set_mascot_visible", { visible });
-/** Drag the (borderless) pet window by its body — core:window:allow-start-dragging. */
-export const dragPetWindow = () => {
-  (globalThis as any).__TAURI__?.window?.getCurrentWindow?.()?.startDragging?.();
-};
-/** Subscribe to a Tauri event; returns an unlisten fn (no-op in the browser). */
+
+/** Move the borderless pet window by dragging its body (core:window:allow-start-dragging). */
+export function dragPetWindow() {
+  const current = (globalThis as any).__TAURI__?.window?.getCurrentWindow?.();
+  current?.startDragging?.();
+}
+
+/** Listen for a shell event; the result stops listening. In a browser it does nothing. */
 export async function onTauriEvent<T>(event: string, handler: (payload: T) => void): Promise<() => void> {
   const listen = (globalThis as any).__TAURI__?.event?.listen;
   if (!listen) return () => {};
-  return (await listen(event, (e: { payload: T }) => handler(e.payload))) as () => void;
+  const stop = await listen(event, (message: { payload: T }) => handler(message.payload));
+  return stop as () => void;
 }
 
-// Local dictation is native-only. The browser build deliberately keeps this unavailable rather
-// than silently sending microphone audio to a server.
+// Dictation runs only in the desktop app, on this machine. A browser build leaves it off on
+// purpose rather than quietly sending microphone audio to a server.
 export const getDictationStatus = () => invoke<DictationStatus>("get_dictation_status");
-/** Instantaneous mic loudness 0..1 while recording (0 otherwise) — drives the composer's
- * live waveform. Cheap; poll at ~10Hz. */
+/** How loud the microphone is right now, 0 to 1 (0 when not recording), for the composer's
+ *  live waveform. Cheap enough to poll about ten times a second. */
 export const getDictationLevel = () => invoke<number>("dictation_level");
 export const startDictation = () => invokeStrict<DictationStatus>("start_dictation");
 export const stopDictation = () => invokeStrict<string>("stop_dictation");
@@ -80,12 +85,7 @@ export async function listenVoice<T>(event: string, handler: (payload: T) => voi
   return onTauriEvent<T>(event, handler);
 }
 
-export async function listenDictationDownloadProgress(
-  handler: (progress: DictationDownloadProgress) => void,
-): Promise<() => void> {
-  const listen = (globalThis as any).__TAURI__?.event?.listen;
-  if (!listen) return () => {};
-  return (await listen("dictation-download-progress", (event: { payload: DictationDownloadProgress }) => {
-    handler(event.payload);
-  })) as () => void;
+/** Progress while the dictation model downloads. */
+export function listenDictationDownloadProgress(handler: (progress: DictationDownloadProgress) => void): Promise<() => void> {
+  return onTauriEvent<DictationDownloadProgress>("dictation-download-progress", handler);
 }

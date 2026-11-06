@@ -110,17 +110,17 @@ pub(in crate::core::automation) fn named_zone(name: &str) -> Option<jiff::tz::Ti
 /// work: a routine that was supposed to append a line to a page once read its
 /// own instruction as "what routines do I have?", listed them, did nothing, and finished
 /// green. The frame says which turn this is and what to do in it.
-pub const FIRING_FRAME: &str = "One of the user's automations is firing right now, on its schedule, and this turn is that firing. \
-Carry out the instruction below in this turn: do the work now, then say what happened. Don't create, list or change any \
-automation unless the instruction itself asks you to.";
+pub const FIRING_FRAME: &str = "This turn is one of the user's automations going off on its schedule. \
+Do what the instruction below says, now, in this turn, and then report what happened. Leave automations alone (no \
+creating, listing or editing them) unless the instruction asks for that.";
 
 /// The same frame for a run someone started with Run now. The instruction is the same, for the
 /// same reason — a manual run of "every morning, summarise my inbox" is just as likely to be read
 /// as a request to schedule something — and only the first sentence differs, because "on its
 /// schedule" would be a false thing to tell a model about a run a person just started.
-pub const MANUAL_FRAME: &str = "One of the user's automations is running right now because they pressed Run now, and this turn is that run. \
-Carry out the instruction below in this turn: do the work now, then say what happened. Don't create, list or change any \
-automation unless the instruction itself asks you to.";
+pub const MANUAL_FRAME: &str = "This turn is one of the user's automations, started by hand with Run now. \
+Do what the instruction below says, now, in this turn, and then report what happened. Leave automations alone (no \
+creating, listing or editing them) unless the instruction asks for that.";
 
 /// An automation's instruction as the model is given it on a firing or a manual run.
 pub fn framed(instructions: &str, manual: bool) -> String {

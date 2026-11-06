@@ -16,7 +16,7 @@ use super::*;
         s.apply_patch(&json!({ "standing_instructions": "  Use British spelling.  " }));
         let b = s.standing_block();
         assert!(b.contains("Use British spelling."), "{b}");
-        assert!(b.contains("the role decides what you do and these decide how you do it"), "{b}");
+        assert!(b.contains("your role settles what to do; these instructions settle how to do it"), "{b}");
         s.apply_patch(&json!({ "standing_instructions": "x".repeat(STANDING_INSTRUCTIONS_MAX + 500) }));
         assert_eq!(s.standing_instructions.chars().count(), STANDING_INSTRUCTIONS_MAX);
         s.apply_patch(&json!({ "standing_instructions": "" }));

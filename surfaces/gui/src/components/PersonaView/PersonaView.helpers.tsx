@@ -23,7 +23,7 @@ export const DETAIL = {
   id: "ops",
   name: "Ops Assistant",
   icon: "🛠️",
-  tagline: "Operate and investigate",
+  tagline: "Incidents and runbooks",
   description: "A careful, methodical operations engineer.",
   enabled: true,
   tools: ["files", "search", "shell"],

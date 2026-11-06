@@ -21,8 +21,8 @@ impl McpRegistry {
 
     pub fn list(&self) -> Vec<McpEntry> {
         let Ok(text) = std::fs::read_to_string(&self.path) else { return Vec::new() };
-        // A hand-edited file that no longer parses must not take the tab down; an
-        // unreadable registry reads as an empty one and the user's next write fixes it.
+        // If someone edits the file by hand and breaks it, the tab still loads: an
+        // unreadable registry counts as empty, and the next save from the app repairs it.
         let mut v: Vec<McpEntry> = serde_json::from_str(&text).unwrap_or_default();
         v.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
         v

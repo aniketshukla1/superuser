@@ -20,22 +20,25 @@ pub(super) const MIN_PLAUSIBLE_BYTES: u64 = 100_000_000;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DictationStatus {
-    pub recording: bool,
-    pub model_installed: bool,
-    pub model_verified: bool,
-    pub test_passed: bool,
-    pub download_in_progress: bool,
+    /// Whether this machine can dictate at all, and if not, why.
+    pub supported: bool,
+    pub compatibility_reason: Option<String>,
+    pub device_summary: String,
+    /// The speech model: which one, its size, and how far along it is.
     pub model_name: String,
     pub model_bytes: u64,
-    pub supported: bool,
-    pub device_summary: String,
-    pub compatibility_reason: Option<String>,
+    pub model_installed: bool,
+    pub model_verified: bool,
+    pub download_in_progress: bool,
+    /// Right now.
+    pub test_passed: bool,
+    pub recording: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct DownloadProgress {
-    pub downloaded_bytes: u64,
     pub total_bytes: u64,
+    pub downloaded_bytes: u64,
 }
 
 pub fn model_path(data_dir: &Path) -> PathBuf {

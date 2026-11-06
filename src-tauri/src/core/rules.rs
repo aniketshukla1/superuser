@@ -32,10 +32,10 @@
 //!
 //! # What a result means
 //!
-//! Only `true` and `false` answer "does this rule apply". Anything else — a string,
-//! a number, an error — is a broken rule, and it is the *caller* that decides what a
-//! broken rule means, because the safe answer differs by list: a broken deny must
-//! still deny, and a broken allow must not permit. See `core::boundaries`.
+//! A rule answers "does this apply" with `true` or `false` and nothing else. A string,
+//! a number or an error means the rule is broken, and the *caller* settles what that
+//! means, since the safe reading depends on the list: a broken deny still refuses, and a
+//! broken allow grants nothing. See `core::boundaries`.
 
 use std::collections::BTreeMap;
 

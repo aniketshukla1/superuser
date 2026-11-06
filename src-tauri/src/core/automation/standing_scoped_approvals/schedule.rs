@@ -1,9 +1,9 @@
 use super::super::*;
 
-// An `always_allowed_tools` entry is either a bare tool name (allows the tool against
-// any argument) or "tool target" (one space; tool names never contain spaces) binding
-// the allowance to one exact target (a channel, a recipient, …). Rules live on the task
-// so revocation is per-automation and deleting the task takes them along.
+// Each `always_allowed_tools` entry is a tool name alone, which allows that tool with any
+// argument, or "tool target" (separated by one space, which no tool name contains), which
+// allows it for that one target only (a channel, a recipient, …). The rules belong to the
+// task, so they are revoked per automation and go when the task is deleted.
 
 pub fn rule_entry(tool: &str, target: Option<&str>) -> String {
     match target {

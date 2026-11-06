@@ -135,8 +135,8 @@ impl Recall {
         }
         let mut s = String::from("\n\n---\n**Where this came from**\n");
         // First, because it is the strongest claim on the page: a complete listing
-        // means the answer enumerated rather than sampled, and the reader deserves
-        // to know which of the two they are looking at.
+        // means the answer enumerated rather than sampled, and the reader should be
+        // told which of those they are reading.
         for inv in &self.inventories {
             if inv.complete() {
                 s.push_str(&format!(

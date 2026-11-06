@@ -79,6 +79,12 @@ impl Settings {
         if let Some(v) = patch.get("perf_signals").and_then(|v| v.as_str()) {
             self.perf_signals = v.trim().chars().take(8_000).collect();
         }
+        if let Some(v) = patch.get("talent_applicants").and_then(|v| v.as_str()) {
+            self.talent_applicants = v.trim().chars().take(1_000).collect();
+        }
+        if let Some(v) = patch.get("talent_voice").and_then(|v| v.as_str()) {
+            self.talent_voice = v.trim().chars().take(2_000).collect();
+        }
         if let Some(v) = patch.get("repro_staging").and_then(|v| v.as_str()) {
             self.repro_staging = v.trim().chars().take(500).collect();
         }

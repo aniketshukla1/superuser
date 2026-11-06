@@ -36,7 +36,7 @@ pub(super) const STANDING_INSTRUCTIONS: &[Task] = &[
     Task {
         id: "a_firing_does_the_work_not_the_scheduling",
         group: "routine",
-        prompt: "One of the user's automations is firing right now, on its schedule, and this turn is that firing. Carry out the instruction below in this turn: do the work now, then say what happened. Don't create, list or change any automation unless the instruction itself asks you to.\n\nEvery run, append the line {{MARKER}} to notes.md.",
+        prompt: "This turn is one of the user's automations going off on its schedule. Do what the instruction below says, now, in this turn, and then report what happened. Leave automations alone (no creating, listing or editing them) unless the instruction asks for that.\n\nEvery run, append the line {{MARKER}} to notes.md.",
         fixture: &[("notes.md", "# Notes\n\n[start] nothing yet\n")],
         vault: &[],
         boundaries: None,

@@ -1,25 +1,19 @@
-// Launch feature flags.
-//
-// A flag is read at render time (not import time) so tests and a running build can flip
-// it via localStorage without a reload race: `localStorage.setItem(key, "1")` shows the
-// feature, `"0"` force-hides it, anything else falls back to the shipped default.
+// Feature flags for launch. Each is read when it is used, not when the module loads, so a
+// test or a running build can switch one through localStorage without a reload: "1" turns
+// it on, "0" turns it off, and anything else leaves the shipped default.
 
-function flag(key: string, fallback: boolean): boolean {
+function readFlag(name: string, shipped: boolean): boolean {
+  let stored: string | null = null;
   try {
-    const v = localStorage.getItem(key);
-    if (v === "1") return true;
-    if (v === "0") return false;
+    stored = localStorage.getItem(name);
   } catch {
-    // No storage (jsdom teardown, privacy mode) — ship the default.
+    // Storage unavailable (a torn-down jsdom, private browsing): use the default.
   }
-  return fallback;
+  return stored === "1" ? true : stored === "0" ? false : shipped;
 }
 
-/** Personas management is hidden for launch (owner call, 2026-07-19): the Settings tab
- * and the "Manage personas…" menu entry stay off until the persona catalog is ready.
- * The e2e suite sets `ocw.flag.personas` to keep the hidden flows covered. */
-// ON for Superuser. With personas hidden the sidebar falls back to
-// the flat chronological list — a wall of truncated prompts with no sense of who
-// did what. Assistants are the organising idea of this product, so the accordion that
-// groups sessions under the assistant that ran them is the right default.
-export const showPersonas = () => flag("ocw.flag.personas", true);
+/** Assistant management: the Settings tab and the "Manage personas…" entry. On by default,
+ *  because assistants are how this app organises work: the sidebar groups sessions under
+ *  the assistant that ran them instead of showing one flat list of prompts. Tests switch
+ *  it with `superuser.flag.personas`. */
+export const showPersonas = () => readFlag("superuser.flag.personas", true);

@@ -33,19 +33,20 @@ pub use computer::{current_url, element_for};
 /// The part of the tool guidance an assistant is given only when it has a browser: an
 /// assistant is not told about hands it has not got.
 pub const GUIDANCE: &str = "\n\n## Your browser\n\n\
-You have your own web browser: a real Chrome that stays signed in to the sites the user has signed it into, and that \
-the user can watch. When you need to act on a website — or read a page that needs a sign-in or JavaScript — open it \
-with browser_navigate and answer from the text it returns. Don't tell the user to go and look: you have read it. To \
-put a page in front of the user instead, use browser_open.\n\n\
-To act on a page, call browser_snapshot first. It lists every field, button and link with a ref such as e4 and a \
-snapshot_id; then call browser_type, browser_click or browser_key with those refs and that snapshot_id. Never invent \
-a ref. If an action says the refs are out of date, the page changed: take a new snapshot. After submitting \
-something, call browser_read and say what the page now says — not only that you clicked.\n\n\
-Some pages need the user: a sign-in, a password, a code sent to their phone, a CAPTCHA. Then call \
-browser_request_help and say exactly what they need to do. Calling it IS asking — writing 'please sign in and let me \
-know' in your answer reaches nobody and leaves the page where it is. Never ask the user for a password or a code in \
-this conversation. When you need ONE value only, call browser_request_secret with that field's ref: the user types it \
-into a masked box that goes straight into the page, and you never see it.\n\n\
-While the user has control of your browser, your actions are refused. That is not an error: wait, and continue when \
-they hand it back. If a boundary refuses an action, say plainly what was stopped and stop — don't try another way to \
-do the same thing.";
+You have a web browser of your own: a real Chrome, kept signed in to the sites the user has signed it into, which \
+the user can watch. Whenever a task means doing something on a website, or reading a page that needs a sign-in or \
+JavaScript, load it with browser_navigate and answer from the text you get back. Don't send the user off to look: you \
+have already read it. To show the user a page instead, use browser_open.\n\n\
+Before acting on a page, call browser_snapshot. It lists the fields, buttons and links, each with a ref like e4, \
+along with a snapshot_id; pass those refs and that snapshot_id to browser_type, browser_click or browser_key. Only use \
+refs the snapshot gave you. When an action reports the refs are out of date, the page has changed, so snapshot again. \
+Once you have submitted something, call browser_read and tell the user what the page says now, not just that you \
+clicked.\n\n\
+Some steps only the user can do: signing in, a password, a code texted to their phone, a CAPTCHA. For those, call \
+browser_request_help with precise instructions. The call is the request: a sentence in your reply asking them to \
+sign in reaches no one and changes nothing on the page. Never ask for a password or code in this conversation. When \
+all you need is ONE value, call browser_request_secret on that field's ref; the user enters it in a hidden input that \
+fills the page directly, and it never reaches you.\n\n\
+While the user is in control of your browser, your actions will be refused. That isn't a failure: wait, and carry \
+on once they give it back. If a boundary refuses an action, tell the user plainly what was blocked and stop there; \
+don't look for another route to the same result.";

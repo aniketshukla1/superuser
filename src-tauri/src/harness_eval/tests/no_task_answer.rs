@@ -163,7 +163,7 @@ use super::*;
         // A fixture with malformed frontmatter does not fail loudly — `parse_file`
         // falls back to defaults, so the memory silently loses its date and its
         // origin. `prefers_the_newer_fact` would then be unfalsifiable: both halves
-        // undated, and the task red for a reason that has nothing to do with the
+        // undated, and the task red for a reason unrelated to the
         // harness. Parse them here, where it is cheap to be sure.
         let d = std::env::temp_dir().join(format!("bba-vaultfix-{}", std::process::id()));
         std::fs::create_dir_all(&d).unwrap();

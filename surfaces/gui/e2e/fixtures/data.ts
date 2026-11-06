@@ -49,7 +49,7 @@ export const PERSONAS = {
     { id: "chat", name: "Chat", icon: "chat", tagline: "Quick questions — no workspace", needs_workspace: false, builtin: true, family: "knowledge", workspace: "none", tools: [], enabled: true, surfaced: false, default: false },
     // The builtin manifest's own name (personas_builtin/ops.md). Chrome shows it short —
     // shortPersonaName drops the " Assistant" — so the sidebar group reads "Ops".
-    { id: "ops", name: "Ops Assistant", icon: "wrench", tagline: "Operate and investigate — runbooks, logs, infrastructure", needs_workspace: true, builtin: true, family: "knowledge", workspace: "deliverable", tools: ["files", "shell"], enabled: true, surfaced: true, default: false },
+    { id: "ops", name: "Ops Assistant", icon: "wrench", tagline: "Incidents and runbooks — logs, metrics, infrastructure", needs_workspace: true, builtin: true, family: "knowledge", workspace: "deliverable", tools: ["files", "shell"], enabled: true, surfaced: true, default: false },
     // A non-builtin install (disabled pending consent — invisible to picker specs) so the
     // Personas page's delete/enable affordances have a target.
     { id: "acme-notes", name: "Acme Notes", icon: "pencil", tagline: "Acme's note-taking coworker", needs_workspace: true, builtin: false, family: "knowledge", workspace: "deliverable", tools: ["files"], enabled: false, surfaced: false, default: false },

@@ -1,6 +1,6 @@
 ---
 name: security-fix-pr
-description: Turn triaged security findings into a focused, reviewable fix branch
+description: Take security findings that have been triaged and land them as one focused fix branch
 allowed-tools: grep, list_dir, read_file, run_shell
 ---
 Ship the fix as something a colleague can actually review.
@@ -13,7 +13,7 @@ Ship the fix as something a colleague can actually review.
    project has a validation helper, use it; if it has an escaping convention, follow it. A
    fix that fights the surrounding style will be reverted by the next person who touches
    the file.
-4. **Add the test that would have caught it.** A security fix without a regression test is
+4. **Write the test that fails without the fix.** A security fix without a regression test is
    a security fix with an expiry date. Where the harness makes that unreasonable, say so
    rather than skipping it silently.
 5. **Run the tests and report the real result.** If they fail, fix or say so — never

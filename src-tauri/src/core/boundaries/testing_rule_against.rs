@@ -33,10 +33,10 @@ pub struct Report {
 
 pub const CHANGES_CAP: usize = 50;
 
-/// What these boundaries would have decided about actions that already happened.
+/// How these boundaries would have ruled on actions already taken.
 ///
-/// Replay, not simulation: the context is rebuilt from the recorded row by
-/// [`context`], the function the gateway itself used. Only decision rows are
+/// This replays rather than simulates: each recorded row is turned back into a context
+/// by [`context`], the same function the gateway used at the time. Only decision rows are
 /// replayed — a failure or a stop is a second row about an action already counted.
 pub fn replay(candidate: &Boundaries, rows: &[Entry]) -> Report {
     let loaded = compile(candidate.clone(), None);

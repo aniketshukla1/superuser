@@ -1,5 +1,5 @@
-/* Tailwind layer — utilities for the mock-parity restyle. Imported before styles.css so the
-   app's existing base rules still win on surfaces not yet ported to utility classes. */
+/* Tailwind's three layers. This file loads before styles.css, so the app's own base rules
+   still apply wherever a surface has not moved to utility classes. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

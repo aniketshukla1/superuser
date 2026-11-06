@@ -6,11 +6,10 @@ pub const FLOOR: usize = 12;
 /// How long the chooser gets before the run goes ahead with everything.
 pub(super) const TIMEOUT: std::time::Duration = std::time::Duration::from_secs(20);
 
-pub(super) const INSTRUCTIONS: &str = "You pick which of a person's saved procedures (\"skills\") a request needs.\n\n\
-Answer with JSON and nothing else: {\"skills\": [\"skill-name\", ...]}. Use the names exactly as given.\n\n\
-Lean towards including one. Choosing a skill that turns out to be unnecessary costs almost nothing. \
-Failing to choose one that was needed means the work cannot be done at all. When in doubt, include it. \
-If none of them are about this request, answer {\"skills\": []}.";
+pub(super) const INSTRUCTIONS: &str = "Decide which of a person's saved procedures (\"skills\") this request will need.\n\n\
+Reply with JSON only: {\"skills\": [\"skill-name\", ...]}, using the names exactly as listed.\n\n\
+Err on the side of including. An extra skill costs next to nothing; a missing one leaves the work impossible. \
+If unsure, include it. If no skill relates to the request, reply {\"skills\": []}.";
 
 /// Why a run offered what it offered — for the trace, and for the ablation's report.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

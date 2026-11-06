@@ -1,6 +1,6 @@
-//! Personas — a persona is a specialized "assistant" defined by a markdown
-//! manifest: a YAML frontmatter block declaring identity + capabilities, followed
-//! by a markdown body that IS the system prompt. The same frontmatter↔markdown
+//! Personas — each assistant is described by one markdown file: YAML frontmatter
+//! for who it is and what it may use, then a markdown body that becomes its system
+//! prompt word for word. The same frontmatter↔markdown
 //! shape is reused by skills (persona ⊇ skill).
 
 use std::collections::HashMap;

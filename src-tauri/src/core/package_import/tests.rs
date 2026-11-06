@@ -23,8 +23,8 @@ use super::*;
     skills: [bot-creator, find-a-doc, not-in-package]
   - id: remote-risk
     name: Remote Risk
-    title: Risk
-    role_description: Investigate policies.
+    title: Compliance
+    role_description: Check claims against the rules.
     type: remote-ag-ui
     endpoint: ${{RISK_URL:-https://risk.example.com/agui}}
   - id: unset-remote

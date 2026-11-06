@@ -1,49 +1,44 @@
 import type { ProviderSetupState } from "./ProviderSetupState";
 
-const label = "block text-sm text-muted mt-3 mb-1";
-const input = "w-full px-3 py-2 rounded-lg border bg-panel text-md outline-none focus:border-accent";
+const LABEL = "block mb-1 mt-3 text-muted text-sm";
+const INPUT = "bg-panel border border-line focus:border-accent outline-none px-3 py-2 rounded-lg text-md w-full";
+const SAVED_PILL = "-translate-y-1/2 absolute bg-okSoft font-medium pointer-events-none px-2 py-0.5 right-2 rounded-full text-ok text-xs top-1/2";
 
-/** Custom endpoint (keyed providers only): a quiet disclosure below the key help, with
- * enough separation to read as its own advanced row — no explainer copy (owner calls
- * 2026-07-18 + 2026-07-19). */
+/** A custom endpoint, for providers that take a key: a quiet disclosure under the key help,
+ *  far enough below it to read as an advanced row of its own, with no explaining text (owner,
+ *  2026-07-18 and 2026-07-19). */
 export function CustomEndpoint({ ps, tp }: { ps: ProviderSetupState; tp: string }) {
-  const { info } = ps;
-  const keyed = (info?.fields || []).some((x) => x.secret);
-  const ep = keyed ? (info?.fields || []).find((f) => f.key === "base_url") : undefined;
-  if (!ep) return null;
-  if (!ps.showEndpoint)
+  const fields = ps.info?.fields ?? [];
+  const endpoint = fields.some((field) => field.secret) ? fields.find((field) => field.key === "base_url") : undefined;
+  if (!endpoint) return null;
+  if (!ps.showEndpoint) {
     return (
-      <button
-        className="block self-start text-sm text-muted hover:text-ink mt-4"
-        onClick={() => ps.setShowEndpoint(true)}
-        data-testid={`${tp}-endpoint-link`}
-      >
+      <button className="block hover:text-ink mt-4 self-start text-muted text-sm" onClick={() => ps.setShowEndpoint(true)} data-testid={`${tp}-endpoint-link`}>
         Custom endpoint ⌄
       </button>
     );
+  }
+  const key = endpoint.key;
   return (
     <div className="mt-4">
-      <label className={label}>{ep.label}</label>
+      <label className={LABEL}>{endpoint.label}</label>
       <div className="relative">
         <input
-          className={input + " border-line"}
+          className={INPUT}
           type="text"
-          placeholder={ep.placeholder}
-          value={ps.fields[ep.key] || ""}
-          data-testid={`${tp}-field-${ep.key}`}
-          onChange={(e) => ps.setFieldValue(ep.key, e.target.value)}
-          onBlur={() => void ps.saveField(ep.key)}
+          placeholder={endpoint.placeholder}
+          value={ps.fields[key] || ""}
+          data-testid={`${tp}-field-${key}`}
+          onChange={(e) => ps.setFieldValue(key, e.target.value)}
+          onBlur={() => void ps.saveField(key)}
         />
-        {ps.fieldSaved === ep.key && (
-          <span
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-ok bg-okSoft rounded-full px-2 py-0.5 pointer-events-none"
-            data-testid={`${tp}-field-saved-${ep.key}`}
-          >
+        {ps.fieldSaved === key && (
+          <span className={SAVED_PILL} data-testid={`${tp}-field-saved-${key}`}>
             ✓ Saved
           </span>
         )}
       </div>
-      {ep.help && <p className="text-xs text-faint mt-1">{ep.help}</p>}
+      {endpoint.help && <p className="mt-1 text-faint text-xs">{endpoint.help}</p>}
     </div>
   );
 }

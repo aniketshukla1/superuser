@@ -27,7 +27,7 @@ pub(in crate::harness_eval) fn read_the_marker_in_the_browser(r: &TurnRecord) ->
 /// the loop the refusal's "take a new snapshot" exists to end.
 pub(in crate::harness_eval) fn no_stale_loop(r: &TurnRecord) -> Result<(), String> {
     let stale = |c: &Call| {
-        c.result.contains("no longer on the page") || c.result.contains("refs are out of date") || c.result.contains("Nothing on this page has the ref")
+        c.result.contains("no longer on the page") || c.result.contains("refs are out of date") || c.result.contains("No element here carries this page has the ref")
     };
     let mut in_a_row = 0;
     for c in &r.calls {

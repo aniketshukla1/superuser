@@ -157,7 +157,7 @@ pub(in crate::core::agent) fn expense_tools() -> Vec<ToolSpec> {
 pub(in crate::core::agent) fn todo_tools() -> Vec<ToolSpec> {
     // Param key is `todos`, NOT `items` (a top-level `items` key shadows a map method
     // in some hosted chat templates and 400s the request).
-    vec![tool("todo_write", "Replace the task list. Provide the full list of todos each call; the Progress panel is rendered from it.", "todo", RiskClass::Read,
+    vec![tool("todo_write", "Set the task list. Send every todo on each call, because this replaces the whole list; the Progress panel is drawn from it.", "todo", RiskClass::Read,
         params(json!({"todos":{
             "type": "array",
             "description": "The WHOLE list, every call — it replaces the previous one rather than adding to it. Carry finished items forward with status \"done\" or they disappear from the panel.",

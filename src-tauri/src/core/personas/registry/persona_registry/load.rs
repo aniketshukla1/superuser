@@ -111,7 +111,7 @@ impl PersonaRegistry {
             .collect()
     }
 
-    /// Every installed persona + its lifecycle state — for the Personas settings panel.
+    /// All installed personas with their lifecycle state, as the Personas settings panel lists them.
     pub fn list_all(&self) -> Vec<PersonaListItem> {
         let default = self.default_id();
         self.order

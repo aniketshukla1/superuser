@@ -1,173 +1,82 @@
-import { Notices } from "./components/Notices";
-import { UpdateBanner } from "./components/UpdateBanner";
-import { SecretsLockedNotice } from "./components/SecretsLockedNotice";
-import { Icon, ICON } from "./components/Icon";
-import { ResizeHandle } from "./components/ResizeHandle";
-import { NAV_DEFAULT_W, PANEL_DEFAULT_W } from "./App/appHelpers";
-import { SurfaceBoundary } from "./components/SurfaceBoundary";
-import { AutomationsSurface } from "./components/WatchesView";
-import { IntegrationsView } from "./components/IntegrationsView";
-import { BrainView } from "./components/BrainView";
-import { AuditView } from "./components/AuditView";
-import { InboxView } from "./components/InboxView";
-import { PersonaView } from "./components/PersonaView";
 import { LiveView } from "./components/LiveView";
+import { Notices } from "./components/Notices";
+import { ResizeHandle } from "./components/ResizeHandle";
+import { SecretsLockedNotice } from "./components/SecretsLockedNotice";
+import { SurfaceBoundary } from "./components/SurfaceBoundary";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { WorkspaceTrustPrompt } from "./components/WorkspaceTrustPrompt";
-import { useAppModel } from "./App/model/useAppModel";
-import { RunToast } from "./App/RunToast";
-import { AppOnboarding } from "./App/AppOnboarding";
-import { AppSidebar } from "./App/AppSidebar";
-import { SettingsSurface } from "./App/SettingsSurface";
-import { Topbar } from "./App/Topbar";
-import { MainChat } from "./App/MainChat";
-import { AppWorkspacePanel } from "./App/AppWorkspacePanel";
-import { AppSearch } from "./App/AppSearch";
 import { AppFolderGate } from "./App/AppFolderGate";
+import { AppOnboarding } from "./App/AppOnboarding";
+import { AppSearch } from "./App/AppSearch";
+import { AppSidebar } from "./App/AppSidebar";
+import { NAV_DEFAULT_W } from "./App/appHelpers";
+import { CollapsedNav } from "./App/CollapsedNav";
+import { CurrentSurface } from "./App/CurrentSurface";
+import { RunToast } from "./App/RunToast";
+import { useAppModel } from "./App/model/useAppModel";
 import { renderSplash } from "./App/render/splash";
+
+/** The shell's classes: the desktop title-bar overlay, and the nav collapsed or peeking. */
+function shellClass(overlay: boolean, collapsed: boolean, peeking: boolean): string {
+  const classes = ["app"];
+  if (overlay) classes.push("tauri-overlay");
+  if (collapsed) classes.push("nav-collapsed");
+  if (collapsed && peeking) classes.push("nav-peek");
+  return classes.join(" ");
+}
 
 export function App() {
   const m = useAppModel();
-  const { appReady, overlay, navCollapsed, navPeek, navWidth, panelFitted, simOverlay, secrets,
-    setSecrets, setNavPeek, surface, toggleNav, setNavWidth, route, openRunSession, runTaskNow,
-    scheduledOpenId, scheduledNew, navigate, openSessionFromInbox, personaViewId, agent,
-    personaViewReturn, openSettings, setSurface, railHidden, setPanelWidth, liveView, nameOf,
-    setLiveView, workspaceTrustRequest, setWorkspaceTrustRequest } = m;
-  return !appReady ? <>{null}{renderSplash(m)}</> : (
+  if (!m.appReady) return <>{null}{renderSplash(m)}</>;
+  // Both side panels can be dragged to any width. The two widths feed the grid column and the
+  // panel's own width, so the whole layout follows from them.
+  const widths = { ["--nav-w" as string]: `${m.navWidth}px`, ["--wp-w" as string]: `${m.panelFitted}px` };
+  return (
     <>
-    <div
-      className={
-        "app" +
-        (overlay ? " tauri-overlay" : "") +
-        (navCollapsed ? " nav-collapsed" : "") +
-        (navCollapsed && navPeek ? " nav-peek" : "")
-      }
-      // Both side panels are drag-resizable; the widths drive the grid column and the
-      // panel's own width, so the layout follows from one place.
-      style={{ ["--nav-w" as string]: `${navWidth}px`, ["--wp-w" as string]: `${panelFitted}px` }}
-    >
-      {/* Dev-only fake traffic lights so ?overlay=1 previews the real desktop top-left. */}
-      {simOverlay && (
-        <div className="sim-traffic-lights" aria-hidden="true">
-          <span /><span /><span />
-        </div>
-      )}
-      {/* Failed writes, wherever they happen (UX-REPORT §5). */}
-      <Notices />
-      {/* Desktop-only auto-update prompt (15s after boot, then every 30 min; inert in browser). */}
-      <UpdateBanner />
-      {/* Saved keys that won't open: said, with the way out, instead of every key reading as missing. */}
-      <SecretsLockedNotice status={secrets} onResolved={() => setSecrets("empty")} />
-      {/* UX-026: automation-start toast — quiet panel, neutral dot/drain, accent only
-          on the action (rev 2); auto-dismisses with the 5s drain bar. */}
-      <RunToast m={m} />
-      {/* When collapsed, a thin left-edge zone peeks the nav back as a floating overlay. */}
-      {navCollapsed && (
-        <div
-          className="nav-hover-zone"
-          onMouseEnter={() => setNavPeek(true)}
-          aria-hidden="true"
-        />
-      )}
-      {/* Explicit reveal affordance while collapsed (alongside hover-peek + ⌘B) — on every
-          surface EXCEPT the session view, whose topbar carries the [sidebar][+][search] cluster
-          instead (§22; no duplicate reveal buttons). */}
-      {navCollapsed && !navPeek && surface !== "session" && (
-        <button
-          className="nav-reveal-btn"
-          onClick={toggleNav}
-          onMouseEnter={() => setNavPeek(true)}
-          title="Show sidebar (⌘B)"
-          aria-label="Show sidebar"
-        >
-          <Icon name="sidebar" size={ICON.md} />
-        </button>
-      )}
-      <AppOnboarding m={m} />
-      <AppSidebar m={m} />
-      {/* Nothing to grab while the nav is collapsed — it's off-screen, and the peek
-          overlay is transient. */}
-      {!navCollapsed && (
-        <ResizeHandle side="left" width={navWidth} onResize={setNavWidth} label="Resize the sidebar" defaultWidth={NAV_DEFAULT_W} />
-      )}
-      {/* One surface crashing must not take the shell with it (UX-REPORT §1): the
-          boundary is inside the sidebar's sibling slot, and clears when the user
-          navigates somewhere else. */}
-      <SurfaceBoundary resetKey={`${surface}:${route.tab ?? ""}`}>
-      {surface === "scheduled" ? (
-        <AutomationsSurface
-          onOpenRun={openRunSession}
-          onRunNow={runTaskNow}
-          initialOpenId={scheduledOpenId}
-          newRequest={scheduledNew}
-          tab={route.tab}
-          // `replace`: switching tabs corrects where you are, it isn't a place you
-          // navigated to. Pushing would make Back undo a tab click one at a time.
-          onTabChange={(t) => navigate({ surface: "scheduled", tab: t }, true)}
-        />
-      ) : surface === "integrations" ? (
-        <IntegrationsView />
-      ) : surface === "settings" ? (
-        <SettingsSurface m={m} />
-      ) : surface === "brain" ? (
-        <BrainView
-          section={route.tab}
-          onSectionChange={(s) => navigate({ surface: "brain", tab: s }, true)}
-        />
-      ) : surface === "audit" ? (
-        <AuditView />
-      ) : surface === "inbox" ? (
-        <InboxView onOpenSession={openSessionFromInbox} />
-      ) : surface === "persona" ? (
-        <PersonaView
-          personaId={personaViewId || agent}
-          onBack={() =>
-            personaViewReturn === "settings" ? openSettings("personas") : setSurface("session")
-          }
-          onOpenIntegrations={() => setSurface("integrations")}
-        />
-      ) : (
-      // The panel now renders for every persona (`chat` included, where the old rail was
-      // hidden outright), so the inset must follow the same condition — otherwise the
-      // transcript runs underneath it.
-      <div className={"main" + (surface === "session" && !railHidden ? " rail-open" : "")}>
-        <Topbar m={m} />
-        <div className={"main-workspace" + (railHidden ? " rail-hidden" : "")}>
-          {/* The session surface's reading column is the page's main landmark; it was the
-              one surface without one (UX-REPORT §8). */}
-          <MainChat m={m} />
-          {/* The panel now carries a terminal and a browser, which are useful whoever
-              you're talking to — so it renders for `chat` too, where the old rail was
-              hidden outright. Files still needs somewhere to look. */}
-          <AppWorkspacePanel m={m} />
-          {surface === "session" && !railHidden && (
-            <ResizeHandle
-              side="right"
-              width={panelFitted}
-              onResize={setPanelWidth}
-              label="Resize the workspace panel"
-              defaultWidth={PANEL_DEFAULT_W}
-            />
-          )}
-        </div>
+      <div className={shellClass(m.overlay, m.navCollapsed, m.navPeek)} style={widths}>
+        {/* In development, ?overlay=1 draws stand-in window buttons to preview the desktop's corner. */}
+        {m.simOverlay && (
+          <div className="sim-traffic-lights" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        )}
+        {/* Writes that failed, from anywhere in the app (UX-REPORT §5). */}
+        <Notices />
+        {/* Desktop only: offers an update 15 s after launch, then every 30 minutes. */}
+        <UpdateBanner />
+        {/* Keys that are saved but won't open say so, with the way out, instead of reading as missing. */}
+        <SecretsLockedNotice status={m.secrets} onResolved={() => m.setSecrets("empty")} />
+        {/* UX-026: the toast when an automation starts, gone with its 5 s drain bar (rev 2). */}
+        <RunToast m={m} />
+        <CollapsedNav m={m} />
+        <AppOnboarding m={m} />
+        <AppSidebar m={m} />
+        {/* A collapsed nav is off-screen and its peek is fleeting: no edge to drag then. */}
+        {!m.navCollapsed && (
+          <ResizeHandle
+            side="left"
+            width={m.navWidth}
+            onResize={m.setNavWidth}
+            label="Resize the sidebar"
+            defaultWidth={NAV_DEFAULT_W}
+          />
+        )}
+        {/* A surface that crashes must not take the shell with it (UX-REPORT §1). The boundary
+            resets when the user goes somewhere else. */}
+        <SurfaceBoundary resetKey={`${m.surface}:${m.route.tab ?? ""}`}>
+          <CurrentSurface m={m} />
+        </SurfaceBoundary>
+        {/* Search for the topbar's collapsed-sidebar cluster; the sidebar's own is out of reach then. */}
+        <AppSearch m={m} />
+        {m.liveView && <LiveView persona={m.liveView} name={m.nameOf(m.liveView)} onClose={() => m.setLiveView(null)} />}
+        <AppFolderGate m={m} />
+        {m.workspaceTrustRequest && (
+          <WorkspaceTrustPrompt request={m.workspaceTrustRequest} onClose={() => m.setWorkspaceTrustRequest(null)} />
+        )}
       </div>
-      )}
-      </SurfaceBoundary>
-
-      {/* Search from the collapsed-sidebar topbar cluster (the sidebar's own instance is
-          unreachable while it's collapsed). */}
-      <AppSearch m={m} />
-
-      {liveView && <LiveView persona={liveView} name={nameOf(liveView)} onClose={() => setLiveView(null)} />}
-
-      <AppFolderGate m={m} />
-      {workspaceTrustRequest && (
-        <WorkspaceTrustPrompt
-          request={workspaceTrustRequest}
-          onClose={() => setWorkspaceTrustRequest(null)}
-        />
-      )}
-    </div>
-    {renderSplash(m)}
+      {renderSplash(m)}
     </>
   );
 }

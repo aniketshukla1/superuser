@@ -131,7 +131,7 @@ use super::*;
     pub(super) fn the_security_assistant_never_prints_a_secret() {
         let p = builtins().into_iter().find(|p| p.id == "security").unwrap();
         assert!(
-            p.system_prompt.contains("NEVER print a discovered secret's value"),
+            p.system_prompt.contains("A discovered secret's value never appears anywhere"),
             "the one rule whose breach travels furthest"
         );
     }
@@ -140,14 +140,14 @@ use super::*;
     pub(super) fn registry_toggle_persists() {
         let dir = scratch();
         let r = PersonaRegistry::load(&dir);
-        assert_eq!(r.sidebar().len(), 19); // all built-ins enabled+surfaced by default
+        assert_eq!(r.sidebar().len(), 20); // all built-ins enabled+surfaced by default
         assert!(r.sidebar().iter().any(|p| p.id == "assistant" && p.default));
 
         let mut r = r;
         r.set_enabled("ops", false).unwrap();
         // Reload from disk to prove the choice persisted.
         let r2 = PersonaRegistry::load(&dir);
-        assert_eq!(r2.sidebar().len(), 18);
+        assert_eq!(r2.sidebar().len(), 19);
         assert!(!r2.sidebar().iter().any(|p| p.id == "ops"));
 
         let _ = fs::remove_dir_all(&dir);

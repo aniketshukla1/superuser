@@ -1,19 +1,25 @@
-import { useState, useEffect } from "react";
-import { introForThisLaunch, SPLASH_SETTLE_MS } from "../appHelpers";
+import { useEffect, useState } from "react";
 import { PERSONAS_CHANGED } from "../../api";
+import { introForThisLaunch, SPLASH_SETTLE_MS } from "../appHelpers";
 import type { useAppState } from "./useAppState";
-import type { useNavigationState } from "./useNavigationState";
-import type { useLayout } from "./useLayout";
-import type { usePersonas } from "./usePersonas";
 import type { useBoot } from "./useBoot";
+import type { useLayout } from "./useLayout";
+import type { useNavigationState } from "./useNavigationState";
+import type { usePersonas } from "./usePersonas";
 
-/** The splash's lifecycle and the settings the app loads at start. */
-export function useSplashAndSettings(prev: ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> & ReturnType<typeof usePersonas> & ReturnType<typeof useBoot>) {
-  const { booting, uiReady, openSettings, surface, loadSettings, refreshSessions } = prev;
-  // The launch film and its exit (components/LaunchFilm). The app renders the moment it is
-  // ready; the reel stays laid over it until it has played or been skipped, then fades
-  // off. Neither waits on the other: a slow runtime holds the reel's last frame, and a
-  // fast one waits for the reel. Reduced motion plays no reel and no exit.
+type Deps = ReturnType<typeof useAppState> & ReturnType<typeof useNavigationState> & ReturnType<typeof useLayout> &
+  ReturnType<typeof usePersonas> & ReturnType<typeof useBoot>;
+
+const SESSIONS_POLL_MS = 5000;
+
+/** The splash from start to finish, and the settings the app loads when it starts. */
+export function useSplashAndSettings(prev: Deps) {
+  const { booting, loadSettings, openSettings, refreshSessions, surface, uiReady } = prev;
+
+  // The launch film (components/LaunchFilm) and how it leaves. The app renders as soon as it is
+  // ready, with the film laid over it until it has played or been skipped, then fading away.
+  // Neither waits for the other: a slow runtime holds the film's last frame, and a fast one
+  // waits for the film. With reduced motion there is no film and no fade.
   const appReady = !booting && uiReady;
   const [intro] = useState(introForThisLaunch);
   const [reelDone, setReelDone] = useState(intro === "off");
@@ -21,45 +27,45 @@ export function useSplashAndSettings(prev: ReturnType<typeof useAppState> & Retu
   const [splashLeaving, setSplashLeaving] = useState(false);
   const [splashGone, setSplashGone] = useState(false);
   useEffect(() => {
-    if (!appReady || splashLeaving || !(reelDone || introSkipped)) return;
+    const filmOver = reelDone || introSkipped;
+    if (!appReady || splashLeaving || !filmOver) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       setSplashGone(true);
       return;
     }
-    // No beat after a skip: that asked for the app, now.
-    const t = setTimeout(() => setSplashLeaving(true), introSkipped ? 0 : SPLASH_SETTLE_MS);
-    return () => clearTimeout(t);
+    // A skip asked for the app now, so it gets no pause.
+    const timer = setTimeout(() => setSplashLeaving(true), introSkipped ? 0 : SPLASH_SETTLE_MS);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appReady, reelDone, introSkipped]);
 
-
-  // Open Settings → Configure Models (from the composer's "No model connected" chip).
+  /** Settings ▸ Models, from the composer's "No model connected" chip. */
   const openModelSetup = () => openSettings("models");
 
-  // Leaving the Settings page: pick up any model/surface changes for the composer (the modal used to
-  // do this on close).
+  // Coming back from Settings: the composer picks up any change to models or surfaces (the old
+  // settings dialog did this when it closed).
   useEffect(() => {
     if (surface !== "settings") loadSettings();
   }, [surface]);
 
+  // At start: the sessions, the models that can be chosen and which session surfaces show.
   useEffect(() => {
     refreshSessions();
-    loadSettings(); // selectable models + which session surfaces are visible
+    loadSettings();
   }, [refreshSessions]);
 
-  // Poll the session list so the attention/liveness badges stay live and sessions created
-  // out-of-band (unattended work, messaging, automations) appear without a manual refresh.
+  // The session list is polled, so attention and liveness badges stay current and sessions
+  // made elsewhere (unattended work, messages, automations) appear without a refresh. An
+  // assistant switched off can archive its sessions on the server (§18), so that event also
+  // refreshes at once rather than at the next poll.
   useEffect(() => {
-    const t = setInterval(refreshSessions, 5000);
-    return () => clearInterval(t);
-  }, [refreshSessions]);
-
-  // Persona toggles can archive sessions server-side (disable-archives, §18): refetch on the
-  // personas-changed event so the sidebar section disappears immediately, not on the next poll.
-  useEffect(() => {
+    const poll = setInterval(refreshSessions, SESSIONS_POLL_MS);
     const onPersonas = () => refreshSessions();
     window.addEventListener(PERSONAS_CHANGED, onPersonas);
-    return () => window.removeEventListener(PERSONAS_CHANGED, onPersonas);
+    return () => {
+      clearInterval(poll);
+      window.removeEventListener(PERSONAS_CHANGED, onPersonas);
+    };
   }, [refreshSessions]);
 
   return { appReady, intro, reelDone, setReelDone, introSkipped, setIntroSkipped, splashLeaving, splashGone, setSplashGone, openModelSetup };

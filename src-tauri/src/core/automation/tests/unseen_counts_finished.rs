@@ -3,7 +3,7 @@ use super::*;
     #[test]
     pub(super) fn a_firing_is_told_that_it_is_the_firing() {
         let framed_text = format!("{FIRING_FRAME}\n\nAppend today's total to the sheet.");
-        assert!(FIRING_FRAME.contains("this turn is that firing") && FIRING_FRAME.contains("Don't create, list or change"));
+        assert!(FIRING_FRAME.contains("going off on its schedule") && FIRING_FRAME.contains("Leave automations alone"));
         assert_eq!(without_frame(&framed_text), "Append today's total to the sheet.");
         assert_eq!(without_frame("Append today's total to the sheet."), "Append today's total to the sheet.");
         // A manual run carries the same instruction, without claiming a schedule it isn't on.

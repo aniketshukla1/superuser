@@ -1,7 +1,7 @@
-//! Connector descriptors — the data that drives connect/setup. Adding a connector
-//! is (mostly) data,
-//! not code. A descriptor declares its auth method, the fields the user pastes,
-//! step-by-step instructions, and its catalog metadata (brand color, aliases).
+//! Connector descriptors: the data behind connecting and setting up an app. A new
+//! connector is mostly a new entry here, not new code. Each entry gives the sign-in
+//! method, the fields a person pastes in, the setup steps, and how the catalog shows
+//! it (brand colour, aliases).
 //!
 //! Auth kinds:
 //! - `api_token` / `token` / `bot_token` — the user pastes a credential (private,

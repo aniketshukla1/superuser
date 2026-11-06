@@ -5,13 +5,13 @@ export function connectorState() {
   const subscriptions: any[] = [
     // One existing subscription (a non-pinned session) so the Slack page's per-workspace
     // "Listening" row has an entry. Relay-mode channels are team-qualified (slack:T…/C…).
-    { session_id: "wp-1", session_title: "Weekly plan 1", agent: "cowork", channel: "slack:T1DL/C0AAA111", channel_name: "ocw-test", routing_target: null, collision: false },
+    { session_id: "wp-1", session_title: "Weekly plan 1", agent: "cowork", channel: "slack:T1DL/C0AAA111", channel_name: "team-test", routing_target: null, collision: false },
   ];
   // Parked unauthorized messages (§19) — mutable so Allow/Dismiss round-trip through the UI.
   // The relay is multi-workspace: parked items carry their team so the Slack page files them
   // under the right workspace card.
   const parked: any[] = [
-    { id: "pk1", platform: "slack", chat_id: "C0AAA111", chat_name: "#ocw-test", user_id: "U0NEW", user_name: "Maya", chat_type: "channel", text: "hey ocw, can you summarize this thread?", ts: Date.now() / 1000 - 120, team_id: "T1DL" },
+    { id: "pk1", platform: "slack", chat_id: "C0AAA111", chat_name: "#team-test", user_id: "U0NEW", user_name: "Maya", chat_type: "channel", text: "hey superuser, can you summarize this thread?", ts: Date.now() / 1000 - 120, team_id: "T1DL" },
   ];
   // Slack connector — PER-TEST state (managed relay, two workspaces) so allow/disconnect
   // mutations never leak across tests sharing a worker. Backend parity: `workspaces` mirrors
@@ -44,7 +44,7 @@ export function connectorState() {
   // GitHub — PER-TEST multi-installation state (managed relay, one installation +
   // one parked mention) mirroring the backend's github:install:<id> profiles.
   const githubParked: any[] = [
-    { id: "gh-pk1", platform: "github", chat_id: "acme/site#7", chat_name: "acme/site#7", user_id: "maya-dev", user_name: "maya-dev", chat_type: "channel", text: "@ocw please take a look at this flaky test", ts: Date.now() / 1000 - 90, team_id: "101" },
+    { id: "gh-pk1", platform: "github", chat_id: "acme/site#7", chat_name: "acme/site#7", user_id: "maya-dev", user_name: "maya-dev", chat_type: "channel", text: "@superuser please take a look at this flaky test", ts: Date.now() / 1000 - 90, team_id: "101" },
   ];
   const githubState = {
     connected: true,

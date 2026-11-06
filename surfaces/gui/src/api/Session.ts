@@ -1,119 +1,120 @@
-import { fetch, httpBase, jsonOf, openWebSocket, wsBase } from "./neverRejectingJson";
+import { fetch, httpBase, jsonBody, jsonOf, openWebSocket, wsBase } from "./neverRejectingJson";
 import type { Handlers } from "./SlackStatus";
 
+/** A frame off the socket, or undefined when it doesn't parse. */
+function parseFrame(data: any): unknown {
+  try {
+    return JSON.parse(data);
+  } catch {
+    return undefined;
+  }
+}
+
+/** The live socket for one session: events come in, the user's messages and answers go out. */
 export class Session {
-  private ws: WebSocket;
-  // Payloads sent before the socket finished opening, replayed on `onopen`. Belt-and-suspenders
-  // against the first message being dropped if the user sends in the connect window.
-  private outbox: object[] = [];
+  private readonly ws: WebSocket;
+  /** Frames sent before the socket finished opening. They go out on `onopen`, so a message
+   *  typed while the connection is still being made isn't lost. */
+  private queued: object[] = [];
 
   constructor(sessionId: string, workspace: string, agent: string, handlers: Handlers) {
-    const q = `?workspace=${encodeURIComponent(workspace)}&agent=${encodeURIComponent(agent)}`;
-    this.ws = openWebSocket(`${wsBase()}/ws/session/${sessionId}${q}`);
-    // Guarded like the app-wide events socket above: a truncated frame is a network
-    // condition, not a programming error, and an uncaught throw inside a native
-    // onmessage callback surfaces as a stackless page error nobody can act on.
-    this.ws.onmessage = (e) => {
-      let event: unknown;
-      try {
-        event = JSON.parse(e.data);
-      } catch {
-        return; /* malformed frame — ignore */
-      }
-      handlers.onEvent(event as any);
+    const query = [`workspace=${encodeURIComponent(workspace)}`, `agent=${encodeURIComponent(agent)}`].join("&");
+    this.ws = openWebSocket(`${wsBase()}/ws/session/${sessionId}?${query}`);
+    // A cut-off frame is a network event, not a bug, and a throw inside a native socket
+    // callback would show up as a page error with no stack. Such frames are skipped.
+    this.ws.onmessage = (message) => {
+      const event = parseFrame(message.data);
+      if (event !== undefined) handlers.onEvent(event as any);
     };
     this.ws.onopen = () => {
-      this.flush();
+      this.sendQueued();
       handlers.onOpen?.();
     };
     this.ws.onclose = () => handlers.onClose?.();
   }
 
-  private flush() {
+  private sendQueued() {
     if (this.ws.readyState !== WebSocket.OPEN) return;
-    const pending = this.outbox;
-    this.outbox = [];
-    for (const p of pending) this.ws.send(JSON.stringify(p));
+    for (const frame of this.queued.splice(0)) this.ws.send(JSON.stringify(frame));
   }
 
-  private send(payload: object) {
-    if (this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(payload));
-    // Still connecting: queue and flush on open rather than silently dropping.
-    else if (this.ws.readyState === WebSocket.CONNECTING) this.outbox.push(payload);
+  private deliver(frame: object) {
+    const state = this.ws.readyState;
+    if (state === WebSocket.OPEN) this.ws.send(JSON.stringify(frame));
+    // Still connecting: keep it for `onopen` instead of dropping it.
+    else if (state === WebSocket.CONNECTING) this.queued.push(frame);
   }
 
-  /** `model` = the composer's CURRENT selection, carried on every message so the turn uses
-   * exactly what the user sees — immune to set_model races across reconnects (a new cowork
-   * session always reconnects once to adopt its scratch dir, which could drop a queued
-   * set_model and leave the engine on a stale/resumed model; found 2026-07-04). */
+  /** `model` is what the composer shows right now, sent with every message so the turn runs on
+   *  exactly that. It can't be lost to a set_model race across reconnects: a new cowork
+   *  session reconnects once to take up its scratch folder, and a queued set_model could be
+   *  dropped then, leaving the engine on an old model (found 2026-07-04). */
   userMessage(text: string, attachments?: unknown[], model?: string, skill?: string) {
-    this.send({
-      type: "user_message",
-      text,
-      ...(model ? { model } : {}),
-      ...(attachments?.length ? { attachments } : {}),
-      // Force-run (SKILLS-SPEC §4.1): the composer's /skill pick rides as its own field;
-      // the server validates it against the session's effective menu and frames the turn.
-      ...(skill ? { skill } : {}),
-    });
+    const frame: Record<string, unknown> = { type: "user_message", text };
+    if (model) frame.model = model;
+    if (attachments?.length) frame.attachments = attachments;
+    // A skill forced from the composer's "/" menu (SKILLS-SPEC §4.1) travels as its own field;
+    // the server checks it against what the session may use and frames the turn around it.
+    if (skill) frame.skill = skill;
+    this.deliver(frame);
   }
 
   approve(decision: string) {
-    this.send({ type: "approval", decision });
+    this.deliver({ type: "approval", decision });
   }
 
-  // Reply to a `request_directory` prompt: grant a folder (with access level) or decline.
+  /** The answer to `request_directory`: a folder with its access level, or a refusal. */
   respondDirectory(granted: boolean, path?: string, writable?: boolean) {
-    this.send({ type: "directory_response", granted, ...(path ? { path } : {}), writable: !!writable });
+    const frame: Record<string, unknown> = { type: "directory_response", granted };
+    if (path) frame.path = path;
+    frame.writable = Boolean(writable);
+    this.deliver(frame);
   }
 
-  // Reply to a `propose_plan` prompt: approve (choosing the execution mode) or reject with feedback.
+  /** The answer to `propose_plan`: approved with the mode to run it in, or rejected with feedback. */
   respondPlan(approved: boolean, mode?: string, feedback?: string) {
-    this.send({
-      type: "plan_response",
-      approved,
-      ...(mode ? { mode } : {}),
-      ...(feedback ? { feedback } : {}),
-    });
+    const frame: Record<string, unknown> = { type: "plan_response", approved };
+    if (mode) frame.mode = mode;
+    if (feedback) frame.feedback = feedback;
+    this.deliver(frame);
   }
 
-  // Answer a live `ask_user` prompt: one entry per question, in order, null where the
-  // user skipped. The server hands them to the tool that asked, which pairs them back
-  // up with the questions (`Ask::read_answer`).
+  /** The answers to a live `ask_user`: one per question, in order, null for a skipped one. The
+   *  server passes them to the waiting tool, which matches them to its questions
+   *  (`Ask::read_answer`). */
   respondQuestion(answers: (string | null)[]) {
-    this.send({ type: "question_response", answers });
+    this.deliver({ type: "question_response", answers });
   }
 
-  // Answer a live `ask_form` prompt: one entry per field, keyed by the field's name.
-  // The same frame and the same rendezvous as a question — only the shape differs,
-  // and the tool that parked the receiver knows which one it asked for
-  // (`Form::read_answer`).
+  /** The answers to a live `ask_form`, keyed by field name. Same frame and same hand-off as a
+   *  question; only the shape differs, and the waiting tool knows which it asked for
+   *  (`Form::read_answer`). */
   respondForm(answers: Record<string, string>) {
-    this.send({ type: "question_response", answers });
+    this.deliver({ type: "question_response", answers });
   }
 
   interrupt() {
-    this.send({ type: "interrupt" });
+    this.deliver({ type: "interrupt" });
   }
 
-  // Re-run a turn that ended in a provider error — no new user message; the server
-  // guards on the history tail so a stray frame is a no-op.
+  /** Run again a turn that ended on a provider error, with no new message. The server checks
+   *  the end of the history, so a stray frame does nothing. */
   retry() {
-    this.send({ type: "retry" });
+    this.deliver({ type: "retry" });
   }
 
   setMode(mode: string) {
-    this.send({ type: "set_mode", mode });
+    this.deliver({ type: "set_mode", mode });
   }
 
   setModel(model: string) {
-    this.send({ type: "set_model", model });
+    this.deliver({ type: "set_model", model });
   }
 
   close() {
-    // Detach before closing: this socket's async `close` event may land AFTER the
-    // successor session's `open` (observed when switching into an automation-run
-    // session), and a torn-down socket must not clobber the new one's connected state.
+    // Unhook first: this socket's close event can arrive after the next session's open
+    // (seen when switching into an automation run's session), and a dead socket must not
+    // overwrite the new one's connected state.
     this.ws.onopen = null;
     this.ws.onmessage = null;
     this.ws.onclose = null;
@@ -126,38 +127,18 @@ export interface FeedbackReason {
   label: string;
 }
 
-/** What the user has already said about this session, and the reasons on offer. */
-export async function getFeedback(
-  session: string,
-): Promise<{ reasons: FeedbackReason[]; given: Array<{ message: number; verdict: "up" | "down"; message_at: number }> }> {
-  const res = await fetch(`${httpBase()}/v1/feedback?session=${encodeURIComponent(session)}`);
-  const j = await jsonOf(res);
-  return { reasons: (j.reasons as FeedbackReason[]) ?? [], given: (j.given as any[]) ?? [] };
+type GivenFeedback = { message: number; verdict: "up" | "down"; message_at: number };
+
+/** What the user has already said about this session, and the reasons they can pick from. */
+export async function getFeedback(session: string): Promise<{ reasons: FeedbackReason[]; given: GivenFeedback[] }> {
+  const reply = await jsonOf(await fetch(`${httpBase()}/v1/feedback?session=${encodeURIComponent(session)}`));
+  return { reasons: (reply.reasons as FeedbackReason[]) ?? [], given: (reply.given as GivenFeedback[]) ?? [] };
 }
 
-/**
- * Record a verdict on one answer.
- *
- * Keyed on the message's timestamp, not its index in the transcript: several UI items
- * come from one stored message, so an index counted on this side is an index into the
- * wrong list. The server resolves it.
- */
-export async function sendFeedback(body: {
-  session: string;
-  messageAt: number;
-  verdict: "up" | "down";
-  reason?: string;
-  note?: string;
-}): Promise<void> {
-  await fetch(`${httpBase()}/v1/feedback`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      session: body.session,
-      message_at: body.messageAt,
-      verdict: body.verdict,
-      reason: body.reason,
-      note: body.note,
-    }),
-  });
+/** Record a verdict on one answer. It is keyed on the message's timestamp, not its position:
+ *  several items on screen come from one stored message, so a position counted here would
+ *  point into the wrong list. The server works it out. */
+export async function sendFeedback(body: { session: string; messageAt: number; verdict: "up" | "down"; reason?: string; note?: string }): Promise<void> {
+  const { session, messageAt, verdict, reason, note } = body;
+  await fetch(`${httpBase()}/v1/feedback`, jsonBody("POST", { session, message_at: messageAt, verdict, reason, note }));
 }

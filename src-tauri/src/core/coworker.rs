@@ -4,12 +4,11 @@
 //! delegated run of that assistant — its own prompt, tools, connected apps, model and
 //! permission mode — in a conversation of its own that the person can open afterwards.
 //!
-//! **What it takes is typed**, which is the one place this departs from the obvious
-//! build. The natural shape is `ask_coworker(who, message)`, and free text is the
-//! commonest way a handoff goes quietly wrong: the assistant on the other end infers the
-//! intent, re-derives the constraints, guesses what shape of answer was wanted — and when
-//! it guesses wrong it does not fail, it answers something else confidently. Naming the
-//! parts costs the asking model a little effort and removes most of that.
+//! **The request has fields.** The obvious design would be `ask_coworker(who, message)`,
+//! but a free-text handoff fails without anyone noticing: the receiving assistant has to
+//! guess the goal, the limits and the kind of answer wanted, and a wrong guess doesn't
+//! error, it produces a confident answer to a different question. Filling in named fields
+//! is a little more work for the asking model and prevents most of that.
 //!
 //! **Nothing here widens what a run may do.** The asked assistant runs under the stricter
 //! of the two permission modes, inherits the asker's taint, and is unattended — nobody is

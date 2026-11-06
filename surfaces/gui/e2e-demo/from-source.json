@@ -85,7 +85,7 @@
    "id": "dep-audit",
    "name": "Dependency Audit Assistant",
    "icon": "audit",
-   "tagline": "Vulnerable dependencies — audit, minimal upgrades, PRs",
+   "tagline": "Risky dependencies — audit, smallest upgrades, PRs",
    "family": "code",
    "tools": [
     "files",
@@ -175,7 +175,7 @@
    "id": "ops",
    "name": "Ops Assistant",
    "icon": "wrench",
-   "tagline": "Operate and investigate — runbooks, logs, infrastructure",
+   "tagline": "Incidents and runbooks — logs, metrics, infrastructure",
    "family": "knowledge",
    "tools": [
     "files",
@@ -256,7 +256,7 @@
    "id": "security",
    "name": "Security Assistant",
    "icon": "shield",
-   "tagline": "Find and fix security issues — scan, triage, PR",
+   "tagline": "Security problems found and fixed — scan, triage, PR",
    "family": "code",
    "tools": [
     "files",
@@ -284,6 +284,22 @@
     "recall_memory"
    ],
    "mode": "interactive"
+  },
+  {
+   "id": "talent",
+   "name": "Talent Scout",
+   "icon": "search",
+   "tagline": "Finds candidates who meet the must-haves — none already in your ATS — with outreach drafts",
+   "family": "knowledge",
+   "tools": [
+    "talent",
+    "web",
+    "knowledge",
+    "recall_memory",
+    "todo",
+    "files"
+   ],
+   "mode": "discuss"
   },
   {
    "id": "writer",

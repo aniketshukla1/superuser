@@ -1,20 +1,19 @@
 import { SearchModal } from "../components/SearchModal";
 import type { AppModel } from "./model/useAppModel";
 
-/** The search modal. */
+/** The search palette. Picking a session closes it and opens that session. */
 export function AppSearch({ m }: { m: AppModel }) {
-  const { searchOpen, sessions, personas, setSearchOpen, selectSession } = m;
+  if (!m.searchOpen) return null;
+  const close = () => m.setSearchOpen(false);
   return (
-    <>{searchOpen && (
-        <SearchModal
-          sessions={sessions}
-          personas={personas ?? undefined}
-          onSelect={(id, ws, ag) => {
-            setSearchOpen(false);
-            selectSession(id, ws, ag);
-          }}
-          onClose={() => setSearchOpen(false)}
-        />
-      )}</>
+    <SearchModal
+      sessions={m.sessions}
+      personas={m.personas ?? undefined}
+      onSelect={(id, folder, assistant) => {
+        close();
+        m.selectSession(id, folder, assistant);
+      }}
+      onClose={close}
+    />
   );
 }

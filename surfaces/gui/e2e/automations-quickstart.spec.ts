@@ -53,8 +53,8 @@ test("role recipe: connect rows, lazy single sign-in, channel by name, consent m
   // the standing grant listed.
   const chan = page.locator('[data-testid="ob-channel"] input');
   await chan.click();
-  await page.getByTestId("channel-suggestions").getByText("#ocw-test").click();
-  await expect(chan).toHaveValue("#ocw-test");
+  await page.getByTestId("channel-suggestions").getByText("#team-test").click();
+  await expect(chan).toHaveValue("#team-test");
   await expect(page.getByTestId("ob-consent")).toBeChecked();
   await page.getByTestId("ob-create").click();
 

@@ -7,7 +7,7 @@ import { test } from "./fixtures";
 
 async function openPersonas(page) {
   // Personas is launch-flagged off by default — these suites cover the flagged-on flows.
-  await page.addInitScript(() => localStorage.setItem("ocw.flag.personas", "1"));
+  await page.addInitScript(() => localStorage.setItem("superuser.flag.personas", "1"));
   await page.goto("/");
   await page.getByTestId("account-row").click();
   await page.getByTestId("account-menu").getByRole("menuitem", { name: "Settings", exact: true }).click();

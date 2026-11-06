@@ -77,6 +77,6 @@ test("channel typeahead: private and not-a-member states are honest", async ({ p
   await page.getByPlaceholder("slack:C0123 or channel link").fill("l");
   await expect(page.getByTestId("roster-channel-slack:T1DL/C8LEADS")).toContainText("🔒");
   await expect(page.getByTestId("roster-channel-slack:T1DL/C7LOBBY")).toContainText(
-    "invite @ocw",
+    "invite @superuser",
   );
 });
