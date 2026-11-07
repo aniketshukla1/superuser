@@ -1,11 +1,9 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.webp">
-  <img src="docs/assets/hero-light.webp" width="100%" alt="Superuser: the AI you can tell everything. It runs on your machine, asks before it acts, and shows you everything that left.">
-</picture>
+<a href="https://aniketshukla1.github.io/superuser/"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.webp"><img src="docs/assets/hero-light.webp" width="100%" alt="Superuser: the AI you can tell everything. It runs on your machine, asks before it acts, and shows you everything that left."></picture></a>
 
-<br/>
+<a href="https://aniketshukla1.github.io/superuser/"><b>🌐&nbsp; aniketshukla1.github.io/superuser</b></a>
+
 <br/>
 
 <a href="https://aniketshukla1.github.io/superuser/assistants.mp4"><img src="docs/assets/btn-film.png" height="46" alt="Watch the film"></a>
